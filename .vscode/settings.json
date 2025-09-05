@@ -1,5 +1,6 @@
 {
     "conventionalCommits.scopes": [
-        "Initial commit"
+        "Initial commit",
+        "Black-Frame"
     ]
 }
