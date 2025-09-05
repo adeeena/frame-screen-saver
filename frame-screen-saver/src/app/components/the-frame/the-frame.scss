@@ -1,0 +1,35 @@
+$outer-border: 1rem;
+$inner-border: 4rem;
+$innermost-border: .15rem;
+
+.frame {
+    position:relative;
+    padding:0;
+    margin:0;
+    border:solid $outer-border #555; 
+    width: calc(100dvw - 2*$outer-border);
+    height: calc(100dvh - 2*$outer-border);
+    box-shadow:-3px -3px 12px #f1f1f1;
+}
+
+#border {
+    position:relative;
+    padding:0;
+    margin:0;
+    top:0;
+    bottom: 0;
+    height: calc(100% - 2*$inner-border);
+    border:solid $inner-border white;
+    box-shadow:-3px -3px 12px #999;
+
+    .background-image {
+        background: url('http://www.notshaw.com/raindropskeepfalling/wp-content/gallery/drawings-2013/2013-08-06-14-38-35.jpg');
+        background-position: center;
+        border-top:solid $innermost-border #aaa;
+        border-left:solid $innermost-border #aaa;
+        border-bottom:solid $innermost-border #f1f1f1;
+        border-right:solid $innermost-border #f1f1f1;
+        height: 100%;
+        width: 100%;
+    }
+}
