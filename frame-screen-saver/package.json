@@ -33,6 +33,7 @@
     "@angular/ssr": "^20.2.2",
     "@splidejs/splide": "^4.1.4",
     "express": "^5.1.0",
+    "gsap": "^3.13.0",
     "ngx-splide": "^7.0.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"

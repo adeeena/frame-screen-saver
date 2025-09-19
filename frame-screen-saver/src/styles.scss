@@ -1,8 +1,17 @@
-/* You can add global styles to this file, and also import other style files */
+@font-face {
+    font-family: 'Inter';
+    src: url('assets/fonts/Inter_Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
 html, body {
-    background: purple;
     height: 100vh;
     margin: 0;
     padding: 0;
     width: 100vw;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
 }
