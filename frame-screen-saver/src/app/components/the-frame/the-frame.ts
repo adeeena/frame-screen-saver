@@ -2,12 +2,13 @@ import { NgxSplideModule } from 'ngx-splide';
 import { Component, inject, isDevMode } from '@angular/core';
 import { gsap } from 'gsap';
 import { ClockService } from '../../services/clock.service';
+import { FormatDateTimePipe } from '../../pipes/format-date-time.pipe';
 
 @Component({
   selector: 'app-the-frame',
   templateUrl: './the-frame.html',
   styleUrl: './the-frame.scss',
-  imports: [ NgxSplideModule ],
+  imports: [ NgxSplideModule, FormatDateTimePipe ],
   standalone: true
 })
 export class TheFrame {
