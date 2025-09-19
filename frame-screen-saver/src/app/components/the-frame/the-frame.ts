@@ -1,6 +1,7 @@
 import { NgxSplideModule } from 'ngx-splide';
-import { Component, isDevMode } from '@angular/core';
+import { Component, inject, isDevMode } from '@angular/core';
 import { gsap } from 'gsap';
+import { ClockService } from '../../services/clock.service';
 
 @Component({
   selector: 'app-the-frame',
@@ -13,6 +14,8 @@ export class TheFrame {
   IMAGE_DISPLAY_TIMEOUT_MS: number = isDevMode() ? 2000 : 8000;
   COVER_PAGE_DISPLAY_TIMEOUT_MS: number = isDevMode() ? 2000 : 8000;
   COLUMNS_PAGE_DISPLAY_TIMEOUT_MS: number = isDevMode() ? 2000 : 8000;
+
+  public clockService = inject(ClockService);
 
   onSplideInit(splide: any)
   {
