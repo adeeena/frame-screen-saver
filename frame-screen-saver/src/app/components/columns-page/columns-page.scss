@@ -1,0 +1,25 @@
+.columns-page {
+    padding: 5vh;
+
+    .columns {
+        display: flex;
+        justify-content: space-between;
+
+        .main-section {
+            position: relative;
+            z-index: 8;
+            transform: translateX(-1rem);
+
+            .main-clock {
+                font-size: 3rem; 
+            }
+        }
+
+        .widgets {
+            display: flex;
+            font-size: 1.4rem;
+            justify-content: center;
+            gap: 1rem;
+        }
+    }
+}

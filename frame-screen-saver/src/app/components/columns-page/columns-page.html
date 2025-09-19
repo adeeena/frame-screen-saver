@@ -1,0 +1,26 @@
+<div class="columns-page">
+  <div class="main-section">
+    <div class="main-clock">
+      {{ clockService.time() | formatDateTime:'shortTime' }}
+    </div>
+    
+    <div class="widgets">
+      <div>
+        <span class="weather-current-icon">
+          (*)
+        </span>
+        <span class="weather-current-temperature">
+          23*C
+        </span>
+      </div>
+      <div>
+        <span class="weather-current-icon">
+          (*)
+        </span>
+        <span class="weather-current-temperature">
+          7:01
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

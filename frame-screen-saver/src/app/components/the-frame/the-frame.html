@@ -29,59 +29,8 @@
       
     </div>
     
-    <div class="cover-page absolute-fill">
-      <div class="main-clock">
-        {{ clockService.time() | formatDateTime:'shortTime' }}
-      </div>
-      
-      <div class="widgets">
-        <div>
-          <span class="weather-current-icon">
-            (*)
-          </span>
-          <span class="weather-current-temperature">
-            23*C
-          </span>
-        </div>
-        <div>
-          <span class="weather-current-icon">
-            (*)
-          </span>
-          <span class="weather-current-temperature">
-            7:01
-          </span>
-        </div>
-      </div>
-    </div>
+    <app-cover-page class="absolute-fill"></app-cover-page>
     
-    <div class="columns-page absolute-fill">
-      <div class="main-section">
-        <div class="main-clock">
-          12:34
-        </div>
-        
-        <div class="widgets">
-          <div>
-            <span class="weather-current-icon">
-              (*)
-            </span>
-            <span class="weather-current-temperature">
-              23*C
-            </span>
-          </div>
-          <div>
-            <span class="weather-current-icon">
-              (*)
-            </span>
-            <span class="weather-current-temperature">
-              7:01
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-    
+    <app-columns-page class="absolute-fill"></app-columns-page>
   </div>
 </div>
-</div>
-

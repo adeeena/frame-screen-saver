@@ -1,0 +1,15 @@
+.cover-page {
+    text-align: center;
+    padding: 10vh 0;
+    
+    .main-clock {
+        font-size: 5.2rem; 
+    }
+
+    .widgets {
+        display: flex;
+        font-size: 1.4rem;
+        justify-content: center;
+        gap: 1rem;
+    }
+}

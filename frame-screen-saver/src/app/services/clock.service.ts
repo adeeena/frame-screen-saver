@@ -25,7 +25,7 @@ export class ClockService implements OnDestroy {
   private readonly apiUrl = 'http://localhost:3000/api/clock';
 
   // Signals for time and error state
-  private readonly _time = signal('Loading...');
+  private readonly _time = signal('');
   private readonly _error = signal<string | null>(null);
 
   // Public readonly signals for components

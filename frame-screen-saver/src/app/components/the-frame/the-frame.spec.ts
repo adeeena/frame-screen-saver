@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TheFrame } from './the-frame';
+import { TheFrame } from './the-frame.component';
 
 describe('TheFrame', () => {
   let component: TheFrame;

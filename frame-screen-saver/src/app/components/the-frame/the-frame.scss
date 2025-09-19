@@ -95,50 +95,17 @@ $innermost-border: .15rem;
         z-index: 6;
     }
 
-    .cover-page {
-        text-align: center;
-        padding: 10vh 0;
-        z-index: 7;
+    app-cover-page, app-columns-page {
+        opacity: 0;
+        display: block;
         transform: translateX(-1rem);
-
-        .main-clock {
-            font-size: 5.2rem; 
-        }
-
-        .widgets {
-            display: flex;
-            font-size: 1.4rem;
-            justify-content: center;
-            gap: 1rem;
-        }
     }
 
-    .columns-page {
-        opacity: 0;
-        padding: 5vh;
-        transform: translateX(-1rem);
+    app-cover-page {
+        z-index: 7;
+    }
+
+    app-columns-page {
         z-index: 8;
-        
-        .columns {
-            display: flex;
-            justify-content: space-between;
-
-            .main-section {
-                position: relative;
-                z-index: 8;
-                transform: translateX(-1rem);
-
-                .main-clock {
-                    font-size: 3rem; 
-                }
-            }
-
-            .widgets {
-                display: flex;
-                font-size: 1.4rem;
-                justify-content: center;
-                gap: 1rem;
-            }
-        }
     }
 }
