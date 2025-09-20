@@ -2,14 +2,19 @@
     text-align: center;
     padding: 10vh 0;
     
-    .main-clock {
-        font-size: 5.2rem; 
+    .time {
+        font-size: 5.2rem;
+        line-height: 5.2rem;
+    }
+
+    .date, .widgets {
+        font-size: 1.4rem;
+        margin-bottom: 1.4rem;
     }
 
     .widgets {
         display: flex;
-        font-size: 1.4rem;
         justify-content: center;
-        gap: 1rem;
+        gap: 1.4rem;
     }
 }

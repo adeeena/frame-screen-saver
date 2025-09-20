@@ -1,24 +1,28 @@
-<div class="cover-page">
-  <div class="main-clock">
+<div class="cover-page absolute-fill">
+  <div class="time">
     {{ clockService.time() | formatDateTime:'shortTime' }}
+  </div>
+
+  <div class="date">
+    {{ clockService.time() | formatDateTime:'shortDateWithDayName' }}
   </div>
 
   <div class="widgets">
     <div>
-      <span class="weather-current-icon">
-        (*)
-      </span>
+      <i class="weather-current-icon" data-feather="cloud-drizzle"></i>
       <span class="weather-current-temperature">
         23*C
       </span>
     </div>
-    <div>
-      <span class="weather-current-icon">
-        (*)
-      </span>
-      <span class="weather-current-temperature">
-        7:01
-      </span>
-    </div>
+    
+    @if (solarService.nextEvent(); as event) {
+      <div>
+        <i class="weather-current-icon" [data-feather]="event.type"></i>
+        
+        <span class="weather-current-temperature">
+          {{ event.time | formatDateTime:'shortTime' }}
+        </span>
+      </div>
+    }
   </div>
 </div>

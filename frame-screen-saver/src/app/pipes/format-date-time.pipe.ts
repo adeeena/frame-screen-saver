@@ -21,6 +21,9 @@ export class FormatDateTimePipe implements PipeTransform {
     
     let formatString: string;
     switch (format) {
+      case 'shortDateWithDayName':
+        formatString = 'E, MMM d, y';
+        break;
       case 'shortTime':
         // 'hh:mm a' corresponds to a zero-padded 12-hour clock with an AM/PM marker (e.g., 09:30 PM)
         formatString = 'hh:mm a';

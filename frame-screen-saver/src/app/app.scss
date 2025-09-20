@@ -1,5 +1,5 @@
-@import 'mixins';
+@use 'mixins';
 
 ::ng-deep .absolute-fill {
-    @include absolute-fill;
+    @include mixins.absolute-fill;
 }
