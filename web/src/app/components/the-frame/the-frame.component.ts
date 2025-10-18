@@ -13,9 +13,11 @@ import { ColumnsPageComponent } from '../columns-page/columns-page.component';
   standalone: true
 })
 export class TheFrame {
-  IMAGE_DISPLAY_TIMEOUT_MS: number = isDevMode() ? 2000 : 8000;
-  COVER_PAGE_DISPLAY_TIMEOUT_MS: number = isDevMode() ? 2000 : 8000;
-  COLUMNS_PAGE_DISPLAY_TIMEOUT_MS: number = isDevMode() ? 2000 : 8000;
+  devModeTimeoutMs: number = 8000;
+
+  IMAGE_DISPLAY_TIMEOUT_MS: number = isDevMode() ? this.devModeTimeoutMs : 8000;
+  COVER_PAGE_DISPLAY_TIMEOUT_MS: number = isDevMode() ? this.devModeTimeoutMs : 8000;
+  COLUMNS_PAGE_DISPLAY_TIMEOUT_MS: number = isDevMode() ? this.devModeTimeoutMs : 8000;
 
   onSplideInit(splide: any)
   {

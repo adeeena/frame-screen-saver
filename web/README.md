@@ -1,3 +1,26 @@
+# Samsung :tm: The Frame :tm: -like screen saver, on steroids!
+
+## Development time
+
+## Usage
+
+To have the application running on full screen, launch it in a browser (in kiosk mode).
+
+To do so in macOS:
+
+`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --kiosk http://localhost:4200`
+
+
+
+
+
+
+
+
+
+
+
+
 # FrameScreenSaver
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.2.

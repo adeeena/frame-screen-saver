@@ -1,7 +1,11 @@
-<div class="columns-page">
+<div class="columns">
   <div class="main-section">
-    <div class="main-clock">
+    <div class="time">
       {{ clockService.time() | formatDateTime:'shortTime' }}
+    </div>
+
+    <div class="date">
+      {{ clockService.time() | formatDateTime:'shortDateWithDayName' }}
     </div>
     
     <div class="widgets">
@@ -13,14 +17,16 @@
           23*C
         </span>
       </div>
+      
+      @if (solarService.nextEvent(); as event) {
       <div>
-        <span class="weather-current-icon">
-          (*)
-        </span>
+        <i class="weather-current-icon" [data-feather]="event.type"></i>
+        
         <span class="weather-current-temperature">
-          7:01
+          {{ event.time | formatDateTime:'shortTime' }}
         </span>
       </div>
+    }
     </div>
   </div>
 </div>

@@ -1,0 +1,23 @@
+.columns {
+    display: flex;
+    justify-content: space-between;
+    padding: 5vh;
+
+    .main-section {
+        .time {
+            font-size: 2.4rem; 
+        }
+
+        .date {
+            font-size: 1.4rem;
+            margin-bottom: 1.4rem;
+        }
+    }
+
+    .widgets {
+        display: flex;
+        font-size: 1.4rem;
+        justify-content: center;
+        gap: 1rem;
+    }
+}
