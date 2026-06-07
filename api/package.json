@@ -1,12 +1,11 @@
 {
-  "name": "frame-screen-saver-server",
+  "name": "frame-screen-saver-api",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "install:services": "npm install --prefix clock-service && npm install --prefix weather-service && npm install --prefix solar-service && npm install --prefix orchestrator-service",
-    "start:services": "concurrently \"npm start --prefix clock-service\" \"npm start --prefix weather-service\" \"npm start --prefix solar-service\" \"npm start --prefix orchestrator-service\"",
+    "install:services": "npm install --prefix communicator && npm install --prefix clock-service && npm install --prefix weather-service && npm install --prefix solar-service && npm install --prefix orchestrator-service && npm install --prefix image-service",
+    "start:services": "concurrently \"npm start --prefix clock-service\" \"npm start --prefix weather-service\" \"npm start --prefix solar-service\" \"npm start --prefix orchestrator-service\" \"npm start --prefix image-service\"",
     "start": "npm run install:services && npm run start:services"
-  
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

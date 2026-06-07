@@ -1,16 +1,7 @@
 import { Injectable, signal, OnDestroy, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import moment from 'moment';
-import {
-  Subject,
-  timer,
-  switchMap,
-  takeUntil,
-  retry,
-  catchError,
-  of,
-  tap,
-} from 'rxjs';
+import { Subject, timer, switchMap, takeUntil, retry, catchError, of, tap } from 'rxjs';
 
 // Interface for the API response
 interface ClockResponse {
@@ -26,7 +17,7 @@ export class ClockService implements OnDestroy {
   private readonly apiUrl = 'http://localhost:3000/api/clock';
 
   // Signals for time and error state
-  private readonly _time = signal('Loading...');
+  private readonly _time = signal('');
   private readonly _error = signal<string | null>(null);
 
   // Public readonly signals for components
