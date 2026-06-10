@@ -1,0 +1,21 @@
+# Git
+.git
+.gitignore
+
+# Node.js dependencies (installed inside the container)
+web/node_modules
+
+# Build artifacts
+web/dist
+web/.angular
+
+# IDE and editor files
+.vscode
+.idea
+
+# Docker files
+web/Dockerfile
+containers/
+
+# Logs
+web/npm-debug.log

@@ -1,17 +1,27 @@
-@font-face {
-    font-family: 'Inter';
-    src: url('assets/fonts/Inter_Regular.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
+﻿@use 'app/design-system' as ds;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-html, body {
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    width: 100vw;
+html,
+body {
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  width: 100dvw;
+  background-color: #0a0a0c;
+  overflow: hidden;
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
+  font-weight: 300;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }

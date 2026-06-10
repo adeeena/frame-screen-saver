@@ -1,0 +1,75 @@
+{
+  "animationSettings": {
+    "stillImageTimeoutMs": 10000,
+    "coverPageTimeoutMs": 5000,
+    "columnsPageTimeoutMs": 10000,
+    "frameChangeAfterCycles": 10,
+    "autoReloadIntervalHours": 6
+  },
+  "displaySettings": {
+    "isGrainEffectEnabled": true,
+    "opacity": 1.0,
+    "fontSettings": {
+      "clock": "DidotLTPro, Didot, 'Bodoni MT', Georgia, serif",
+      "headers": "AvenirNextLTPro, 'Avenir Next', Futura, Helvetica, sans-serif",
+      "default": "AvenirNextLTPro, 'Avenir Next', Futura, Helvetica, sans-serif"
+    },
+    "colors": {
+      "accent": "#f0bc75",
+      "secondary": "#fcfcfd"
+    },
+    "media": {
+      "packs": [
+        {
+          "name": "travel",
+          "contentDir": "/media/travel/content",
+          "metadataFile": "/media/travel/metadata.csv",
+          "cacheExpiryTimeHours": 24
+        },
+        {
+          "name": "mccurry",
+          "contentDir": "/media/mccurry/content",
+          "metadataFile": null,
+          "cacheExpiryTimeHours": 24
+        }
+      ]
+    }
+  },
+  "appSettings": {
+    "location": {
+      "city": "Paris",
+      "region": "Europe",
+      "latitude": 48.917,
+      "longitude": 1.867
+    },
+    "timezone": "Europe/Paris",
+    "timeFormat": "HH:mm",
+    "dateFormat": "dddd, MMMM D",
+    "weather": {
+      "provider": "met.no",
+      "apiKey": null,
+      "units": "metric"
+    },
+    "transit": {
+      "isEnabled": true,
+      "provider": "prim",
+      "stopId": "STIF:StopArea:SP:46886:",
+      "stopLabel": "Maule",
+      "lineLabel": "N",
+      "lineColor": "00A88F",
+      "lineTextColor": "ffffff",
+      "direction": "Paris Montparnasse",
+      "maxDepartures": 2,
+      "primLineRef": "STIF:Line::C01736:",
+      "navitiaRegion": null,
+      "gtfsRtUrl": null,
+      "destinationFilter": "Paris"
+    },
+    "calendar": {
+      "isEnabled": true,
+      "icsUrl": "",
+      "daysAhead": 7,
+      "maxDisplayDays": 2
+    }
+  }
+}

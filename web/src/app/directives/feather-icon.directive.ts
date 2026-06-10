@@ -1,29 +1,21 @@
-import {
-  Directive,
-  ElementRef,
-  Input,
-  OnChanges,
-  SimpleChanges,
-  inject,
-  PLATFORM_ID,
-} from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import * as feather from 'feather-icons';
+import { Directive, ElementRef, Input, OnChanges, inject } from '@angular/core';
+import feather, { FeatherIcon } from 'feather-icons';
+
+const icons = feather.icons as Record<string, FeatherIcon | undefined>;
 
 @Directive({
-  selector: '[data-feather]',
+  selector: '[feather]',
   standalone: true,
 })
-
 export class FeatherIconDirective implements OnChanges {
-  @Input('data-feather') iconName!: string;
+  @Input() feather = '';
 
-  private platformId = inject(PLATFORM_ID);
-  private el: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly el = inject(ElementRef<HTMLElement>);
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (isPlatformBrowser(this.platformId) && changes['iconName']) {
-      this.el.nativeElement.innerHTML = (feather.icons as any)[this.iconName]?.toSvg() || '';
+  ngOnChanges(): void {
+    const icon = icons[this.feather];
+    if (icon) {
+      this.el.nativeElement.innerHTML = icon.toSvg();
     }
   }
 }

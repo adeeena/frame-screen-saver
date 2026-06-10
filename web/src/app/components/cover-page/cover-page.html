@@ -1,27 +1,27 @@
-<div class="cover-page absolute-fill">
-  <div class="time">
-    {{ clockService.time() | formatDateTime:'shortTime' }}
-  </div>
-
-  <div class="date">
-    {{ clockService.time() | formatDateTime:'shortDateWithDayName' }}
-  </div>
-
-  <div class="widgets">
-    <div>
-      <i class="weather-current-icon" data-feather="cloud-drizzle"></i>
-      <span class="weather-current-temperature">
-        23*C
-      </span>
+<div class="cover-page">
+  <div class="cover-page__time-block">
+    <div class="cover-page__clock">
+      {{ clockService.time() | formatDateTime:'HH:mm' }}
     </div>
-    
-    @if (solarService.nextEvent(); as event) {
-      <div>
-        <i class="weather-current-icon" [data-feather]="event.type"></i>
-        
-        <span class="weather-current-temperature">
-          {{ event.time | formatDateTime:'shortTime' }}
-        </span>
+    <div class="cover-page__date">
+      {{ clockService.time() | formatDateTime:'fullDate' }}
+    </div>
+  </div>
+
+  <div class="cover-page__photo-meta">
+    @if (imageCycleService.currentMeta().location) {
+      <div class="cover-page__photo-location">
+        {{ imageCycleService.currentMeta().location }}
+      </div>
+    }
+    @if (imageCycleService.currentMeta().title) {
+      <div class="cover-page__photo-title">
+        {{ imageCycleService.currentMeta().title }}
+      </div>
+    }
+    @if (imageCycleService.currentMeta().subtitle) {
+      <div class="cover-page__photo-subtitle">
+        {{ imageCycleService.currentMeta().subtitle }}
       </div>
     }
   </div>

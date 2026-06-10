@@ -1,0 +1,464 @@
+<div class="config-page">
+
+  <!-- ── Header ───────────────────────────────────────────────────────────── -->
+  <header class="config-page__header">
+    <div class="config-page__header-title">
+      <span class="config-page__header-title-accent">Frame</span> Configuration
+    </div>
+    <button class="config-page__close" (click)="close()" title="Close (Esc)">✕</button>
+  </header>
+
+  @if (draft(); as d) {
+
+    <div class="config-page__body">
+
+      <!-- ── Section nav ─────────────────────────────────────────────────── -->
+      <nav class="config-page__nav">
+        @for (s of sections; track s.id) {
+          <button class="config-page__nav-item"
+                  [class.config-page__nav-item--active]="activeSection() === s.id"
+                  (click)="activeSection.set(s.id)">
+            <span class="config-page__nav-icon">{{ s.icon }}</span>
+            <span class="config-page__nav-label">{{ s.label }}</span>
+          </button>
+        }
+      </nav>
+
+      <!-- ── Section content ────────────────────────────────────────────── -->
+      <div class="config-page__content">
+
+        <!-- ANIMATION -->
+        @if (activeSection() === 'animation') {
+          <div class="config-page__section">
+            <div class="config-page__section-title">Animation Settings</div>
+            <div class="config-page__fields">
+
+              <div class="config-page__field">
+                <label class="config-page__label">Still image timeout (ms)</label>
+                <input class="config-page__input" type="number" min="1000" step="1000"
+                       [value]="d.animationSettings.stillImageTimeoutMs"
+                       (change)="patchAnimation({ stillImageTimeoutMs: numVal($event) })" />
+                <span class="config-page__hint">How long the bare photo is shown per cycle.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Cover page timeout (ms)</label>
+                <input class="config-page__input" type="number" min="1000" step="1000"
+                       [value]="d.animationSettings.coverPageTimeoutMs"
+                       (change)="patchAnimation({ coverPageTimeoutMs: numVal($event) })" />
+                <span class="config-page__hint">Duration of the clock/date overlay page.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Columns page timeout (ms)</label>
+                <input class="config-page__input" type="number" min="1000" step="1000"
+                       [value]="d.animationSettings.columnsPageTimeoutMs"
+                       (change)="patchAnimation({ columnsPageTimeoutMs: numVal($event) })" />
+                <span class="config-page__hint">Duration of the weather/transit/calendar page.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Frame change after N cycles</label>
+                <input class="config-page__input" type="number" min="1" step="1"
+                       [value]="d.animationSettings.frameChangeAfterCycles"
+                       (change)="patchAnimation({ frameChangeAfterCycles: numVal($event) })" />
+                <span class="config-page__hint">Museum-frame border style changes after this many image loops.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Auto-reload interval (hours)</label>
+                <input class="config-page__input" type="number" min="0" step="1"
+                       [value]="d.animationSettings.autoReloadIntervalHours"
+                       (change)="patchAnimation({ autoReloadIntervalHours: numVal($event) })" />
+                <span class="config-page__hint">Page reloads automatically after this many hours. Set to 0 to disable.</span>
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- DISPLAY -->
+        @if (activeSection() === 'display') {
+          <div class="config-page__section">
+            <div class="config-page__section-title">Display Settings</div>
+            <div class="config-page__fields">
+
+              <div class="config-page__field config-page__field--toggle">
+                <label class="config-page__label">Grain effect</label>
+                <label class="config-page__toggle">
+                  <input type="checkbox"
+                         [checked]="d.displaySettings.isGrainEffectEnabled"
+                         (change)="patchDisplay({ isGrainEffectEnabled: boolVal($event) })" />
+                  <span class="config-page__toggle-track"></span>
+                </label>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Overlay opacity (0–1)</label>
+                <input class="config-page__input" type="number" min="0" max="1" step="0.05"
+                       [value]="d.displaySettings.opacity"
+                       (change)="patchDisplay({ opacity: numVal($event) })" />
+              </div>
+
+              <div class="config-page__field-group-title">Colors</div>
+
+              <div class="config-page__field config-page__field--color">
+                <label class="config-page__label">Accent color</label>
+                <div class="config-page__color-row">
+                  <input class="config-page__color-swatch" type="color"
+                         [value]="d.displaySettings.colors.accent"
+                         (change)="patchColors({ accent: strVal($event) })" />
+                  <input class="config-page__input config-page__input--hex"
+                         type="text" maxlength="7"
+                         [value]="d.displaySettings.colors.accent"
+                         (change)="patchColors({ accent: strVal($event) })" />
+                </div>
+              </div>
+
+              <div class="config-page__field config-page__field--color">
+                <label class="config-page__label">Secondary color</label>
+                <div class="config-page__color-row">
+                  <input class="config-page__color-swatch" type="color"
+                         [value]="d.displaySettings.colors.secondary"
+                         (change)="patchColors({ secondary: strVal($event) })" />
+                  <input class="config-page__input config-page__input--hex"
+                         type="text" maxlength="7"
+                         [value]="d.displaySettings.colors.secondary"
+                         (change)="patchColors({ secondary: strVal($event) })" />
+                </div>
+              </div>
+
+              <div class="config-page__field-group-title">Media</div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Media source path</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.displaySettings.media.source"
+                       (change)="patchMedia({ source: strVal($event) })" />
+                <span class="config-page__hint">Container path to the photo library root.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Metadata file</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.displaySettings.media.metadata"
+                       (change)="patchMedia({ metadata: strVal($event) })" />
+                <span class="config-page__hint">Path to metadata.csv (id, title, text) used for image captions.</span>
+              </div>
+
+              <div class="config-page__field-group-title">Fonts</div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Clock font stack</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.displaySettings.fontSettings.clock"
+                       (change)="patchDisplay({ fontSettings: { ...d.displaySettings.fontSettings, clock: strVal($event) } })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Headers font stack</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.displaySettings.fontSettings.headers"
+                       (change)="patchDisplay({ fontSettings: { ...d.displaySettings.fontSettings, headers: strVal($event) } })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Default font stack</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.displaySettings.fontSettings.default"
+                       (change)="patchDisplay({ fontSettings: { ...d.displaySettings.fontSettings, default: strVal($event) } })" />
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- LOCATION & TIME -->
+        @if (activeSection() === 'location') {
+          <div class="config-page__section">
+            <div class="config-page__section-title">Location &amp; Time</div>
+            <div class="config-page__fields">
+
+              <div class="config-page__field">
+                <label class="config-page__label">City</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.appSettings.location.city"
+                       (change)="patchLocation({ city: strVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Region</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.appSettings.location.region"
+                       (change)="patchLocation({ region: strVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Latitude</label>
+                <input class="config-page__input" type="number" step="0.001"
+                       [value]="d.appSettings.location.latitude"
+                       (change)="patchLocation({ latitude: numVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Longitude</label>
+                <input class="config-page__input" type="number" step="0.001"
+                       [value]="d.appSettings.location.longitude"
+                       (change)="patchLocation({ longitude: numVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Timezone</label>
+                <input class="config-page__input" type="text" placeholder="Europe/Paris"
+                       [value]="d.appSettings.timezone"
+                       (change)="patchAppTime({ timezone: strVal($event) })" />
+                <span class="config-page__hint">IANA timezone name, e.g. America/New_York</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Time format</label>
+                <input class="config-page__input" type="text" placeholder="HH:mm"
+                       [value]="d.appSettings.timeFormat"
+                       (change)="patchAppTime({ timeFormat: strVal($event) })" />
+                <span class="config-page__hint">Moment.js format string.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Date format</label>
+                <input class="config-page__input" type="text" placeholder="dddd, MMMM D"
+                       [value]="d.appSettings.dateFormat"
+                       (change)="patchAppTime({ dateFormat: strVal($event) })" />
+                <span class="config-page__hint">Moment.js format string.</span>
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- WEATHER -->
+        @if (activeSection() === 'weather') {
+          <div class="config-page__section">
+            <div class="config-page__section-title">Weather</div>
+            <div class="config-page__fields">
+
+              <div class="config-page__field">
+                <label class="config-page__label">Provider</label>
+                <select class="config-page__input config-page__select"
+                        [value]="d.appSettings.weather.provider"
+                        (change)="patchWeather({ provider: strVal($event) })">
+                  <option value="met.no">met.no (no key required)</option>
+                </select>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">API key</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.appSettings.weather.apiKey ?? ''"
+                       (change)="patchWeather({ apiKey: nullableStr($event) })" />
+                <span class="config-page__hint">Leave empty if the provider doesn't require a key.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Units</label>
+                <select class="config-page__input config-page__select"
+                        [value]="d.appSettings.weather.units"
+                        (change)="patchWeatherUnits($event)">
+                  <option value="metric">Metric (°C, m/s)</option>
+                  <option value="imperial">Imperial (°F, mph)</option>
+                </select>
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- TRANSIT -->
+        @if (activeSection() === 'transit') {
+          <div class="config-page__section">
+            <div class="config-page__section-title">Transit</div>
+            <div class="config-page__fields">
+
+              <div class="config-page__field config-page__field--toggle">
+                <label class="config-page__label">Enable transit widget</label>
+                <label class="config-page__toggle">
+                  <input type="checkbox"
+                         [checked]="d.appSettings.transit.isEnabled"
+                         (change)="patchTransit({ isEnabled: boolVal($event) })" />
+                  <span class="config-page__toggle-track"></span>
+                </label>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Provider</label>
+                <select class="config-page__input config-page__select"
+                        [value]="d.appSettings.transit.provider"
+                        (change)="patchTransit({ provider: strVal($event) })">
+                  <option value="prim">PRIM — Île-de-France Mobilités</option>
+                  <option value="navitia">Navitia (40+ countries)</option>
+                  <option value="bkk">BKK — Budapest</option>
+                  <option value="gtfs-rt">GTFS-RT (generic)</option>
+                </select>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Stop ID</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.appSettings.transit.stopId"
+                       (change)="patchTransit({ stopId: strVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Stop label</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.appSettings.transit.stopLabel"
+                       (change)="patchTransit({ stopLabel: strVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Line label</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.appSettings.transit.lineLabel"
+                       (change)="patchTransit({ lineLabel: strVal($event) })" />
+              </div>
+
+              <div class="config-page__field config-page__field--color">
+                <label class="config-page__label">Line badge color</label>
+                <div class="config-page__color-row">
+                  <input class="config-page__color-swatch" type="color"
+                         [value]="'#' + d.appSettings.transit.lineColor"
+                         (change)="patchTransit({ lineColor: strVal($event).replace('#', '') })" />
+                  <input class="config-page__input config-page__input--hex"
+                         type="text" maxlength="6" placeholder="00A88F"
+                         [value]="d.appSettings.transit.lineColor"
+                         (change)="patchTransit({ lineColor: strVal($event).replace('#', '') })" />
+                </div>
+              </div>
+
+              <div class="config-page__field config-page__field--color">
+                <label class="config-page__label">Line badge text color</label>
+                <div class="config-page__color-row">
+                  <input class="config-page__color-swatch" type="color"
+                         [value]="'#' + d.appSettings.transit.lineTextColor"
+                         (change)="patchTransit({ lineTextColor: strVal($event).replace('#', '') })" />
+                  <input class="config-page__input config-page__input--hex"
+                         type="text" maxlength="6" placeholder="ffffff"
+                         [value]="d.appSettings.transit.lineTextColor"
+                         (change)="patchTransit({ lineTextColor: strVal($event).replace('#', '') })" />
+                </div>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Direction label</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.appSettings.transit.direction"
+                       (change)="patchTransit({ direction: strVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Max departures</label>
+                <input class="config-page__input" type="number" min="1" max="10"
+                       [value]="d.appSettings.transit.maxDepartures"
+                       (change)="patchTransit({ maxDepartures: numVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Destination filter</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.appSettings.transit.destinationFilter ?? ''"
+                       (change)="patchTransit({ destinationFilter: nullableStr($event) })" />
+                <span class="config-page__hint">Only show departures whose destination contains this string. Leave empty to show all.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">PRIM line ref</label>
+                <input class="config-page__input" type="text" placeholder="STIF:Line::C01736:"
+                       [value]="d.appSettings.transit.primLineRef ?? ''"
+                       (change)="patchTransit({ primLineRef: nullableStr($event) })" />
+                <span class="config-page__hint">Only used with the PRIM provider.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Navitia region</label>
+                <input class="config-page__input" type="text" placeholder="fr-idf"
+                       [value]="d.appSettings.transit.navitiaRegion ?? ''"
+                       (change)="patchTransit({ navitiaRegion: nullableStr($event) })" />
+                <span class="config-page__hint">Only used with the Navitia provider.</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">GTFS-RT feed URL</label>
+                <input class="config-page__input" type="text"
+                       [value]="d.appSettings.transit.gtfsRtUrl ?? ''"
+                       (change)="patchTransit({ gtfsRtUrl: nullableStr($event) })" />
+                <span class="config-page__hint">Only used with the GTFS-RT provider.</span>
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- CALENDAR -->
+        @if (activeSection() === 'calendar') {
+          <div class="config-page__section">
+            <div class="config-page__section-title">Calendar</div>
+            <div class="config-page__fields">
+
+              <div class="config-page__field config-page__field--toggle">
+                <label class="config-page__label">Enable calendar widget</label>
+                <label class="config-page__toggle">
+                  <input type="checkbox"
+                         [checked]="d.appSettings.calendar.isEnabled"
+                         (change)="patchCalendar({ isEnabled: boolVal($event) })" />
+                  <span class="config-page__toggle-track"></span>
+                </label>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">iCal URL</label>
+                <input class="config-page__input" type="url"
+                       [value]="d.appSettings.calendar.icsUrl"
+                       (change)="patchCalendar({ icsUrl: strVal($event) })" />
+                <span class="config-page__hint">Publicly accessible .ics feed URL (iCloud, Google Calendar share link, etc.).</span>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Days ahead to fetch</label>
+                <input class="config-page__input" type="number" min="1" max="30"
+                       [value]="d.appSettings.calendar.daysAhead"
+                       (change)="patchCalendar({ daysAhead: numVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Max days to display</label>
+                <input class="config-page__input" type="number" min="1" max="7"
+                       [value]="d.appSettings.calendar.maxDisplayDays"
+                       (change)="patchCalendar({ maxDisplayDays: numVal($event) })" />
+                <span class="config-page__hint">How many days to show in the columns panel (auto-trims to fit).</span>
+              </div>
+
+            </div>
+          </div>
+        }
+
+      </div><!-- /content -->
+    </div><!-- /body -->
+
+    <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+    <footer class="config-page__footer">
+      <div class="config-page__footer-status">
+        @if (saveStatus() === 'saving') { <span class="config-page__status config-page__status--saving">Saving…</span> }
+        @if (saveStatus() === 'saved')  { <span class="config-page__status config-page__status--saved">✓ Saved</span> }
+        @if (saveStatus() === 'error')  { <span class="config-page__status config-page__status--error">✗ Save failed</span> }
+      </div>
+      <div class="config-page__footer-actions">
+        <button class="config-page__btn config-page__btn--ghost" (click)="reset()">Reset changes</button>
+        <button class="config-page__btn config-page__btn--primary" (click)="save()"
+                [disabled]="saveStatus() === 'saving'">Save</button>
+      </div>
+    </footer>
+
+  } @else {
+    <div class="config-page__loading">Loading configuration…</div>
+  }
+
+</div>

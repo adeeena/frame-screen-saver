@@ -1,0 +1,63 @@
+<div class="debug-overlay" (click)="close.emit()">
+  <div class="debug-overlay__panel" (click)="$event.stopPropagation()">
+    <div class="debug-overlay__header">
+      <span>Debug — Frame Screen Saver</span>
+      <button class="debug-overlay__close" (click)="close.emit()">✕</button>
+    </div>
+    <div class="debug-overlay__grid">
+
+      <div class="debug-overlay__section">
+        <div class="debug-overlay__section-title">Clock</div>
+        <pre>{{ clockService.time() }}</pre>
+      </div>
+
+      <div class="debug-overlay__section">
+        <div class="debug-overlay__section-title">Solar</div>
+        <pre>{{ solarService.nextEvent() | json }}</pre>
+      </div>
+
+      <div class="debug-overlay__section">
+        <div class="debug-overlay__section-title">Weather (yr.no)</div>
+        <pre>{{ weatherService.temperature() }}° — {{ weatherService.weatherLabel() }}</pre>
+        <pre>Symbol: {{ weatherService.symbolCode() }}</pre>
+        <pre>Wind: {{ weatherService.windSpeed() }} m/s</pre>
+      </div>
+
+      <div class="debug-overlay__section">
+        <div class="debug-overlay__section-title">Transilien N — Maule</div>
+        @for (dep of trainService.departures(); track dep.expectedDeparture) {
+          <pre>{{ dep.expectedDeparture }} — {{ dep.minutesUntilDeparture }}min — {{ dep.status }}</pre>
+        }
+      </div>
+
+      <div class="debug-overlay__section">
+        <div class="debug-overlay__section-title">Calendar ({{ calendarService.days().length }} days)</div>
+        @for (day of calendarService.days(); track day.date) {
+          <pre>{{ day.dayLabel }}: {{ day.events.length }} events</pre>
+        }
+      </div>
+
+      <div class="debug-overlay__section">
+        <div class="debug-overlay__section-title">Image Cycle</div>
+        <pre>Current: {{ imageCycleService.currentImage() }}</pre>
+        <pre>{{ imageCycleService.images().length }} images loaded</pre>
+        <pre>Meta: {{ imageCycleService.currentMeta() | json }}</pre>
+      </div>
+
+    </div>
+    <div class="debug-overlay__footer">
+      <div class="debug-overlay__hotkeys">
+        <span><kbd>D</kbd> / <kbd>ESC</kbd> Toggle debug</span>
+        <span><kbd>P</kbd> Pause / resume</span>
+        <span><kbd>F</kbd> Frame style</span>
+        <span><kbd>Space</kbd> Next page</span>
+        <span><kbd>→</kbd> Next image</span>
+        <span><kbd>A</kbd> Sidebar layout</span>
+        <span><kbd>C</kbd> Config page</span>
+        <span><kbd>I</kbd> / <kbd>O</kbd> Dim +/−</span>
+        <span><kbd>R</kbd> Reload</span>
+      </div>
+    </div>
+  </div>
+</div>
+

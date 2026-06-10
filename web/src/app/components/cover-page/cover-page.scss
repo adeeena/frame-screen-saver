@@ -1,20 +1,156 @@
+﻿@use '../../design-system' as ds;
+
 .cover-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 4vw;
+  padding: 4dvw;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+
+  &__time-block {
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
     text-align: center;
-    padding: 10vh 0;
-    
-    .time {
-        font-size: 5.2rem;
-        line-height: 5.2rem;
-    }
+    margin-top: 3vw;
+    margin-top: 3dvw;
+  }
 
-    .date, .widgets {
-        font-size: 1.4rem;
-        margin-bottom: 1.4rem;
-    }
+  &__clock {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 10vw;
+    font-size: 10dvw;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
 
-    .widgets {
-        display: flex;
-        justify-content: center;
-        gap: 1.4rem;
+  &__date {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.8vw;
+    font-size: 1.8dvw;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--text-primary);
+    margin-top: 0.1vw;
+    margin-top: 0.1dvw;
+  }
+
+  &__info-cluster {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    gap: 3vw;
+    gap: 3dvw;
+  }
+
+  &__weather {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 0.8vw;
+    gap: 0.8dvw;
+  }
+
+  &__weather-icon,
+  &__solar-icon {
+    display: inline-flex;
+    -webkit-align-items: center;
+    align-items: center;
+    width: 2.5vw;
+    width: 2.5dvw;
+    height: 2.5vw;
+    height: 2.5dvw;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: var(--text-primary);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
+  }
+
+  &__temperature {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 2vw;
+    font-size: 2dvw;
+    color: var(--accent);
+  }
+
+  &__weather-label {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.4vw;
+    font-size: 1.4dvw;
+    color: var(--text-secondary);
+  }
+
+  &__solar {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 0.5vw;
+    gap: 0.5dvw;
+  }
+
+  &__solar-time {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.4vw;
+    font-size: 1.4dvw;
+    color: var(--text-secondary);
+  }
+
+  &__photo-meta {
+    text-align: center;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  &__photo-location {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.1vw;
+    font-size: 1.1dvw;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  &__photo-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-style: normal;
+    font-size: 2.4vw;
+    font-size: 2.4dvw;
+    color: var(--accent);
+    margin-top: 0.4vw;
+    margin-top: 0.4dvw;
+  }
+
+  &__photo-subtitle {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.8vw;
+    font-size: 1.8dvw;
+    color: var(--text-primary);
+    margin-top: 0.3vw;
+    margin-top: 0.3dvw;
+  }
 }

@@ -1,32 +1,102 @@
-<div class="columns">
-  <div class="main-section">
-    <div class="time">
-      {{ clockService.time() | formatDateTime:'shortTime' }}
+<div class="columns-page" [class.columns-page--sidebar]="sidebarLayout()">
+
+  <!-- LEFT PANEL -->
+  <div class="columns-page__panel columns-page__panel--left">
+
+    <div class="columns-page__mini-clock">
+      <div class="columns-page__clock-time">
+        {{ clockService.time() | formatDateTime:'HH:mm' }}
+      </div>
+      <div class="columns-page__clock-date">
+        {{ clockService.time() | formatDateTime:'fullDate' }}
+      </div>
     </div>
 
-    <div class="date">
-      {{ clockService.time() | formatDateTime:'shortDateWithDayName' }}
+    <!-- <div class="columns-page__divider" role="separator"></div> -->
+    <div class="columns-page__divider" role="separator"></div>
+
+    <div class="columns-page__widget columns-page__weather">
+      <span class="columns-page__weather-icon" [feather]="weatherIconName()"></span>
+      <span class="columns-page__temperature">{{ weatherService.temperature() }}°</span>
+      <span class="columns-page__weather-label">{{ weatherService.weatherLabel() }}</span>
+      @if (weatherService.uvIndex() !== null) {
+        <div class="columns-page__uv">
+          <span class="columns-page__uv-label">UV</span>
+          <span class="columns-page__uv-value">{{ weatherService.uvIndex() }}</span>
+        </div>
+      }
+      @if (solarService.nextEvent(); as evt) {
+        <div class="columns-page__solar">
+          <span class="columns-page__solar-icon" [feather]="evt.type === 'sunrise' ? 'sunrise' : 'sunset'"></span>
+          <span class="columns-page__solar-time">{{ evt.time | formatDateTime:'HH:mm' }}</span>
+        </div>
+      }
     </div>
-    
-    <div class="widgets">
-      <div>
-        <span class="weather-current-icon">
-          (*)
-        </span>
-        <span class="weather-current-temperature">
-          23*C
-        </span>
+
+    @if (trainService.departures().length > 0) {
+    <div class="columns-page__divider" role="separator"></div>
+    <div class="columns-page__widget transilien">
+      <div class="transilien__header">
+        <div class="transilien__line-badge"
+             [style.background-color]="'#' + config.transit.lineColor"
+             [style.color]="'#' + config.transit.lineTextColor"
+             [attr.aria-label]="'Line ' + config.transit.lineLabel">
+          {{ config.transit.lineLabel }}
+        </div>
+        <div class="transilien__direction">
+          <span class="transilien__arrow">→</span>
+          <span class="transilien__destination">{{ config.transit.direction }}</span>
+        </div>
       </div>
-      
-      @if (solarService.nextEvent(); as event) {
-      <div>
-        <i class="weather-current-icon" [data-feather]="event.type"></i>
-        
-        <span class="weather-current-temperature">
-          {{ event.time | formatDateTime:'shortTime' }}
-        </span>
+
+      <div class="transilien__departures">
+        @for (dep of trainService.departures(); track dep.expectedDeparture) {
+          <div class="transilien__departure">
+            <span class="transilien__departure-time">
+              {{ dep.expectedDeparture | formatDateTime:'HH:mm' }}
+            </span>
+            <span class="transilien__departure-minutes">
+              {{ minutesUntil(dep) }}<span class="transilien__departure-unit"> min</span>
+            </span>
+          </div>
+        }
       </div>
+    </div>
     }
+
+    <!-- Future widget slot -->
+    <div class="columns-page__widget-slot" aria-label="Widget slot"></div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="columns-page__panel columns-page__panel--right">
+
+    <div class="columns-page__agenda-header">Upcoming events</div>
+
+    <div class="columns-page__calendar" #calendarRef>
+      @for (day of displayDays(); track day.date; let isFirstDay = $first) {
+        <div class="cal-timeline__day-header">
+          <span class="cal-timeline__accent">{{ dayLabelParts(day).accent }}</span><!--
+          --><span class="cal-timeline__normal">{{ dayLabelParts(day).normal }}</span>
+        </div>
+        @for (evt of day.events; track evt.title + evt.startTime; let isFirstEvt = $first; let isLastEvt = $last) {
+          <div class="cal-timeline__event-row" [class.cal-timeline__event-row--last]="isLastEvt">
+            <div class="cal-timeline__spine"
+                 [style.--line-top]="isFirstEvt ? '1.15dvw' : '0px'"
+                 [style.--line-bottom]="isLastEvt ? 'calc(100% - 1.15dvw)' : '0px'">
+              <div class="cal-timeline__dot"></div>
+            </div>
+            <div class="cal-timeline__event-body">
+              <span class="cal-timeline__time">{{ eventTime(evt) }}</span>
+              <span class="cal-timeline__title">{{ evt.title }}</span>
+            </div>
+          </div>
+        }
+      } @empty {
+        <div class="columns-page__no-events">No upcoming events</div>
+      }
     </div>
+
   </div>
 </div>

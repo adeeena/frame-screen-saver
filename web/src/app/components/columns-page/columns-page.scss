@@ -1,23 +1,508 @@
-.columns {
+﻿@use '../../design-system' as ds;
+
+.columns-page {
+  display: -webkit-flex;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background-color: var(--overlay-columns);
+  gap: 3vw;
+  gap: 3dvw;
+
+  &__panel {
+    height: 100%;
+    padding: 4vw 3vw;
+    padding: 4dvw 3dvw;
+    overflow: hidden;
+
+    &--left {
+      width: calc(45% - 1.5vw);
+      width: calc(45% - 1.5dvw);
+      border-right: none;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-flex-direction: column;
+      flex-direction: column;
+      gap: 2vw;
+      gap: 2dvw;
+    }
+
+    &--right {
+      width: calc(55% - 1.5vw);
+      width: calc(55% - 1.5dvw);
+      display: -webkit-flex;
+      display: flex;
+      -webkit-flex-direction: column;
+      flex-direction: column;
+    }
+  }
+
+  &__mini-clock {
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  &__clock-time {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 6vw;
+    font-size: 6dvw;
+    line-height: 1;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  &__clock-date {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--text-secondary);
+    margin-top: 0.1vw;
+    margin-top: 0.1dvw;
+  }
+
+  &__divider {
+    height: 0.15rem;
+    background-color: var(--accent);
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  &__weather {
+    display: -webkit-flex;
     display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 0.8vw;
+    gap: 0.8dvw;
+  }
+
+  &__weather-icon,
+  &__solar-icon {
+    display: inline-flex;
+    -webkit-align-items: center;
+    align-items: center;
+    width: 1.6vw;
+    width: 1.6dvw;
+    height: 1.6vw;
+    height: 1.6dvw;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: var(--text-primary);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  }
+
+  &__temperature {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    color: var(--accent);
+  }
+
+  &__weather-label {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    color: var(--text-secondary);
+  }
+
+  &__solar {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 0.5vw;
+    gap: 0.5dvw;
+    margin-left: auto;
+  }
+
+  &__solar-time {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    color: var(--text-secondary);
+  }
+
+  &__widget {
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  &__agenda-header {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-style: normal;
+    font-size: 3vw;
+    font-size: 3dvw;
+    color: var(--text-primary);
+    margin-bottom: 0.8vw;
+    margin-bottom: 0.8dvw;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  &__calendar {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  &__widget-slot {
+    -webkit-flex: 1;
+    flex: 1;
+  }
+
+  &__no-events {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.2vw;
+    font-size: 1.2dvw;
+    color: var(--text-muted);
+  }
+}
+
+// â”€â”€ Transilien widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.transilien {
+
+  &__header {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 1vw;
+    gap: 1dvw;
+    margin-bottom: 1.5vw;
+    margin-bottom: 1.5dvw;
+  }
+
+  &__line-badge {
+    display: grid;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+    width: 2.8vw;
+    width: 2.8dvw;
+    height: 2.8vw;
+    height: 2.8dvw;
+    background-color: var(--transilien-n);
+    color: var(--transilien-n-fg);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    line-height: 3vw;
+    line-height: 3dvw;
+    border-radius: 0.3vw;
+    border-radius: 0.3dvw;
+    -webkit-font-smoothing: antialiased;
+    text-align: center;
+  }
+
+  &__direction {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 0.5vw;
+    gap: 0.5dvw;
+  }
+
+  &__arrow {
+    color: var(--accent);
+    font-size: 1.4vw;
+    font-size: 1.4dvw;
+  }
+
+  &__destination {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    color: var(--text-secondary);
+  }
+
+  &__departures {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    -webkit-align-items: baseline;
+    align-items: baseline;
+    -webkit-justify-content: space-between;
     justify-content: space-between;
-    padding: 5vh;
+  }
 
-    .main-section {
-        .time {
-            font-size: 2.4rem; 
-        }
+  &__departure {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    -webkit-align-items: baseline;
+    align-items: baseline;
+    gap: 1vw;
+    gap: 1dvw;
+  }
 
-        .date {
-            font-size: 1.4rem;
-            margin-bottom: 1.4rem;
-        }
+  &__departure-time {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    color: var(--text-primary);
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  &__departure-minutes {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    color: var(--accent);
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+
+  &__departure-unit {
+    font-weight: 300;
+    font-size: 1.1vw;
+    font-size: 1.1dvw;
+    color: var(--accent);
+  }
+
+  &__no-data {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.2vw;
+    font-size: 1.2dvw;
+    color: var(--text-muted);
+  }
+}
+
+// â”€â”€ Calendar timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.cal-timeline {
+  $spine-w: 1.4dvw;
+  $dot-size: 0.7dvw;
+  $dot-day-size: 0.9dvw;
+  $line-color: rgba(255, 255, 255, 0.5);
+
+  &__day-header {
+    padding: 1.2vw 0 0.3vw;
+    padding: 1.2dvw 0 0.3dvw;
+    font-family: var(--font-body);
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    font-weight: 500;
+    white-space: nowrap;
+
+    &:first-child {
+      padding-top: 0;
     }
+  }
 
-    .widgets {
-        display: flex;
-        font-size: 1.4rem;
-        justify-content: center;
-        gap: 1rem;
+  &__event-row {
+    display: grid;
+    grid-template-columns: $spine-w 1fr;
+    gap: 0.8vw;
+    gap: 0.8dvw;
+
+    &--last {
+      margin-bottom: 0.2vw;
+      margin-bottom: 0.2dvw;
     }
+  }
+
+  &__spine {
+    position: relative;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: center;
+    justify-content: center;
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+    -webkit-align-self: stretch;
+    align-self: stretch;
+    padding-top: 0.8vw;
+    padding-top: 0.8dvw;
+    --line-top: 0px;
+    --line-bottom: 0px;
+
+    // Vertical line via pseudo-element
+    &::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      -webkit-transform: translateX(-50%);
+      transform: translateX(-50%);
+      top: var(--line-top);
+      bottom: var(--line-bottom);
+      width: 0.15rem;
+      background-color: $line-color;
+    }
+  }
+
+  &__dot {
+    position: relative;
+    z-index: 1;
+    width: $dot-size;
+    height: $dot-size;
+    border-radius: 50%;
+    background-color: var(--text-primary);
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+
+    &--day {
+      width: $dot-day-size;
+      height: $dot-day-size;
+      background-color: var(--text-primary);
+    }
+  }
+
+  &__accent {
+    color: var(--accent);
+  }
+
+  &__normal {
+    color: var(--text-primary);
+    font-weight: 300;
+  }
+
+  &__event-body {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-self: flex-start;
+    align-self: flex-start;
+    gap: 0.1vw;
+    gap: 0.1dvw;
+    padding: 0.6vw 0;
+    padding: 0.6dvw 0;
+    min-width: 0;
+  }
+
+  &__time {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.2vw;
+    font-size: 1.2dvw;
+    color: var(--text-primary);
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  &__title {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// â”€â”€ Sidebar layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Key A toggles a narrow frosted-glass sidebar on the right edge of the frame.
+// Both panels stack vertically; the photo fills the remaining ~80% of the frame.
+.columns-page--sidebar {
+  background: transparent;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  width: 22vw;
+  width: 22dvw;
+  margin-left: auto;
+  gap: 0;
+
+  .columns-page__panel {
+    width: 100% !important;
+    height: auto;
+    padding: 2vw 1.8vw;
+    padding: 2dvw 1.8dvw;
+    background: rgba(8, 8, 14, 0.78);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
+  }
+
+  .columns-page__panel--left {
+    border-right: none;
+    border-bottom: 1px solid rgba(240, 188, 117, 0.15);
+    gap: 1.4vw;
+    gap: 1.4dvw;
+  }
+
+  .columns-page__panel--right {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  // â”€â”€ Condensed typography â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  .columns-page__clock-time {
+    font-size: 4.2vw;
+    font-size: 4.2dvw;
+    letter-spacing: -0.02em;
+  }
+  .columns-page__clock-date {
+    font-size: 1.05vw;
+    font-size: 1.05dvw;
+  }
+  .columns-page__temperature {
+    font-size: 1.4vw;
+    font-size: 1.4dvw;
+  }
+  .columns-page__weather-label,
+  .columns-page__weather-uv-label {
+    font-size: 1.1vw;
+    font-size: 1.1dvw;
+  }
+  .columns-page__agenda-header {
+    font-size: 1.8vw;
+    font-size: 1.8dvw;
+  }
+  .columns-page__agenda-no-events {
+    font-size: 1vw;
+    font-size: 1dvw;
+  }
+
+  // â”€â”€ Transit badge sizing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  .transilien__line-badge {
+    width: 2.2vw;
+    width: 2.2dvw;
+    height: 2.2vw;
+    height: 2.2dvw;
+    font-size: 1.1vw;
+    font-size: 1.1dvw;
+  }
+  .transilien__departure-time {
+    font-size: 1.2vw;
+    font-size: 1.2dvw;
+  }
+  .transilien__route-name {
+    font-size: 1vw;
+    font-size: 1dvw;
+  }
+
+  // â”€â”€ Calendar timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  .cal-timeline__item-title {
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+  }
+  .cal-timeline__item-time {
+    font-size: 1vw;
+    font-size: 1dvw;
+  }
 }

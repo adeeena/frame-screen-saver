@@ -1,111 +1,342 @@
-@use '../../mixins';
+﻿@use '../../design-system' as ds;
 
-$outer-border: 3rem;
-$inner-border: 3.5rem;
-$innermost-border: .15rem;
+// â”€â”€ Frame border dimensions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// (controlled via CSS custom properties for runtime frame style switching)
+$inner-line:   0.15dvw;
 
-.darken-effect {
-    @include mixins.absolute-fill;
-    height: 100%;
-    background-color: rgba(0, 0, 0, .4);
-    z-index: 2;
-}
+// â”€â”€ Grain base64 texture â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+$grain-url: url(data:image/png;base64,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);
 
-.grain-effect {
-    @include mixins.absolute-fill;
-    height: 100%;
-    background-image: url(data:image/png;base64,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);
-    z-index: 3;
-}
+.the-frame {
 
-.frame {
-    position:relative;
-    padding:0;
-    margin:0;
-    border-top:solid $outer-border #101016;
-    border-left:solid $outer-border #141420;
-    border-bottom:solid $outer-border #222228;
-    border-right:solid $outer-border #282834;
-    width: calc(100dvw - 2*$outer-border);
-    height: calc(100dvh - 2*$outer-border);
-    box-shadow:-3px -3px $innermost-border #f1f1f1;
-}
+  &__outer {
+    position: relative;
+    width: 100vw;
+    width: 100dvw;
+    height: 100vh;
+    height: 100dvh;
 
-#border {
-    position:relative;
-    padding:0;
-    margin:0;
-    top:0;
-    bottom: 0;
-    height: calc(100% - 2*$inner-border);
-    border:solid $inner-border #ffffff;
-    
-    splide {
-        display: block;
-        height: 100%;
-        position: relative;
-        top: 0;
-        bottom: 0;
-        z-index: 4;
-        
-        ::ng-deep .splide {
-            height: 100%;
-            
-            .splide__track {
-                height: 100%;
-                
-                ::ng-deep .splide__slide {
-                    display: block;
-                    position: relative;
-                    height: 100%;
-                    width: 100%;
-                    top: 0;
-                    bottom: 0;
-                    
-                    .background-image {
-                        background-position: center;
-                        border-top:solid $innermost-border #aaa;
-                        border-left:solid $innermost-border #aaa;
-                        border-bottom:solid $innermost-border #f1f1f1;
-                        border-right:solid $innermost-border #f1f1f1;
-                        height: 100%;
-                        width: 100%;
-                        
-                        &.foo {
-                            background-image: url('http://www.notshaw.com/raindropskeepfalling/wp-content/gallery/drawings-2013/2013-08-06-14-38-35.jpg');
-                        }
-                        
-                        &.bar {
-                            background-image: url('https://picsum.photos/1000');
-                        }
-                    }
-                }
-            }
-        }
+    // â”€â”€ CSS vars: Style 0 â€” Museum Classic (default) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Dark navy body, pure-white mat, clean and minimal
+    --f-outer-pad:   3vw;
+    --f-outer-pad:   3dvw;
+    --f-inner-brd:   3.5vw;
+    --f-inner-brd:   3.5dvw;
+    --f-bg-from:     #141420;
+    --f-bg-to:       #282834;
+    --f-mat-color:   #ffffff;
+
+    // â”€â”€ Style 1 â€” Gilded Baroque â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Near-black body, warm ivory mat, gold bevel layers in the frame
+    &.the-frame--style-1 {
+      --f-outer-pad:   3.5vw;
+      --f-outer-pad:   3.5dvw;
+      --f-inner-brd:   2.5vw;
+      --f-inner-brd:   2.5dvw;
+      --f-bg-from:     #0a0905;
+      --f-bg-to:       #14120a;
+      --f-mat-color:   #f5efdf;
     }
-}
 
-#screensaver-info-pages {
-    font-size: 30px;
-    color: white;
-    z-index: 5;
+    // â”€â”€ Style 2 â€” Warm Mahogany â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Deep reddish-brown body, warm cream mat, terracotta â†’ mahogany bevel
+    &.the-frame--style-2 {
+      --f-outer-pad:   4vw;
+      --f-outer-pad:   4dvw;
+      --f-inner-brd:   3vw;
+      --f-inner-brd:   3dvw;
+      --f-bg-from:     #1c0a04;
+      --f-bg-to:       #2e1208;
+      --f-mat-color:   #f8f0e5;
+    }
+
+    // â”€â”€ Style 3 â€” Gallery Wall (floating frame on cream) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Warm cream wall, pure white mat, soft cascading drop shadows all around
+    &.the-frame--style-3 {
+      --f-outer-pad:   4vw;
+      --f-outer-pad:   4dvw;
+      --f-inner-brd:   4.5vw;
+      --f-inner-brd:   4.5dvw;
+      --f-bg-from:     #f0ede2;
+      --f-bg-to:       #e8e4d8;
+      --f-mat-color:   #ffffff;
+    }
+
+    // â”€â”€ Style 4 â€” Arsenal Bronze (inspired by WWII cartridge-band frames) â”€â”€
+    // Tight dark-olive body, warm parchment mat, dense repeating brass rings
+    &.the-frame--style-4 {
+      --f-outer-pad:   2.5vw;
+      --f-outer-pad:   2.5dvw;
+      --f-inner-brd:   3vw;
+      --f-inner-brd:   3dvw;
+      --f-bg-from:     #1a1505;
+      --f-bg-to:       #0d0c04;
+      --f-mat-color:   #f2ead8;
+    }
+
+    padding: var(--f-outer-pad);
+    background-color: var(--frame-outer);
+    background-image: linear-gradient(135deg, var(--f-bg-from), var(--f-bg-to));
+    transition: padding 0.8s ease;
+  }
+
+  &__progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background-color: var(--accent);
+    z-index: 100;
+    opacity: 0;
+    -webkit-transform-origin: left center;
+    transform-origin: left center;
+
+    &--visible {
+      opacity: 1;
+    }
+  }
+
+  &__inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border: var(--f-inner-brd, 3.5vw) solid var(--f-mat-color, var(--frame-inner));
+    border: var(--f-inner-brd, 3.5dvw) solid var(--f-mat-color, var(--frame-inner));
+    overflow: hidden;
+    transition: border-width 0.8s ease, border-color 0.8s ease;
+
+    // â”€â”€ Style 0: Museum Classic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Outward box-shadows paint INTO the frame padding area.
+    // Layers go from mat edge outward, simulating depth via highlight/shadow.
+    box-shadow:
+      // mat edge lines (inset)
+      inset #{$inner-line} 0 0 rgba(170, 170, 170, 0.6),
+      inset 0 #{$inner-line} 0 rgba(170, 170, 170, 0.6),
+      inset #{-$inner-line} 0 0 rgba(241, 241, 241, 0.8),
+      inset 0 #{-$inner-line} 0 rgba(241, 241, 241, 0.8),
+      // outward frame decoration (into frame body)
+      0 0 0 2px  rgba(210, 210, 230, 0.3),
+      0 0 0 5px  rgba(0, 0, 10, 0.55);
+
+    // â”€â”€ Style 1: Gilded Baroque â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Gold bevel â€” inner gold line, dark groove, raised highlight, mid shadow, deep outer
+    .the-frame--style-1 & {
+      box-shadow:
+        inset #{$inner-line} 0 0 rgba(200, 170, 80, 0.55),
+        inset 0 #{$inner-line} 0 rgba(200, 170, 80, 0.55),
+        inset #{-$inner-line} 0 0 rgba(230, 200, 110, 0.75),
+        inset 0 #{-$inner-line} 0 rgba(230, 200, 110, 0.75),
+        0 0 0 3px  #b8940a,
+        0 0 0 8px  #1a1000,
+        0 0 0 13px #d4a830,
+        0 0 0 19px #6b4808,
+        0 0 0 25px #0f0900;
+    }
+
+    // â”€â”€ Style 2: Warm Mahogany â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Terracotta highlight, dark groove, rich mahogany body, deep outer shadow
+    .the-frame--style-2 & {
+      box-shadow:
+        inset #{$inner-line} 0 0 rgba(210, 155, 110, 0.5),
+        inset 0 #{$inner-line} 0 rgba(210, 155, 110, 0.5),
+        inset #{-$inner-line} 0 0 rgba(245, 195, 155, 0.65),
+        inset 0 #{-$inner-line} 0 rgba(245, 195, 155, 0.65),
+        0 0 0 2px  #d4906a,
+        0 0 0 7px  #1c0500,
+        0 0 0 14px #8b3a1e,
+        0 0 0 21px #4a1a08,
+        0 0 0 28px #0e0200;
+    }
+
+    // â”€â”€ Style 3: Gallery Wall â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Top-lit mat (inset shadow heavier at top), cascading drop shadows below
+    .the-frame--style-3 & {
+      box-shadow:
+        // mat inset shadows: heavy top, light sides and bottom (top-lit depth)
+        inset 0    0.8dvw 0.5dvw rgba(0, 0, 0, 0.22),
+        inset 0.15dvw 0   0.2dvw  rgba(0, 0, 0, 0.09),
+        inset -0.15dvw 0  0.2dvw  rgba(0, 0, 0, 0.05),
+        inset 0 -0.15dvw  0.2dvw  rgba(0, 0, 0, 0.04),
+        // cascading drop shadows radiating outward (pen figure::after technique)
+        0 1dvw  2dvw  -0.5dvw rgba(0, 0, 0, 0.40),
+        0 2dvw  2dvw  -0.5dvw rgba(0, 0, 0, 0.30),
+        0 3dvw  2dvw  -0.5dvw rgba(0, 0, 0, 0.20),
+        0 4dvw  1.5dvw -0.5dvw rgba(0, 0, 0, 0.14),
+        0 2dvw  4dvw   0.5dvw rgba(0, 0, 0, 0.08);
+    }
+
+    // â”€â”€ Style 4: Arsenal Bronze â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Tight repeating brass bands (dark â†’ highlight â†’ dark â†’ highlight â†’ dark)
+    // Evokes stacked cartridge casings around the mat edge.
+    .the-frame--style-4 & {
+      box-shadow:
+        inset #{$inner-line} 0 0 rgba(205, 165, 60, 0.6),
+        inset 0 #{$inner-line} 0 rgba(205, 165, 60, 0.6),
+        inset #{-$inner-line} 0 0 rgba(230, 195, 100, 0.8),
+        inset 0 #{-$inner-line} 0 rgba(230, 195, 100, 0.8),
+        0 0 0 2px  #c8a028,   // inner brass highlight
+        0 0 0 4px  #1e1500,   // dark groove
+        0 0 0 7px  #b07c12,   // mid brass
+        0 0 0 9px  #0e0a00,   // dark groove
+        0 0 0 12px #d4a830,   // brass ring
+        0 0 0 14px #130d00,   // dark groove
+        0 0 0 17px #a07020,   // darker brass
+        0 0 0 19px #0a0700,   // dark groove
+        0 0 0 22px #7a5510,   // deep bronze
+        0 0 0 26px #050300;   // outer black
+    }
+
+    // Inset shadow on the image area â€” softens the hard frameâ†”image boundary
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 20;
+      box-shadow: inset 0 0 0 2px rgba(80, 80, 90, 0.55),
+                  inset 0 0 12px 0 rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  &__grain {
+    @include ds.absolute-fill;
+    z-index: 10;
+    pointer-events: none;
+    background-image: $grain-url;
+    opacity: 0.35;
+  }
+
+  &__image {
+    @include ds.absolute-fill;
+    z-index: 1;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
     opacity: 0;
 
-    .darken-effect {
-        z-index: 6;
+    &--a { z-index: 1; }
+    &--b { z-index: 2; }
+  }
+
+  &__overlay {
+    @include ds.absolute-fill;
+    z-index: 4; // bumped up: vignette(3) and tint(5) bracket it
+    opacity: 0;
+  }
+
+  &__scrim {
+    @include ds.absolute-fill;
+    z-index: 4;
+    background-color: var(--overlay-dark);
+  }
+
+  &__page {
+    @include ds.absolute-fill;
+    z-index: 5;
+    opacity: 0;
+    -webkit-transform: translateX(-2vw);
+    transform: translateX(-2vw);
+  }
+
+  // â”€â”€ Vignette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Always-on radial darkening on the artwork corners (below overlay z=4).
+  &__vignette {
+    @include ds.absolute-fill;
+    z-index: 3;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 88% 82% at 50% 50%,
+      transparent 28%,
+      rgba(0, 0, 0, 0.48) 100%
+    );
+  }
+
+  // â”€â”€ Global dim overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Sibling of __inner in __outer â€” covers the full frame including mat border.
+  // z-index 12: above grain (10) and mat-texture (11), below nothing.
+  &__dim {
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    pointer-events: none;
+    background: #000;
+    transition: opacity 0.4s ease;
+  }
+
+  // â”€â”€ Config cog button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Sits in __outer above dim (z=13), bottom-right corner.
+  // Fades in on mouse move, auto-hides after 3s.
+  &__cog-btn {
+    position: absolute;
+    bottom: 2vw;
+    bottom: 2dvw;
+    right: 2vw;
+    right: 2dvw;
+    z-index: 13;
+    display: -webkit-flex;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.2vw;
+    width: 3.2dvw;
+    height: 3.2vw;
+    height: 3.2dvw;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    opacity: 0;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    transition: opacity 0.35s ease, background 0.2s ease, color 0.2s ease;
+    pointer-events: none;
+
+    svg {
+      width: 55%;
+      height: 55%;
     }
 
-    app-cover-page, app-columns-page {
-        opacity: 0;
-        display: block;
-        transform: translateX(-1rem);
+    &:hover {
+      background: rgba(255, 255, 255, 0.28);
+      color: #fff;
     }
 
-    app-cover-page {
-        z-index: 7;
+    &--visible {
+      opacity: 1;
+      pointer-events: auto;
     }
-
-    app-columns-page {
-        z-index: 8;
-    }
+  }
+  // Sibling of __inner in __outer. Positioned to match __innerâ€™s outer edge.
+  // Ring-masked so only the mat border area shows the woven texture.
+  // z-index 11 > grain (10), masked to border area so artwork is unaffected.
+  &__mat-texture {
+    position: absolute;
+    inset: var(--f-outer-pad);
+    border: var(--f-inner-brd) solid transparent;
+    box-sizing: border-box;
+    pointer-events: none;
+    opacity: 0.09;
+    z-index: 11;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cline x1='0' y1='1.5' x2='8' y2='1.5' stroke='%23000' stroke-width='1' stroke-opacity='0.18'/%3E%3Cline x1='0' y1='5.5' x2='8' y2='5.5' stroke='%23000' stroke-width='0.6' stroke-opacity='0.1'/%3E%3Cline x1='1.5' y1='0' x2='1.5' y2='8' stroke='%23000' stroke-width='1' stroke-opacity='0.14'/%3E%3Cline x1='5.5' y1='0' x2='5.5' y2='8' stroke='%23000' stroke-width='0.6' stroke-opacity='0.09'/%3E%3Crect x='0' y='0' width='1.5' height='1.5' fill='rgba(255,255,255,0.09)'/%3E%3Crect x='4' y='4' width='1.5' height='1.5' fill='rgba(255,255,255,0.09)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 8px 8px;
+    background-clip: border-box;
+    // Ring mask: show only the border (mat) area, clip out content (artwork)
+    -webkit-mask:
+      linear-gradient(#fff, #fff) border-box,
+      linear-gradient(#fff, #fff) content-box;
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff, #fff) border-box,
+      linear-gradient(#fff, #fff) content-box;
+    mask-composite: exclude;
+    // Transition with frame style changes
+    transition: inset 0.8s ease, border-width 0.8s ease;
+  }
 }

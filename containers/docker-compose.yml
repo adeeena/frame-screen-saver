@@ -1,0 +1,10 @@
+name: frame-screen-saver
+
+services:
+  frame-screen-saver-web:
+    build:
+      context: ..
+      dockerfile: web/Dockerfile
+    ports:
+      - "4500:4000"
+    container_name: frame-screen-saver-web

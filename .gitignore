@@ -63,3 +63,8 @@ e2e/test-output/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+web/.env
+
+# Media cache
+/media/cache/*
