@@ -1,8 +1,8 @@
-import { Injectable, signal, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
+import { Injectable, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval, switchMap, catchError, of, startWith } from 'rxjs';
+import { Subject, interval, of } from 'rxjs';
+import { switchMap, catchError, startWith, takeUntil } from 'rxjs/operators';
 
 export interface CalendarEvent {
   readonly title: string;
@@ -18,19 +18,15 @@ export interface CalendarDay {
   readonly events: readonly CalendarEvent[];
 }
 
-@Injectable({
-  providedIn: 'root',
-})
-export class CalendarService {
-  private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly platformId = inject(PLATFORM_ID);
+@Injectable({ providedIn: 'root' })
+export class CalendarService implements OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+  private _days: readonly CalendarDay[] = [];
 
-  private readonly _days = signal<readonly CalendarDay[]>([]);
-
-  readonly days = this._days.asReadonly();
-
-  constructor() {
+  constructor(
+    private readonly http: HttpClient,
+    @Inject(PLATFORM_ID) private readonly platformId: object,
+  ) {
     if (!isPlatformBrowser(this.platformId)) return;
 
     interval(15 * 60 * 1000)
@@ -44,9 +40,16 @@ export class CalendarService {
             }),
           ),
         ),
-        takeUntilDestroyed(this.destroyRef),
+        takeUntil(this.destroy$),
       )
-      .subscribe((data) => this._days.set(data));
+      .subscribe((data) => { this._days = data; });
+  }
+
+  days(): readonly CalendarDay[] { return this._days; }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 

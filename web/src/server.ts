@@ -1,14 +1,12 @@
 import 'dotenv/config';
-import {
-  AngularNodeAppEngine,
-  createNodeRequestHandler,
-  isMainModule,
-  writeResponseToNodeResponse,
-} from '@angular/ssr/node';
-import express, { type Request, type Response, type NextFunction } from 'express';
-import { join } from 'node:path';
-import path from 'node:path';
-import https from 'node:https';
+import { ngExpressEngine } from '@nguniversal/express-engine';
+import { AppServerModule } from './app/app-server.module';
+import { APP_BASE_HREF } from '@angular/common';
+import express, { Request, Response, NextFunction } from 'express';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import path from 'path';
+import https from 'https';
 import momentTz from 'moment-timezone';
 import axios from 'axios';
 import sharp from 'sharp';
@@ -23,12 +21,28 @@ const externalAgent = new https.Agent({ rejectUnauthorized: false });
 const externalAxios = axios.create({ httpsAgent: externalAgent });
 
 // ─── Media directory (resolved once at startup) ───────────────────────────────
-const mediaDir = path.resolve(process.cwd(), process.env['MEDIA_DIR'] ?? '../media');
+// Default: up 4 levels from web/dist/frame-screen-saver/server/ → repo root / media
+const mediaDir = process.env['MEDIA_DIR']
+  ? path.resolve(process.env['MEDIA_DIR'])
+  : path.resolve(__dirname, '../../../../media');
 
-const browserDistFolder = join(import.meta.dirname, '../browser');
+const browserDistFolder = join(__dirname, '../browser');
+const indexHtml = existsSync(join(browserDistFolder, 'index.original.html'))
+  ? 'index.original.html'
+  : 'index';
 
 const app = express();
-const angularApp = new AngularNodeAppEngine();
+
+// Our Universal express-engine
+app.engine(
+  'html',
+  ngExpressEngine({
+    bootstrap: AppServerModule,
+  }),
+);
+
+app.set('view engine', 'html');
+app.set('views', browserDistFolder);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -705,7 +719,8 @@ async function galleryHandler(_req: Request, res: Response): Promise<void> {
     res.json(response);
   } catch (error) {
     console.error('Gallery handler error:', error);
-    res.json({ title: 'Marbles', text: 'Focusing', images: [], imageMeta: [] } satisfies GalleryResponse);
+    const fallback: GalleryResponse = { title: 'Marbles', text: 'Focusing', images: [], imageMeta: [] };
+    res.json(fallback);
   }
 }
 
@@ -846,31 +861,14 @@ app.use(
 /**
  * Handle all other requests by rendering the Angular application.
  */
-app.use((req: Request, res: Response, next: NextFunction) => {
-  angularApp
-    .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
-    .catch(next);
+app.get('*', (req: Request, res: Response) => {
+  res.render(indexHtml, {
+    req,
+    providers: [{ provide: APP_BASE_HREF, useValue: req.baseUrl }],
+  });
 });
 
-/**
- * Start the server if this module is the main entry point.
- * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
- */
-if (isMainModule(import.meta.url)) {
-  const port = process.env['PORT'] || 4000;
-  app.listen(port, (error) => {
-    if (error) {
-      throw error;
-    }
-
-    console.log(`Node Express server listening on http://localhost:${port}`);
-  });
-}
-
-/**
- * Request handler used by the Angular CLI (for dev-server and during build) or Firebase Cloud Functions.
- */
-export const reqHandler = createNodeRequestHandler(app);
+const port = process.env['PORT'] || 4000;
+app.listen(port, () => {
+  console.log(`Node Express server listening on http://localhost:${port}`);
+});

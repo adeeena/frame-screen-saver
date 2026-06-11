@@ -9,20 +9,17 @@
   </div>
 
   <div class="cover-page__photo-meta">
-    @if (imageCycleService.currentMeta().location) {
-      <div class="cover-page__photo-location">
-        {{ imageCycleService.currentMeta().location }}
-      </div>
-    }
-    @if (imageCycleService.currentMeta().title) {
-      <div class="cover-page__photo-title">
-        {{ imageCycleService.currentMeta().title }}
-      </div>
-    }
-    @if (imageCycleService.currentMeta().subtitle) {
-      <div class="cover-page__photo-subtitle">
-        {{ imageCycleService.currentMeta().subtitle }}
-      </div>
-    }
+    <div class="cover-page__photo-location"
+         *ngIf="imageCycleService.currentMeta().location">
+      {{ imageCycleService.currentMeta().location }}
+    </div>
+    <div class="cover-page__photo-title"
+         *ngIf="imageCycleService.currentMeta().title">
+      {{ imageCycleService.currentMeta().title }}
+    </div>
+    <div class="cover-page__photo-subtitle"
+         *ngIf="imageCycleService.currentMeta().subtitle">
+      {{ imageCycleService.currentMeta().subtitle }}
+    </div>
   </div>
 </div>

@@ -1,33 +1,28 @@
-import { Injectable, signal, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
+import { Injectable, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, timer, of } from 'rxjs';
+import { switchMap, retry, catchError, takeUntil } from 'rxjs/operators';
 import moment from 'moment';
-import { Subject, timer, switchMap, retry, catchError, of } from 'rxjs';
 
 interface ClockResponse {
   readonly time: string;
   readonly timezone: string;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
-export class ClockService {
-  private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly platformId = inject(PLATFORM_ID);
+@Injectable({ providedIn: 'root' })
+export class ClockService implements OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   private readonly apiUrl = '/api/clock';
 
-  private readonly _time = signal('');
-  private readonly _error = signal<string | null>(null);
+  private _time = '';
+  private _error: string | null = null;
+  private serverTimeOffset = 0;
 
-  readonly time = this._time.asReadonly();
-  readonly error = this._error.asReadonly();
-
-  private serverTimeOffset: number = 0;
-
-  constructor() {
+  constructor(
+    private readonly http: HttpClient,
+    @Inject(PLATFORM_ID) private readonly platformId: object,
+  ) {
     if (!isPlatformBrowser(this.platformId)) return;
 
     // Sync with server every 20 minutes
@@ -38,31 +33,37 @@ export class ClockService {
             retry(2),
             catchError((err) => {
               console.error('Could not fetch time.', err);
-              this._error.set('Could not fetch time.');
+              this._error = 'Could not fetch time.';
               return of(null);
             }),
           ),
         ),
-        takeUntilDestroyed(this.destroyRef),
+        takeUntil(this.destroy$),
       )
       .subscribe((response) => {
         if (response) {
           this.serverTimeOffset = Date.now() - moment(response.time).valueOf();
-          this._error.set(null);
+          this._error = null;
         }
       });
 
-    // Update time signal every minute
+    // Update time every minute
     timer(0, 60 * 1000)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         const syncedTime = Date.now() - this.serverTimeOffset;
-        this._time.set(moment(syncedTime).format('YYYY-MM-DD HH:mm:ss'));
+        this._time = moment(syncedTime).format('YYYY-MM-DD HH:mm:ss');
       });
   }
 
-  /** Synced current time in milliseconds (same epoch used by the time signal) */
-  nowMs(): number {
-    return Date.now() - this.serverTimeOffset;
+  time(): string { return this._time; }
+  error(): string | null { return this._error; }
+
+  /** Synced current time in milliseconds */
+  nowMs(): number { return Date.now() - this.serverTimeOffset; }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

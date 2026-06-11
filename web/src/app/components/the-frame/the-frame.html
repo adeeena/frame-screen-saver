@@ -1,25 +1,25 @@
 <!-- ① Outer frame (museum border) -->
 <div class="the-frame__outer"
-     [class.the-frame--style-1]="frameStyle() === 1"
-     [class.the-frame--style-2]="frameStyle() === 2"
-     [class.the-frame--style-3]="frameStyle() === 3"
-     [class.the-frame--style-4]="frameStyle() === 4"
+     [class.the-frame--style-1]="frameStyle === 1"
+     [class.the-frame--style-2]="frameStyle === 2"
+     [class.the-frame--style-3]="frameStyle === 3"
+     [class.the-frame--style-4]="frameStyle === 4"
      (mousemove)="onMouseMove()">
 
   <!-- Pause progress bar — 3px tall, top of screen, full width -->
   <div class="the-frame__progress-bar" #progressBar
-       [class.the-frame__progress-bar--visible]="isPaused()">
+       [class.the-frame__progress-bar--visible]="isPaused">
   </div>
 
   <!-- Mat linen texture — shows only in the white mat border area via ring mask -->
   <div class="the-frame__mat-texture" aria-hidden="true"></div>
 
   <!-- Global dim overlay — covers full frame incl. mat, adjusted with I/O keys -->
-  <div class="the-frame__dim" [style.opacity]="dimLevel()" aria-hidden="true"></div>
+  <div class="the-frame__dim" [style.opacity]="dimLevel" aria-hidden="true"></div>
 
   <!-- Config cog button — appears on mouse movement, fades after 3s -->
   <button class="the-frame__cog-btn"
-          [class.the-frame__cog-btn--visible]="showCog()"
+          [class.the-frame__cog-btn--visible]="showCog"
           (click)="navigateToConfig()"
           aria-label="Open configuration">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -50,14 +50,12 @@
       <app-cover-page #coverPage class="the-frame__page"></app-cover-page>
 
       <!-- Page 3: Columns -->
-      <app-columns-page #columnsPage class="the-frame__page" [sidebarLayout]="sidebarLayout()"></app-columns-page>
+      <app-columns-page #columnsPage class="the-frame__page" [sidebarLayout]="sidebarLayout"></app-columns-page>
 
     </div><!-- /overlay -->
 
     <!-- Debug overlay -->
-    @if (showDebug()) {
-      <app-debug-overlay (close)="showDebug.set(false)"></app-debug-overlay>
-    }
+    <app-debug-overlay *ngIf="showDebug" (close)="showDebug = false"></app-debug-overlay>
 
   </div><!-- /inner -->
 </div><!-- /outer -->

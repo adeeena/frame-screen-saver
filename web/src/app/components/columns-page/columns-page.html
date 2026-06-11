@@ -1,4 +1,4 @@
-<div class="columns-page" [class.columns-page--sidebar]="sidebarLayout()">
+<div class="columns-page" [class.columns-page--sidebar]="sidebarLayout">
 
   <!-- LEFT PANEL -->
   <div class="columns-page__panel columns-page__panel--left">
@@ -16,24 +16,22 @@
     <div class="columns-page__divider" role="separator"></div>
 
     <div class="columns-page__widget columns-page__weather">
-      <span class="columns-page__weather-icon" [feather]="weatherIconName()"></span>
+      <span class="columns-page__weather-icon" [feather]="weatherIconName"></span>
       <span class="columns-page__temperature">{{ weatherService.temperature() }}°</span>
       <span class="columns-page__weather-label">{{ weatherService.weatherLabel() }}</span>
-      @if (weatherService.uvIndex() !== null) {
-        <div class="columns-page__uv">
-          <span class="columns-page__uv-label">UV</span>
-          <span class="columns-page__uv-value">{{ weatherService.uvIndex() }}</span>
-        </div>
-      }
-      @if (solarService.nextEvent(); as evt) {
+      <div class="columns-page__uv" *ngIf="weatherService.uvIndex() !== null">
+        <span class="columns-page__uv-label">UV</span>
+        <span class="columns-page__uv-value">{{ weatherService.uvIndex() }}</span>
+      </div>
+      <ng-container *ngIf="solarService.nextEvent() as evt">
         <div class="columns-page__solar">
           <span class="columns-page__solar-icon" [feather]="evt.type === 'sunrise' ? 'sunrise' : 'sunset'"></span>
           <span class="columns-page__solar-time">{{ evt.time | formatDateTime:'HH:mm' }}</span>
         </div>
-      }
+      </ng-container>
     </div>
 
-    @if (trainService.departures().length > 0) {
+    <ng-container *ngIf="trainService.departures().length > 0">
     <div class="columns-page__divider" role="separator"></div>
     <div class="columns-page__widget transilien">
       <div class="transilien__header">
@@ -50,19 +48,18 @@
       </div>
 
       <div class="transilien__departures">
-        @for (dep of trainService.departures(); track dep.expectedDeparture) {
-          <div class="transilien__departure">
-            <span class="transilien__departure-time">
-              {{ dep.expectedDeparture | formatDateTime:'HH:mm' }}
-            </span>
-            <span class="transilien__departure-minutes">
-              {{ minutesUntil(dep) }}<span class="transilien__departure-unit"> min</span>
-            </span>
-          </div>
-        }
+        <div class="transilien__departure"
+             *ngFor="let dep of trainService.departures()">
+          <span class="transilien__departure-time">
+            {{ dep.expectedDeparture | formatDateTime:'HH:mm' }}
+          </span>
+          <span class="transilien__departure-minutes">
+            {{ minutesUntil(dep) }}<span class="transilien__departure-unit"> min</span>
+          </span>
+        </div>
       </div>
     </div>
-    }
+    </ng-container>
 
     <!-- Future widget slot -->
     <div class="columns-page__widget-slot" aria-label="Widget slot"></div>
@@ -75,27 +72,26 @@
     <div class="columns-page__agenda-header">Upcoming events</div>
 
     <div class="columns-page__calendar" #calendarRef>
-      @for (day of displayDays(); track day.date; let isFirstDay = $first) {
+      <ng-container *ngFor="let day of displayDays; let isFirstDay = first">
         <div class="cal-timeline__day-header">
           <span class="cal-timeline__accent">{{ dayLabelParts(day).accent }}</span><!--
           --><span class="cal-timeline__normal">{{ dayLabelParts(day).normal }}</span>
         </div>
-        @for (evt of day.events; track evt.title + evt.startTime; let isFirstEvt = $first; let isLastEvt = $last) {
-          <div class="cal-timeline__event-row" [class.cal-timeline__event-row--last]="isLastEvt">
-            <div class="cal-timeline__spine"
-                 [style.--line-top]="isFirstEvt ? '1.15dvw' : '0px'"
-                 [style.--line-bottom]="isLastEvt ? 'calc(100% - 1.15dvw)' : '0px'">
-              <div class="cal-timeline__dot"></div>
-            </div>
-            <div class="cal-timeline__event-body">
-              <span class="cal-timeline__time">{{ eventTime(evt) }}</span>
-              <span class="cal-timeline__title">{{ evt.title }}</span>
-            </div>
+        <div class="cal-timeline__event-row"
+             [class.cal-timeline__event-row--last]="isLastEvt"
+             *ngFor="let evt of day.events; let isFirstEvt = first; let isLastEvt = last">
+          <div class="cal-timeline__spine"
+               [style.--line-top]="isFirstEvt ? '1.15dvw' : '0px'"
+               [style.--line-bottom]="isLastEvt ? 'calc(100% - 1.15dvw)' : '0px'">
+            <div class="cal-timeline__dot"></div>
           </div>
-        }
-      } @empty {
-        <div class="columns-page__no-events">No upcoming events</div>
-      }
+          <div class="cal-timeline__event-body">
+            <span class="cal-timeline__time">{{ eventTime(evt) }}</span>
+            <span class="cal-timeline__title">{{ evt.title }}</span>
+          </div>
+        </div>
+      </ng-container>
+      <div class="columns-page__no-events" *ngIf="displayDays.length === 0">No upcoming events</div>
     </div>
 
   </div>

@@ -3,7 +3,6 @@ import { DatePipe } from '@angular/common';
 
 @Pipe({
   name: 'formatDateTime',
-  standalone: true,
 })
 export class FormatDateTimePipe implements PipeTransform {
   // We can instantiate DatePipe directly

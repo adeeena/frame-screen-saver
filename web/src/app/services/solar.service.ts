@@ -1,8 +1,8 @@
-import { Injectable, signal, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
+import { Injectable, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { timer, of, expand, catchError, delay, switchMap } from 'rxjs';
+import { Subject, timer, of } from 'rxjs';
+import { expand, catchError, delay, switchMap, takeUntil } from 'rxjs/operators';
 import moment from 'moment';
 import { ClockService } from './clock.service';
 
@@ -12,23 +12,19 @@ export interface SolarEventResponse {
   readonly utcOffset: string;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
-export class SolarService {
-  private readonly http = inject(HttpClient);
-  private readonly clockService = inject(ClockService);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly platformId = inject(PLATFORM_ID);
+@Injectable({ providedIn: 'root' })
+export class SolarService implements OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   private readonly apiUrl = '/api/solar/next-event';
 
-  private readonly _nextEvent = signal<SolarEventResponse | null>(null);
-  private readonly _error = signal<string | null>(null);
+  private _nextEvent: SolarEventResponse | null = null;
+  private _error: string | null = null;
 
-  readonly nextEvent = this._nextEvent.asReadonly();
-  readonly error = this._error.asReadonly();
-
-  constructor() {
+  constructor(
+    private readonly http: HttpClient,
+    private readonly clockService: ClockService,
+    @Inject(PLATFORM_ID) private readonly platformId: object,
+  ) {
     if (!isPlatformBrowser(this.platformId)) return;
 
     timer(0)
@@ -41,25 +37,33 @@ export class SolarService {
         }),
         catchError((err) => {
           console.error('Could not fetch solar event after retries.', err);
-          this._error.set('Could not fetch solar event.');
+          this._error = 'Could not fetch solar event.';
           return of(null).pipe(delay(5 * 60 * 1000));
         }),
-        takeUntilDestroyed(this.destroyRef),
+        takeUntil(this.destroy$),
       )
       .subscribe((response) => {
         if (response) {
-          this._nextEvent.set(response as SolarEventResponse);
-          this._error.set(null);
+          this._nextEvent = response as SolarEventResponse;
+          this._error = null;
         }
       });
   }
 
-  private calculateNextDelay(response: SolarEventResponse | 0): number {
-    if (response === 0) return 0;
+  nextEvent(): SolarEventResponse | null { return this._nextEvent; }
+  error(): string | null { return this._error; }
+
+  private calculateNextDelay(response: SolarEventResponse | number): number {
+    if (typeof response === 'number') return 0;
     const nowString = this.clockService.time();
     if (!nowString) return 2000;
     const now = moment(nowString);
     const eventDate = moment(response.time);
     return eventDate.isSameOrBefore(now) ? 60 * 1000 : eventDate.diff(now) + 60 * 1000;
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

@@ -1,16 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   ElementRef,
-  Injector,
+  NgZone,
+  OnDestroy,
+  AfterViewInit,
   ViewChild,
-  afterNextRender,
-  inject,
-  signal,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { filter, skip, take } from 'rxjs';
+import { Subject } from 'rxjs';
+import { filter, skip, take, takeUntil } from 'rxjs/operators';
 import { gsap } from 'gsap';
 import { Router } from '@angular/router';
 import { ScreensaverConfigService } from '../../services/screensaver-config.service';
@@ -39,18 +37,17 @@ interface FrameElements {
 @Component({
   selector: 'app-the-frame',
   templateUrl: './the-frame.html',
-  styleUrl: './the-frame.scss',
-  standalone: true,
-  imports: [CoverPageComponent, ColumnsPageComponent, DebugOverlayComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrls: ['./the-frame.scss'],
+  changeDetection: ChangeDetectionStrategy.Default,
 })
-export class TheFrame {
-  private readonly imageCycleService = inject(ImageCycleService);
-  private readonly keyboardService = inject(KeyboardService);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly injector = inject(Injector);
-  private readonly router = inject(Router);
-  private readonly configService = inject(ScreensaverConfigService);
+export class TheFrameComponent implements AfterViewInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+
+  private readonly imageCycleService: ImageCycleService;
+  private readonly keyboardService: KeyboardService;
+  private readonly router: Router;
+  private readonly configService: ScreensaverConfigService;
+  private readonly ngZone: NgZone;
 
   @ViewChild('imageA') private imageA!: ElementRef<HTMLDivElement>;
   @ViewChild('imageB') private imageB!: ElementRef<HTMLDivElement>;
@@ -59,10 +56,10 @@ export class TheFrame {
   @ViewChild('coverPage', { read: ElementRef }) private coverPageEl!: ElementRef<HTMLElement>;
   @ViewChild('columnsPage', { read: ElementRef }) private columnsPageEl!: ElementRef<HTMLElement>;
 
-  readonly isPaused = signal(false);
-  readonly showDebug = signal(false);
-  readonly currentPage = signal<1 | 2 | 3>(1);
-  readonly frameStyle = signal<0 | 1 | 2 | 3 | 4>(0);
+  isPaused = false;
+  showDebug = false;
+  currentPage: 1 | 2 | 3 = 1;
+  frameStyle: 0 | 1 | 2 | 3 | 4 = 0;
 
   private mainTimeline!: gsap.core.Timeline;
   private pauseTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -76,7 +73,7 @@ export class TheFrame {
 
   private kenBurnsTween: gsap.core.Tween | null = null;
 
-  readonly sidebarLayout = signal(false);
+  sidebarLayout = false;
 
   private static readonly DIM_STORAGE_KEY = 'frame-dim-level';
   private static readonly DIM_STEP = 0.08;
@@ -84,71 +81,74 @@ export class TheFrame {
   private static readonly DIM_MAX = 0.80;
 
   /** 0–0.80 black overlay opacity. Persisted in localStorage, adjusted with I/O keys. */
-  readonly dimLevel = signal<number>(
-    Math.min(
-      TheFrame.DIM_MAX,
-      Math.max(
-        TheFrame.DIM_MIN,
-        parseFloat(globalThis.localStorage?.getItem(TheFrame.DIM_STORAGE_KEY) ?? '0') || 0,
-      ),
-    ),
-  );
+  dimLevel = 0;
 
-  readonly showCog = signal(false);
+  showCog = false;
   private cogHideTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   onMouseMove(): void {
-    this.showCog.set(true);
+    this.showCog = true;
     if (this.cogHideTimeoutId !== null) clearTimeout(this.cogHideTimeoutId);
-    this.cogHideTimeoutId = setTimeout(() => this.showCog.set(false), 3000);
+    this.cogHideTimeoutId = setTimeout(() => { this.showCog = false; }, 3000);
   }
 
-  constructor() {
-    // Must subscribe here (injection context) for takeUntilDestroyed to work.
-    // skip(1) because setRefresh$ fires once immediately on first gallery load —
-    // we don't want to advance frame style before anything has been shown.
-    this.imageCycleService.setRefresh$
-      .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.advanceFrameStyle());
+  constructor(
+    imageCycleService: ImageCycleService,
+    keyboardService: KeyboardService,
+    router: Router,
+    configService: ScreensaverConfigService,
+    ngZone: NgZone,
+  ) {
+    this.imageCycleService = imageCycleService;
+    this.keyboardService = keyboardService;
+    this.router = router;
+    this.configService = configService;
+    this.ngZone = ngZone;
 
-    afterNextRender(() => {
+    // Read persisted dim level from localStorage
+    if (typeof localStorage !== 'undefined') {
+      const stored = parseFloat(localStorage.getItem(TheFrameComponent.DIM_STORAGE_KEY) ?? '0') || 0;
+      this.dimLevel = Math.min(TheFrameComponent.DIM_MAX, Math.max(TheFrameComponent.DIM_MIN, stored));
+    }
+
+    // skip(1) because setRefresh$ fires once immediately on first gallery load
+    this.imageCycleService.setRefresh$
+      .pipe(skip(1), takeUntil(this.destroy$))
+      .subscribe(() => this.advanceFrameStyle());
+  }
+
+  ngAfterViewInit(): void {
+    this.ngZone.runOutsideAngular(() => {
       this.initElements();
       this.buildTimeline();
-      this.setupKeyboard();
+    });
+    this.setupKeyboard();
 
-      this.frameIntervalId = setInterval(() => this.advanceFrameStyle(), 5 * 60 * 1000);
+    this.frameIntervalId = setInterval(() => this.advanceFrameStyle(), 5 * 60 * 1000);
 
-      // Auto-reload: read interval from config once it loads, then schedule.
-      toObservable(this.configService.config, { injector: this.injector })
-        .pipe(
-          filter((cfg) => cfg !== null),
-          take(1),
-          takeUntilDestroyed(this.destroyRef),
-        )
-        .subscribe((cfg) => {
-          const hours = cfg!.animationSettings.autoReloadIntervalHours;
-          if (hours > 0) {
-            setTimeout(() => globalThis.location.reload(), hours * 60 * 60 * 1000);
-          }
-        });
-
-      this.destroyRef.onDestroy(() => {
-        if (this.frameIntervalId !== null) clearInterval(this.frameIntervalId);
-        if (this.pauseTimeoutId !== null) clearTimeout(this.pauseTimeoutId);
-        if (this.cogHideTimeoutId !== null) clearTimeout(this.cogHideTimeoutId);
-        this.kenBurnsTween?.kill();
+    // Auto-reload: read interval from config once it loads, then schedule.
+    this.configService.config$
+      .pipe(
+        filter((cfg) => cfg !== null),
+        take(1),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((cfg) => {
+        const hours = cfg!.animationSettings.autoReloadIntervalHours;
+        if (hours > 0) {
+          setTimeout(() => location.reload(), hours * 60 * 60 * 1000);
+        }
       });
 
-      // Images load asynchronously (HTTP → /api/gallery).
-      // Wait for the first non-null image, then prime the two layers.
-      toObservable(this.imageCycleService.currentImage, { injector: this.injector })
-        .pipe(
-          filter((img): img is string => img !== null),
-          take(1),
-          takeUntilDestroyed(this.destroyRef),
-        )
-        .subscribe(() => this.initImages());
-    });
+    // Images load asynchronously (HTTP → /api/gallery).
+    // Wait for the first non-null image, then prime the two layers.
+    this.imageCycleService.currentImage$
+      .pipe(
+        filter((img): img is string => img !== null),
+        take(1),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(() => this.initImages());
   }
 
   private initElements(): void {
@@ -190,6 +190,7 @@ export class TheFrame {
 
   private buildTimeline(): void {
     const { els } = this;
+    const run = <T>(fn: () => T) => this.ngZone.run(fn);
     gsap.set(els.overlay, { opacity: 0 });
     gsap.set(els.cover, { opacity: 0, x: '-2vw' });
     gsap.set(els.columns, { opacity: 0, x: '-2vw' });
@@ -197,24 +198,24 @@ export class TheFrame {
     this.mainTimeline = gsap
       .timeline()
       .addLabel('page1', 0)
-      .call(() => this.currentPage.set(1), [], 'page1')
+      .call(() => run(() => { this.currentPage = 1; }), [], 'page1')
       .addLabel('page2', TIMINGS.page1Duration)
       .to(els.overlay, { opacity: 1, duration: TIMINGS.crossfadeDuration }, 'page2')
       .to(els.cover, { opacity: 1, x: 0, duration: TIMINGS.crossfadeDuration }, 'page2')
-      .call(() => this.currentPage.set(2), [], 'page2')
+      .call(() => run(() => { this.currentPage = 2; }), [], 'page2')
       .addLabel('page3', `page2+=${TIMINGS.crossfadeDuration + TIMINGS.page2Duration}`)
       .to(els.cover, { opacity: 0, x: '2vw', duration: TIMINGS.crossfadeDuration }, 'page3')
       .to(els.columns, { opacity: 1, x: 0, duration: TIMINGS.crossfadeDuration }, 'page3')
-      .call(() => this.currentPage.set(3), [], 'page3')
+      .call(() => run(() => { this.currentPage = 3; }), [], 'page3')
       .addLabel('end', `page3+=${TIMINGS.crossfadeDuration + TIMINGS.page3Duration}`)
       .to(els.overlay, { opacity: 0, duration: TIMINGS.crossfadeDuration }, 'end')
       .to(els.columns, { opacity: 0, x: '2vw', duration: TIMINGS.crossfadeDuration }, 'end')
-      .call(() => {
+      .call(() => run(() => {
         gsap.set(els.cover, { x: '-2vw' });
         gsap.set(els.columns, { x: '-2vw' });
-        this.currentPage.set(1);
+        this.currentPage = 1;
         this.advanceImage();
-      });
+      }));
   }
 
   private startKenBurns(el: HTMLElement): void {
@@ -290,13 +291,13 @@ export class TheFrame {
 
   private setupKeyboard(): void {
     this.keyboardService.arrowRight$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.skipToNextImage());
 
     this.keyboardService.space$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
-        const page = this.currentPage();
+        const page = this.currentPage;
         if (page === 1) {
           this.mainTimeline.seek('page2');
         } else if (page === 2) {
@@ -307,40 +308,40 @@ export class TheFrame {
       });
 
     this.keyboardService.keyP$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.togglePause());
 
     this.keyboardService.keyD$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.showDebug.update((v) => !v));
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => { this.showDebug = !this.showDebug; });
 
     this.keyboardService.keyEscape$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.showDebug.set(false));
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => { this.showDebug = false; });
 
     this.keyboardService.keyF$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.advanceFrameStyle());
 
     this.keyboardService.keyC$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.navigateToConfig());
 
     this.keyboardService.keyA$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.sidebarLayout.update((v) => !v));
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => { this.sidebarLayout = !this.sidebarLayout; });
 
     this.keyboardService.keyI$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.adjustDim(TheFrame.DIM_STEP));
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.adjustDim(TheFrameComponent.DIM_STEP));
 
     this.keyboardService.keyO$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.adjustDim(-TheFrame.DIM_STEP));
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.adjustDim(-TheFrameComponent.DIM_STEP));
 
     this.keyboardService.keyR$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => globalThis.location.reload());
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => location.reload());
   }
 
   navigateToConfig(): void {
@@ -350,18 +351,20 @@ export class TheFrame {
 
   private adjustDim(delta: number): void {
     const next = Math.round(
-      Math.min(TheFrame.DIM_MAX, Math.max(TheFrame.DIM_MIN, this.dimLevel() + delta)) * 100,
+      Math.min(TheFrameComponent.DIM_MAX, Math.max(TheFrameComponent.DIM_MIN, this.dimLevel + delta)) * 100,
     ) / 100;
-    this.dimLevel.set(next);
-    globalThis.localStorage?.setItem(TheFrame.DIM_STORAGE_KEY, String(next));
+    this.dimLevel = next;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(TheFrameComponent.DIM_STORAGE_KEY, String(next));
+    }
   }
 
   private advanceFrameStyle(): void {
-    this.frameStyle.update((s) => ((s + 1) % 5) as 0 | 1 | 2 | 3 | 4);
+    this.frameStyle = ((this.frameStyle + 1) % 5) as 0 | 1 | 2 | 3 | 4;
   }
 
   private togglePause(): void {
-    if (this.isPaused()) {
+    if (this.isPaused) {
       this.resumeTimeline();
     } else {
       this.pauseTimeline();
@@ -370,7 +373,7 @@ export class TheFrame {
 
   private pauseTimeline(): void {
     this.mainTimeline.pause();
-    this.isPaused.set(true);
+    this.isPaused = true;
     const bar = this.progressBar.nativeElement;
     gsap.set(bar, { scaleX: 1 });
     this.pauseBarTween = gsap.to(bar, {
@@ -390,6 +393,15 @@ export class TheFrame {
     this.pauseBarTween = null;
     gsap.set(this.progressBar.nativeElement, { scaleX: 1 });
     this.mainTimeline.resume();
-    this.isPaused.set(false);
+    this.isPaused = false;
+  }
+
+  ngOnDestroy(): void {
+    if (this.frameIntervalId !== null) clearInterval(this.frameIntervalId);
+    if (this.pauseTimeoutId !== null) clearTimeout(this.pauseTimeoutId);
+    if (this.cogHideTimeoutId !== null) clearTimeout(this.cogHideTimeoutId);
+    this.kenBurnsTween?.kill();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
