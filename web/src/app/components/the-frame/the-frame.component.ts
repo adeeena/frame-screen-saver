@@ -43,12 +43,6 @@ interface FrameElements {
 export class TheFrameComponent implements AfterViewInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
-  private readonly imageCycleService: ImageCycleService;
-  private readonly keyboardService: KeyboardService;
-  private readonly router: Router;
-  private readonly configService: ScreensaverConfigService;
-  private readonly ngZone: NgZone;
-
   @ViewChild('imageA') private imageA!: ElementRef<HTMLDivElement>;
   @ViewChild('imageB') private imageB!: ElementRef<HTMLDivElement>;
   @ViewChild('infoOverlay') private infoOverlay!: ElementRef<HTMLDivElement>;
@@ -59,7 +53,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   isPaused = false;
   showDebug = false;
   currentPage: 1 | 2 | 3 = 1;
-  frameStyle: 0 | 1 | 2 | 3 | 4 = 0;
+  frameStyle: 0 | 1 | 2 | 3 | 4 = (Math.floor(Math.random() * 5)) as 0 | 1 | 2 | 3 | 4;
 
   private mainTimeline!: gsap.core.Timeline;
   private pauseTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -93,18 +87,12 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   }
 
   constructor(
-    imageCycleService: ImageCycleService,
-    keyboardService: KeyboardService,
-    router: Router,
-    configService: ScreensaverConfigService,
-    ngZone: NgZone,
+    private readonly imageCycleService: ImageCycleService,
+    private readonly keyboardService: KeyboardService,
+    private readonly router: Router,
+    private readonly configService: ScreensaverConfigService,
+    private readonly ngZone: NgZone,
   ) {
-    this.imageCycleService = imageCycleService;
-    this.keyboardService = keyboardService;
-    this.router = router;
-    this.configService = configService;
-    this.ngZone = ngZone;
-
     // Read persisted dim level from localStorage
     if (typeof localStorage !== 'undefined') {
       const stored = parseFloat(localStorage.getItem(TheFrameComponent.DIM_STORAGE_KEY) ?? '0') || 0;

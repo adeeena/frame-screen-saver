@@ -6,7 +6,7 @@ import { TrainService, Departure } from '../../services/train.service';
 import { CalendarService, CalendarDay, CalendarEvent } from '../../services/calendar.service';
 import { WeatherService } from '../../services/weather.service';
 import { SolarService } from '../../services/solar.service';
-import { serverConfig } from '../../../server.config';
+import { ScreensaverConfigService } from '../../services/screensaver-config.service';
 
 const MAX_MINUTES = 60;
 
@@ -40,8 +40,6 @@ const WEATHER_ICON_MAP: Readonly<Record<string, string>> = {
 export class ColumnsPageComponent implements AfterViewChecked {
   @Input() sidebarLayout = false;
 
-  readonly config = serverConfig;
-
   @ViewChild('calendarRef') private calendarRef?: ElementRef<HTMLElement>;
 
   private trimCount = 0;
@@ -54,8 +52,11 @@ export class ColumnsPageComponent implements AfterViewChecked {
     readonly calendarService: CalendarService,
     readonly weatherService: WeatherService,
     readonly solarService: SolarService,
+    readonly configService: ScreensaverConfigService,
     @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {}
+
+  get config() { return this.configService.config()?.appSettings ?? null; }
 
   get candidateDays(): readonly CalendarDay[] {
     const nowMs = this.clockService.nowMs();
@@ -70,7 +71,7 @@ export class ColumnsPageComponent implements AfterViewChecked {
         return day;
       })
       .filter((d) => d.events.length > 0)
-      .slice(0, this.config.calendar.maxDisplayDays);
+      .slice(0, this.config?.calendar?.maxDisplayDays ?? 2);
   }
 
   get displayDays(): readonly CalendarDay[] {
@@ -125,10 +126,36 @@ export class ColumnsPageComponent implements AfterViewChecked {
     return Math.max(0, Math.min(100, 100 - (dep.minutesUntilDeparture / MAX_MINUTES) * 100));
   }
 
+  get futureDepartures(): readonly Departure[] {
+    // Use Date.now() (real UTC ms) — not clockService, whose nowMs() can be
+    // offset if browser timezone ≠ server timezone (common on embedded Pi).
+    // moment() parses the ISO departure string robustly across all formats.
+    const nowMs = Date.now();
+    return this.trainService.departures().filter(
+      (dep) => moment(dep.expectedDeparture).valueOf() >= nowMs,
+    );
+  }
+
   minutesUntil(dep: Departure): number {
+    // Same rationale: Date.now() avoids clock-service timezone offset issues.
     const now = Math.floor(Date.now() / 60000) * 60000;
-    const dep_min = Math.floor(new Date(dep.expectedDeparture).getTime() / 60000) * 60000;
+    const dep_min = Math.floor(moment(dep.expectedDeparture).valueOf() / 60000) * 60000;
     return Math.max(0, Math.round((dep_min - now) / 60000));
+  }
+
+  /** Returns the departure time to display in the server's local timezone.
+   *  Prefers the server-computed displayTime field (populated after server rebuild).
+   *  Falls back to converting the ISO departure string using the server's UTC offset
+   *  (from clockService) — handles both UTC 'Z' strings (PRIM) and offset strings. */
+  departureTime(dep: Departure): string {
+    if (dep.displayTime) return dep.displayTime;
+    const offset = this.clockService.utcOffset();
+    if (offset) {
+      // moment().utcOffset() shifts the display to the given offset without
+      // changing the underlying UTC value. Handles Z, +02:00, and bare strings.
+      return moment(dep.expectedDeparture).utcOffset(offset).format('HH:mm');
+    }
+    return moment.parseZone(dep.expectedDeparture).format('HH:mm');
   }
 
   dayLabelParts(day: CalendarDay): { accent: string; normal: string } {

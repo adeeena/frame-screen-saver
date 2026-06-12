@@ -11,6 +11,8 @@ export interface AnimationSettings {
   columnsPageTimeoutMs: number;
   frameChangeAfterCycles: number;
   autoReloadIntervalHours: number;
+  /** How many images to include in each gallery shuffle (default 10). */
+  gallerySize: number;
 }
 
 export interface FontSettings {

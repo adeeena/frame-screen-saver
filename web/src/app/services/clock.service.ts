@@ -8,6 +8,7 @@ import moment from 'moment';
 interface ClockResponse {
   readonly time: string;
   readonly timezone: string;
+  readonly utcOffset?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -18,6 +19,8 @@ export class ClockService implements OnDestroy {
   private _time = '';
   private _error: string | null = null;
   private serverTimeOffset = 0;
+  private _hasSynced = false;
+  private _utcOffset = '';
 
   constructor(
     private readonly http: HttpClient,
@@ -43,14 +46,18 @@ export class ClockService implements OnDestroy {
       .subscribe((response) => {
         if (response) {
           this.serverTimeOffset = Date.now() - moment(response.time).valueOf();
+          this._hasSynced = true;
+          this._time = moment(Date.now() - this.serverTimeOffset).format('YYYY-MM-DD HH:mm:ss');
+          if (response.utcOffset) this._utcOffset = response.utcOffset;
           this._error = null;
         }
       });
 
-    // Update time every minute
+    // Update time every minute (only after first sync)
     timer(0, 60 * 1000)
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
+        if (!this._hasSynced) return;
         const syncedTime = Date.now() - this.serverTimeOffset;
         this._time = moment(syncedTime).format('YYYY-MM-DD HH:mm:ss');
       });
@@ -58,6 +65,8 @@ export class ClockService implements OnDestroy {
 
   time(): string { return this._time; }
   error(): string | null { return this._error; }
+  /** UTC offset string of the server timezone, e.g. '+02:00'. Empty until first sync. */
+  utcOffset(): string { return this._utcOffset; }
 
   /** Synced current time in milliseconds */
   nowMs(): number { return Date.now() - this.serverTimeOffset; }

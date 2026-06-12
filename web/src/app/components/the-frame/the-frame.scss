@@ -1,10 +1,10 @@
 ﻿@use '../../design-system' as ds;
 
-// â”€â”€ Frame border dimensions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Frame border dimensions 
 // (controlled via CSS custom properties for runtime frame style switching)
-$inner-line:   0.15dvw;
+$inner-line:   0.15vw; // vw not dvw: SCSS vars compile into box-shadow values directly with no fallback mechanism
 
-// â”€â”€ Grain base64 texture â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Grain base64 texture 
 $grain-url: url(data:image/png;base64,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);
 
 .the-frame {
@@ -16,62 +16,72 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     height: 100vh;
     height: 100dvh;
 
-    // â”€â”€ CSS vars: Style 0 â€” Museum Classic (default) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  CSS vars: Style 0 â€” Museum Classic (default) 
     // Dark navy body, pure-white mat, clean and minimal
     --f-outer-pad:   3vw;
-    --f-outer-pad:   3dvw;
     --f-inner-brd:   3.5vw;
-    --f-inner-brd:   3.5dvw;
     --f-bg-from:     #141420;
     --f-bg-to:       #282834;
     --f-mat-color:   #ffffff;
+    @supports (width: 1dvw) {
+      --f-outer-pad:   3dvw;
+      --f-inner-brd:   3.5dvw;
+    }
 
-    // â”€â”€ Style 1 â€” Gilded Baroque â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Style 1 â€” Gilded Baroque 
     // Near-black body, warm ivory mat, gold bevel layers in the frame
     &.the-frame--style-1 {
       --f-outer-pad:   3.5vw;
-      --f-outer-pad:   3.5dvw;
       --f-inner-brd:   2.5vw;
-      --f-inner-brd:   2.5dvw;
       --f-bg-from:     #0a0905;
       --f-bg-to:       #14120a;
       --f-mat-color:   #f5efdf;
+      @supports (width: 1dvw) {
+        --f-outer-pad:   3.5dvw;
+        --f-inner-brd:   2.5dvw;
+      }
     }
 
-    // â”€â”€ Style 2 â€” Warm Mahogany â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Style 2 â€” Warm Mahogany 
     // Deep reddish-brown body, warm cream mat, terracotta â†’ mahogany bevel
     &.the-frame--style-2 {
       --f-outer-pad:   4vw;
-      --f-outer-pad:   4dvw;
       --f-inner-brd:   3vw;
-      --f-inner-brd:   3dvw;
       --f-bg-from:     #1c0a04;
       --f-bg-to:       #2e1208;
       --f-mat-color:   #f8f0e5;
+      @supports (width: 1dvw) {
+        --f-outer-pad:   4dvw;
+        --f-inner-brd:   3dvw;
+      }
     }
 
-    // â”€â”€ Style 3 â€” Gallery Wall (floating frame on cream) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Style 3 â€” Gallery Wall (floating frame on cream) 
     // Warm cream wall, pure white mat, soft cascading drop shadows all around
     &.the-frame--style-3 {
       --f-outer-pad:   4vw;
-      --f-outer-pad:   4dvw;
       --f-inner-brd:   4.5vw;
-      --f-inner-brd:   4.5dvw;
       --f-bg-from:     #f0ede2;
       --f-bg-to:       #e8e4d8;
       --f-mat-color:   #ffffff;
+      @supports (width: 1dvw) {
+        --f-outer-pad:   4dvw;
+        --f-inner-brd:   4.5dvw;
+      }
     }
 
-    // â”€â”€ Style 4 â€” Arsenal Bronze (inspired by WWII cartridge-band frames) â”€â”€
+    //  Style 4 â€” Arsenal Bronze (inspired by WWII cartridge-band frames) 
     // Tight dark-olive body, warm parchment mat, dense repeating brass rings
     &.the-frame--style-4 {
       --f-outer-pad:   2.5vw;
-      --f-outer-pad:   2.5dvw;
       --f-inner-brd:   3vw;
-      --f-inner-brd:   3dvw;
       --f-bg-from:     #1a1505;
       --f-bg-to:       #0d0c04;
       --f-mat-color:   #f2ead8;
+      @supports (width: 1dvw) {
+        --f-outer-pad:   2.5dvw;
+        --f-inner-brd:   3dvw;
+      }
     }
 
     padding: var(--f-outer-pad);
@@ -106,7 +116,7 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     overflow: hidden;
     transition: border-width 0.8s ease, border-color 0.8s ease;
 
-    // â”€â”€ Style 0: Museum Classic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Style 0: Museum Classic 
     // Outward box-shadows paint INTO the frame padding area.
     // Layers go from mat edge outward, simulating depth via highlight/shadow.
     box-shadow:
@@ -119,7 +129,7 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
       0 0 0 2px  rgba(210, 210, 230, 0.3),
       0 0 0 5px  rgba(0, 0, 10, 0.55);
 
-    // â”€â”€ Style 1: Gilded Baroque â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Style 1: Gilded Baroque 
     // Gold bevel â€” inner gold line, dark groove, raised highlight, mid shadow, deep outer
     .the-frame--style-1 & {
       box-shadow:
@@ -134,7 +144,7 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
         0 0 0 25px #0f0900;
     }
 
-    // â”€â”€ Style 2: Warm Mahogany â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Style 2: Warm Mahogany 
     // Terracotta highlight, dark groove, rich mahogany body, deep outer shadow
     .the-frame--style-2 & {
       box-shadow:
@@ -149,24 +159,36 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
         0 0 0 28px #0e0200;
     }
 
-    // â”€â”€ Style 3: Gallery Wall â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Style 3: Gallery Wall 
     // Top-lit mat (inset shadow heavier at top), cascading drop shadows below
     .the-frame--style-3 & {
       box-shadow:
         // mat inset shadows: heavy top, light sides and bottom (top-lit depth)
-        inset 0    0.8dvw 0.5dvw rgba(0, 0, 0, 0.22),
-        inset 0.15dvw 0   0.2dvw  rgba(0, 0, 0, 0.09),
-        inset -0.15dvw 0  0.2dvw  rgba(0, 0, 0, 0.05),
-        inset 0 -0.15dvw  0.2dvw  rgba(0, 0, 0, 0.04),
+        inset 0    0.8vw 0.5vw rgba(0, 0, 0, 0.22),
+        inset 0.15vw 0   0.2vw  rgba(0, 0, 0, 0.09),
+        inset -0.15vw 0  0.2vw  rgba(0, 0, 0, 0.05),
+        inset 0 -0.15vw  0.2vw  rgba(0, 0, 0, 0.04),
         // cascading drop shadows radiating outward (pen figure::after technique)
-        0 1dvw  2dvw  -0.5dvw rgba(0, 0, 0, 0.40),
-        0 2dvw  2dvw  -0.5dvw rgba(0, 0, 0, 0.30),
-        0 3dvw  2dvw  -0.5dvw rgba(0, 0, 0, 0.20),
-        0 4dvw  1.5dvw -0.5dvw rgba(0, 0, 0, 0.14),
-        0 2dvw  4dvw   0.5dvw rgba(0, 0, 0, 0.08);
+        0 1vw  2vw  -0.5vw rgba(0, 0, 0, 0.40),
+        0 2vw  2vw  -0.5vw rgba(0, 0, 0, 0.30),
+        0 3vw  2vw  -0.5vw rgba(0, 0, 0, 0.20),
+        0 4vw  1.5vw -0.5vw rgba(0, 0, 0, 0.14),
+        0 2vw  4vw   0.5vw rgba(0, 0, 0, 0.08);
+      @supports (width: 1dvw) {
+        box-shadow:
+          inset 0    0.8dvw 0.5dvw rgba(0, 0, 0, 0.22),
+          inset 0.15dvw 0   0.2dvw  rgba(0, 0, 0, 0.09),
+          inset -0.15dvw 0  0.2dvw  rgba(0, 0, 0, 0.05),
+          inset 0 -0.15dvw  0.2dvw  rgba(0, 0, 0, 0.04),
+          0 1dvw  2dvw  -0.5dvw rgba(0, 0, 0, 0.40),
+          0 2dvw  2dvw  -0.5dvw rgba(0, 0, 0, 0.30),
+          0 3dvw  2dvw  -0.5dvw rgba(0, 0, 0, 0.20),
+          0 4dvw  1.5dvw -0.5dvw rgba(0, 0, 0, 0.14),
+          0 2dvw  4dvw   0.5dvw rgba(0, 0, 0, 0.08);
+      }
     }
 
-    // â”€â”€ Style 4: Arsenal Bronze â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Style 4: Arsenal Bronze 
     // Tight repeating brass bands (dark â†’ highlight â†’ dark â†’ highlight â†’ dark)
     // Evokes stacked cartridge casings around the mat edge.
     .the-frame--style-4 & {
@@ -207,7 +229,7 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     z-index: 10;
     pointer-events: none;
     background-image: $grain-url;
-    opacity: 0.35;
+    opacity: 0.55;
   }
 
   &__image {
@@ -217,6 +239,9 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     background-position: center center;
     background-repeat: no-repeat;
     opacity: 0;
+    // Pre-promote to GPU compositor layer so Ken Burns + crossfades don't jank
+    -webkit-will-change: transform, opacity;
+    will-change: transform, opacity;
 
     &--a { z-index: 1; }
     &--b { z-index: 2; }
@@ -226,6 +251,8 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     @include ds.absolute-fill;
     z-index: 4; // bumped up: vignette(3) and tint(5) bracket it
     opacity: 0;
+    -webkit-will-change: opacity;
+    will-change: opacity;
   }
 
   &__scrim {
@@ -240,9 +267,12 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     opacity: 0;
     -webkit-transform: translateX(-2vw);
     transform: translateX(-2vw);
+    // Pre-promote for slide+fade transitions
+    -webkit-will-change: transform, opacity;
+    will-change: transform, opacity;
   }
 
-  // â”€â”€ Vignette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Vignette 
   // Always-on radial darkening on the artwork corners (below overlay z=4).
   &__vignette {
     @include ds.absolute-fill;
@@ -255,7 +285,7 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     );
   }
 
-  // â”€â”€ Global dim overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Global dim overlay 
   // Sibling of __inner in __outer â€” covers the full frame including mat border.
   // z-index 12: above grain (10) and mat-texture (11), below nothing.
   &__dim {
@@ -267,7 +297,7 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     transition: opacity 0.4s ease;
   }
 
-  // â”€â”€ Config cog button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Config cog button 
   // Sits in __outer above dim (z=13), bottom-right corner.
   // Fades in on mouse move, auto-hides after 3s.
   &__cog-btn {

@@ -69,6 +69,10 @@
     background-color: var(--accent);
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
+    // flex gap (gap: 2vw on parent) is not supported in Chrome ≤ 83.
+    // Explicit margin ensures the divider always has breathing room.
+    margin-top: 1.5vw;
+    margin-bottom: 1.5vw;
   }
 
   &__weather {
@@ -76,11 +80,30 @@
     display: flex;
     -webkit-align-items: center;
     align-items: center;
-    gap: 0.8vw;
-    gap: 0.8dvw;
+    // gap unsupported in Chrome ≤ 83 on flex — use margin-right on children instead
   }
 
-  &__weather-icon,
+  &__weather-icon {
+    display: inline-flex;
+    -webkit-align-items: center;
+    align-items: center;
+    width: 1.6vw;
+    width: 1.6dvw;
+    height: 1.6vw;
+    height: 1.6dvw;
+    margin-right: 0.8vw;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: var(--text-primary);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  }
+
   &__solar-icon {
     display: inline-flex;
     -webkit-align-items: center;
@@ -89,6 +112,7 @@
     width: 1.6dvw;
     height: 1.6vw;
     height: 1.6dvw;
+    margin-right: 0.5vw;
 
     svg {
       width: 100%;
@@ -107,6 +131,7 @@
     font-size: 1.6vw;
     font-size: 1.6dvw;
     color: var(--accent);
+    margin-right: 0.8vw;
   }
 
   &__weather-label {
@@ -115,6 +140,11 @@
     font-size: 1.6vw;
     font-size: 1.6dvw;
     color: var(--text-secondary);
+    margin-right: 0.8vw;
+  }
+
+  &__uv {
+    margin-right: 0.8vw;
   }
 
   &__solar {
@@ -122,8 +152,7 @@
     display: flex;
     -webkit-align-items: center;
     align-items: center;
-    gap: 0.5vw;
-    gap: 0.5dvw;
+    // gap replaced by margin-right on __solar-icon
     margin-left: auto;
   }
 
@@ -173,7 +202,7 @@
   }
 }
 
-// â”€â”€ Transilien widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Transilien widget 
 .transilien {
 
   &__header {
@@ -181,8 +210,6 @@
     display: flex;
     -webkit-align-items: center;
     align-items: center;
-    gap: 1vw;
-    gap: 1dvw;
     margin-bottom: 1.5vw;
     margin-bottom: 1.5dvw;
   }
@@ -207,6 +234,7 @@
     border-radius: 0.3dvw;
     -webkit-font-smoothing: antialiased;
     text-align: center;
+    margin-right: 1vw;
   }
 
   &__direction {
@@ -214,14 +242,14 @@
     display: flex;
     -webkit-align-items: center;
     align-items: center;
-    gap: 0.5vw;
-    gap: 0.5dvw;
+    // gap replaced by margin-right on __arrow
   }
 
   &__arrow {
     color: var(--accent);
     font-size: 1.4vw;
     font-size: 1.4dvw;
+    margin-right: 0.5vw;
   }
 
   &__destination {
@@ -250,8 +278,7 @@
     flex-direction: row;
     -webkit-align-items: baseline;
     align-items: baseline;
-    gap: 1vw;
-    gap: 1dvw;
+    // gap replaced by margin-right on __departure-time
   }
 
   &__departure-time {
@@ -262,6 +289,7 @@
     color: var(--text-primary);
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
+    margin-right: 1vw;
   }
 
   &__departure-minutes {
@@ -290,11 +318,13 @@
   }
 }
 
-// â”€â”€ Calendar timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Calendar timeline 
 .cal-timeline {
-  $spine-w: 1.4dvw;
-  $dot-size: 0.7dvw;
-  $dot-day-size: 0.9dvw;
+  // vw not dvw: SCSS vars compile directly into grid-template-columns and
+  // width/height — Chrome 66 rejects the whole declaration if dvw appears there.
+  $spine-w: 1.4vw;
+  $dot-size: 0.7vw;
+  $dot-day-size: 0.9vw;
   $line-color: rgba(255, 255, 255, 0.5);
 
   &__day-header {
@@ -314,6 +344,7 @@
   &__event-row {
     display: grid;
     grid-template-columns: $spine-w 1fr;
+    grid-gap: 0.8vw; // Chrome 66: gap on grid was only supported as grid-gap
     gap: 0.8vw;
     gap: 0.8dvw;
 
@@ -415,7 +446,7 @@
   }
 }
 
-// â”€â”€ Sidebar layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Sidebar layout 
 // Key A toggles a narrow frosted-glass sidebar on the right edge of the frame.
 // Both panels stack vertically; the photo fills the remaining ~80% of the frame.
 .columns-page--sidebar {
@@ -450,7 +481,7 @@
     overflow: hidden;
   }
 
-  // â”€â”€ Condensed typography â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Condensed typography 
   .columns-page__clock-time {
     font-size: 4.2vw;
     font-size: 4.2dvw;
@@ -478,7 +509,7 @@
     font-size: 1dvw;
   }
 
-  // â”€â”€ Transit badge sizing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Transit badge sizing 
   .transilien__line-badge {
     width: 2.2vw;
     width: 2.2dvw;
@@ -496,7 +527,7 @@
     font-size: 1dvw;
   }
 
-  // â”€â”€ Calendar timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Calendar timeline 
   .cal-timeline__item-title {
     font-size: 1.6vw;
     font-size: 1.6dvw;

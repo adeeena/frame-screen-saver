@@ -73,6 +73,8 @@ interface Departure {
   readonly destination: string;
   readonly scheduledDeparture: string;
   readonly expectedDeparture: string;
+  /** Pre-formatted local time string (HH:mm) — computed server-side to avoid client timezone issues. */
+  readonly displayTime: string;
   readonly minutesUntilDeparture: number;
   readonly status: 'onTime' | 'delayed' | 'unknown';
 }
@@ -156,8 +158,8 @@ async function solarHandler(_req: Request, res: Response): Promise<void> {
       return resp.data.properties as { sunrise: { time: string }; sunset: { time: string } };
     };
     const todayData = await getSolarData(now.format('YYYY-MM-DD'));
-    const todaySunrise = momentTz(todayData.sunrise.time);
-    const todaySunset = momentTz(todayData.sunset.time);
+    const todaySunrise = momentTz.parseZone(todayData.sunrise.time);
+    const todaySunset = momentTz.parseZone(todayData.sunset.time);
     let nextEventTime: momentTz.Moment;
     let nextEventType: 'sunrise' | 'sunset';
     if (now.isBefore(todaySunrise)) {
@@ -174,7 +176,9 @@ async function solarHandler(_req: Request, res: Response): Promise<void> {
     }
     const data: SolarData = {
       type: nextEventType,
-      time: nextEventTime.format('YYYY-MM-DD HH:mm:ss'),
+      // .format() includes the UTC offset (e.g. '2026-06-12T04:51:26+02:00')
+      // so the client pipe (moment.parseZone) can display in the correct timezone.
+      time: nextEventTime.format(),
       utcOffset: nextEventTime.format('Z'),
     };
     solarCache.data = data;
@@ -337,8 +341,9 @@ async function fetchDeparturesNavitia(now: momentTz.Moment): Promise<readonly De
       lineColor: d.route.line.color ?? serverConfig.transit.lineColor,
       lineTextColor: d.route.line.text_color ?? serverConfig.transit.lineTextColor,
       destination: d.route.direction.stop_point.name,
-      scheduledDeparture: scheduled.toISOString(),
-      expectedDeparture: expected.toISOString(),
+      scheduledDeparture: scheduled.format(),
+      expectedDeparture: expected.format(),
+      displayTime: expected.format('HH:mm'),
       minutesUntilDeparture: minutesUntil,
       status: (isDelayed ? 'delayed' : 'onTime') as 'onTime' | 'delayed' | 'unknown',
     };
@@ -362,14 +367,26 @@ async function fetchDeparturesPrim(now: momentTz.Moment): Promise<readonly Depar
     .map((visit) => {
       const journey = visit.MonitoredVehicleJourney;
       const call = journey.MonitoredCall;
-      const scheduled = call.AimedDepartureTime;
-      const expected = call.ExpectedDepartureTime ?? scheduled;
-      const minutesUntil = Math.max(0, Math.round(momentTz(expected).diff(now, 'minutes')));
+      // Parse and re-format through momentTz so the string always carries the
+      // server timezone offset (e.g. +02:00).  PRIM may send bare local-time
+      // strings without an offset, which would be misinterpreted by UTC clients.
+      const scheduledMoment = momentTz.tz(call.AimedDepartureTime, serverConfig.timezone);
+      const expectedMoment = call.ExpectedDepartureTime
+        ? momentTz.tz(call.ExpectedDepartureTime, serverConfig.timezone)
+        : scheduledMoment.clone();
+      const rawMinutes = Math.round(expectedMoment.diff(now, 'minutes'));
+      const minutesUntilDeparture = Math.max(0, rawMinutes);
       const rawStatus = call.DepartureStatus;
       const status: 'onTime' | 'delayed' | 'unknown' = rawStatus === 'onTime' ? 'onTime' : rawStatus === 'delayed' ? 'delayed' : 'unknown';
-      return { line: serverConfig.transit.lineLabel, destination: journey.DestinationName?.[0]?.value ?? serverConfig.transit.direction, scheduledDeparture: scheduled, expectedDeparture: expected, minutesUntilDeparture: minutesUntil, status };
+      return { line: serverConfig.transit.lineLabel, destination: journey.DestinationName?.[0]?.value ?? serverConfig.transit.direction, scheduledDeparture: scheduledMoment.format(), expectedDeparture: expectedMoment.format(), displayTime: expectedMoment.format('HH:mm'), minutesUntilDeparture, status };
     })
     .filter((d) => !destinationFilter || d.destination.toLowerCase().includes(destinationFilter.toLowerCase()))
+    .filter((_, i, arr) => {
+      // Re-derive raw minutes from the formatted string for an accurate past-filter
+      // (minutesUntilDeparture is clamped to 0 so can't be used directly)
+      const dep = arr[i];
+      return momentTz.parseZone(dep.expectedDeparture).diff(now, 'minutes') >= 0;
+    })
     .sort((a, b) => a.expectedDeparture.localeCompare(b.expectedDeparture))
     .slice(0, serverConfig.transit.maxDepartures);
 }
@@ -407,8 +424,9 @@ async function fetchDeparturesBkk(now: momentTz.Moment): Promise<readonly Depart
       return {
         line: route?.shortName ?? serverConfig.transit.lineLabel,
         destination: trip?.tripHeadsign ?? serverConfig.transit.direction,
-        scheduledDeparture: scheduled.toISOString(),
-        expectedDeparture: expected.toISOString(),
+        scheduledDeparture: scheduled.format(),
+        expectedDeparture: expected.format(),
+        displayTime: expected.format('HH:mm'),
         minutesUntilDeparture: minutesUntil,
         status: (isDelayed ? 'delayed' : 'onTime') as 'onTime' | 'delayed' | 'unknown',
       };
@@ -444,8 +462,9 @@ async function fetchDeparturesGtfsRt(now: momentTz.Moment): Promise<readonly Dep
       departures.push({
         line: serverConfig.transit.lineLabel,
         destination: serverConfig.transit.direction,
-        scheduledDeparture: scheduled.toISOString(),
-        expectedDeparture: expected.toISOString(),
+        scheduledDeparture: scheduled.format(),
+        expectedDeparture: expected.format(),
+        displayTime: expected.format('HH:mm'),
         minutesUntilDeparture: minutesUntil,
         status: delayMs > 0 ? 'delayed' : 'onTime',
       });
@@ -470,7 +489,7 @@ async function transitHandler(_req: Request, res: Response): Promise<void> {
       default:        departures = await fetchDeparturesPrim(now); break;
     }
     transitCache.data = departures;
-    transitCache.expiresAt = Date.now() + 20 * 60 * 1000;
+    transitCache.expiresAt = Date.now() + 2 * 60 * 1000; // 2 min: short enough that past trains don't linger
     res.json(departures);
   } catch (error) {
     const msg = (error as { response?: { status?: number; data?: unknown }; message?: string })?.response?.data ?? (error as Error)?.message ?? error;
@@ -552,22 +571,20 @@ interface MediaPack {
   readonly cacheTtlMs: number;
 }
 
-function buildPacks(): MediaPack[] {
-  return [
-    {
-      name: 'travel',
-      contentDir: path.join(mediaDir, 'travel', 'content'),
-      metadataFile: path.join(mediaDir, 'travel', 'metadata.csv'),
-      cacheTtlMs: 24 * 60 * 60 * 1000, // 24 h
-    },
-    {
-      name: 'mccurry',
-      contentDir: path.join(mediaDir, 'mccurry', 'content'),
-      metadataFile: null,
-      cacheTtlMs: 24 * 60 * 60 * 1000, // 24 h
-    },
-  ];
-}
+const PACKS: MediaPack[] = [
+  {
+    name: 'travel',
+    contentDir: path.join(mediaDir, 'travel', 'content'),
+    metadataFile: path.join(mediaDir, 'travel', 'metadata.csv'),
+    cacheTtlMs: 24 * 60 * 60 * 1000, // 24 h
+  },
+  {
+    name: 'mccurry',
+    contentDir: path.join(mediaDir, 'mccurry', 'content'),
+    metadataFile: null,
+    cacheTtlMs: 24 * 60 * 60 * 1000, // 24 h
+  },
+];
 
 // ─── Cache pruning ────────────────────────────────────────────────────────────
 
@@ -575,7 +592,7 @@ async function pruneCache(): Promise<void> {
   const cacheDir = path.join(mediaDir, 'cache');
   if (!(await fs.pathExists(cacheDir))) return;
 
-  const packs = buildPacks();
+  const packs = PACKS;
   // Build a map of pack-name-prefix → ttlMs for fast lookup
   const ttlByPack = new Map<string, number>(packs.map((p) => [p.name, p.cacheTtlMs]));
   // Files whose pack cannot be identified get the strictest TTL of all packs
@@ -612,17 +629,32 @@ setInterval(() => pruneCache().catch((e) => console.error('Cache prune failed:',
 // ─── CSV metadata loader ──────────────────────────────────────────────────────
 
 /** Per-pack metadata cache, keyed by pack name. */
-const metadataCaches = new Map<string, Map<string, { title: string; subtitle: string }>>();
+interface MetadataCache {
+  map: Map<string, { title: string; subtitle: string }>;
+  mtimeMs: number;
+}
+const metadataCaches = new Map<string, MetadataCache>();
 
 async function loadPackMetadata(
   packName: string,
   metadataFile: string,
 ): Promise<Map<string, { title: string; subtitle: string }>> {
+  let fileMtime = 0;
+  try {
+    const stat = await fs.stat(metadataFile);
+    fileMtime = stat.mtimeMs;
+  } catch {
+    // file doesn't exist yet — treat as empty
+  }
+
   const cached = metadataCaches.get(packName);
-  if (cached) return cached;
+  if (cached && cached.mtimeMs === fileMtime) return cached.map;
 
   const map = new Map<string, { title: string; subtitle: string }>();
-  if (!(await fs.pathExists(metadataFile))) return map;
+  if (!(await fs.pathExists(metadataFile))) {
+    metadataCaches.set(packName, { map, mtimeMs: fileMtime });
+    return map;
+  }
 
   const content = await fs.readFile(metadataFile, 'utf-8');
   const lines = content.split(/\r?\n/);
@@ -653,7 +685,7 @@ async function loadPackMetadata(
     if (id) map.set(id, { title, subtitle });
   }
 
-  metadataCaches.set(packName, map);
+  metadataCaches.set(packName, { map, mtimeMs: fileMtime });
   return map;
 }
 
@@ -668,7 +700,9 @@ export interface GalleryResponse {
 
 async function galleryHandler(_req: Request, res: Response): Promise<void> {
   try {
-    const packs = buildPacks();
+    const appCfg = await fs.readJson(configFilePath).catch(() => ({} as Record<string, unknown>)) as { animationSettings?: { gallerySize?: number } };
+    const galleryMax = appCfg.animationSettings?.gallerySize ?? GALLERY_MAX;
+    const packs = PACKS;
 
     // Collect all candidate images across all packs
     interface Candidate {
@@ -692,7 +726,7 @@ async function galleryHandler(_req: Request, res: Response): Promise<void> {
       const j = Math.floor(Math.random() * (i + 1));
       [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
     }
-    const selected = candidates.slice(0, GALLERY_MAX);
+    const selected = candidates.slice(0, galleryMax);
 
     const images: string[] = [];
     const imageMeta: { title: string; subtitle: string }[] = [];
@@ -765,7 +799,7 @@ async function resizeHandler(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const packs = buildPacks();
+  const packs = PACKS;
   const pack = packs.find((p) => p.name === packName);
   if (!pack) {
     res.status(400).json({ message: 'Unknown media pack.' });

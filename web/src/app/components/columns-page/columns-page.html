@@ -31,27 +31,27 @@
       </ng-container>
     </div>
 
-    <ng-container *ngIf="trainService.departures().length > 0">
+    <ng-container *ngIf="futureDepartures.length > 0">
     <div class="columns-page__divider" role="separator"></div>
     <div class="columns-page__widget transilien">
       <div class="transilien__header">
         <div class="transilien__line-badge"
-             [style.background-color]="'#' + config.transit.lineColor"
-             [style.color]="'#' + config.transit.lineTextColor"
-             [attr.aria-label]="'Line ' + config.transit.lineLabel">
-          {{ config.transit.lineLabel }}
+             [style.background-color]="'#' + config?.transit?.lineColor"
+             [style.color]="'#' + config?.transit?.lineTextColor"
+             [attr.aria-label]="'Line ' + config?.transit?.lineLabel">
+          {{ config?.transit?.lineLabel }}
         </div>
         <div class="transilien__direction">
           <span class="transilien__arrow">→</span>
-          <span class="transilien__destination">{{ config.transit.direction }}</span>
+          <span class="transilien__destination">{{ config?.transit?.direction }}</span>
         </div>
       </div>
 
       <div class="transilien__departures">
         <div class="transilien__departure"
-             *ngFor="let dep of trainService.departures()">
+             *ngFor="let dep of futureDepartures">
           <span class="transilien__departure-time">
-            {{ dep.expectedDeparture | formatDateTime:'HH:mm' }}
+            {{ departureTime(dep) }}
           </span>
           <span class="transilien__departure-minutes">
             {{ minutesUntil(dep) }}<span class="transilien__departure-unit"> min</span>
@@ -81,8 +81,8 @@
              [class.cal-timeline__event-row--last]="isLastEvt"
              *ngFor="let evt of day.events; let isFirstEvt = first; let isLastEvt = last">
           <div class="cal-timeline__spine"
-               [style.--line-top]="isFirstEvt ? '1.15dvw' : '0px'"
-               [style.--line-bottom]="isLastEvt ? 'calc(100% - 1.15dvw)' : '0px'">
+               [style.--line-top]="isFirstEvt ? '1.15vw' : '0px'"
+               [style.--line-bottom]="isLastEvt ? 'calc(100% - 1.15vw)' : '0px'">
             <div class="cal-timeline__dot"></div>
           </div>
           <div class="cal-timeline__event-body">

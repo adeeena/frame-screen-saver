@@ -11,6 +11,8 @@ export interface Departure {
   readonly destination: string;
   readonly scheduledDeparture: string;
   readonly expectedDeparture: string;
+  /** Pre-formatted local time string (HH:mm) — computed server-side to avoid client timezone issues. */
+  readonly displayTime: string;
   readonly minutesUntilDeparture: number;
   readonly status: 'onTime' | 'delayed' | 'unknown';
 }
@@ -26,7 +28,7 @@ export class TrainService implements OnDestroy {
   ) {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    interval(20 * 60 * 1000)
+    interval(2 * 60 * 1000) // 2 min: matches server cache TTL so stale trains don't linger
       .pipe(
         startWith(0),
         switchMap(() =>

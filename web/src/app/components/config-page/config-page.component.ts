@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject } from 'rxjs';
+import { filter, take, takeUntil } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import {
   ScreensaverConfigService,
@@ -27,7 +29,8 @@ export type ConfigSection =
   styleUrls: ['./config-page.scss'],
   changeDetection: ChangeDetectionStrategy.Default,
 })
-export class ConfigPageComponent implements OnInit {
+export class ConfigPageComponent implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   readonly sections: { id: ConfigSection; label: string; icon: string }[] = [
     { id: 'animation', label: 'Animation', icon: '◷' },
     { id: 'display',   label: 'Display',   icon: '⬜' },
@@ -50,19 +53,20 @@ export class ConfigPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const cfg = this.configService.config();
-    if (cfg) {
-      this.draft = JSON.parse(JSON.stringify(cfg));
-    } else {
-      // Config not yet loaded — wait for it
-      const interval = setInterval(() => {
-        const c = this.configService.config();
-        if (c) {
-          this.draft = JSON.parse(JSON.stringify(c));
-          clearInterval(interval);
-        }
-      }, 100);
-    }
+    this.configService.config$
+      .pipe(
+        filter((c): c is ScreensaverConfig => c !== null),
+        take(1),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((cfg) => {
+        this.draft = JSON.parse(JSON.stringify(cfg));
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   close(): void {
