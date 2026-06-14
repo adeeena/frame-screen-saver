@@ -1,13 +1,12 @@
-import { Injectable, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
+import { Injectable, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Subject, filter, Observable } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
-@Injectable({
-  providedIn: 'root',
-})
-export class KeyboardService {
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly platformId = inject(PLATFORM_ID);
+@Injectable({ providedIn: 'root' })
+export class KeyboardService implements OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+  private readonly platformId: object;
 
   private readonly keySubject = new Subject<KeyboardEvent>();
 
@@ -45,20 +44,27 @@ export class KeyboardService {
     filter((e) => e.key === 'r' || e.key === 'R'),
   );
 
-  constructor() {
+  private keydownHandler?: (event: KeyboardEvent) => void;
+
+  constructor(@Inject(PLATFORM_ID) platformId: object) {
+    this.platformId = platformId;
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const handler = (event: KeyboardEvent): void => {
+    this.keydownHandler = (event: KeyboardEvent): void => {
       if (event.key === ' ') event.preventDefault();
       this.keySubject.next(event);
     };
 
-    window.addEventListener('keydown', handler);
+    window.addEventListener('keydown', this.keydownHandler);
+  }
 
-    this.destroyRef.onDestroy(() => {
-      window.removeEventListener('keydown', handler);
-      this.keySubject.complete();
-    });
+  ngOnDestroy(): void {
+    if (this.keydownHandler) {
+      window.removeEventListener('keydown', this.keydownHandler);
+    }
+    this.keySubject.complete();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 

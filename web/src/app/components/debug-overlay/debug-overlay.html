@@ -25,16 +25,12 @@
 
       <div class="debug-overlay__section">
         <div class="debug-overlay__section-title">Transilien N — Maule</div>
-        @for (dep of trainService.departures(); track dep.expectedDeparture) {
-          <pre>{{ dep.expectedDeparture }} — {{ dep.minutesUntilDeparture }}min — {{ dep.status }}</pre>
-        }
+        <pre *ngFor="let dep of trainService.departures()">{{ dep.expectedDeparture }} — {{ dep.minutesUntilDeparture }}min — {{ dep.status }}</pre>
       </div>
 
       <div class="debug-overlay__section">
         <div class="debug-overlay__section-title">Calendar ({{ calendarService.days().length }} days)</div>
-        @for (day of calendarService.days(); track day.date) {
-          <pre>{{ day.dayLabel }}: {{ day.events.length }} events</pre>
-        }
+        <pre *ngFor="let day of calendarService.days()">{{ day.dayLabel }}: {{ day.events.length }} events</pre>
       </div>
 
       <div class="debug-overlay__section">

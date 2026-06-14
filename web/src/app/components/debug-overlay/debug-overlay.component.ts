@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
-import { JsonPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, Output, EventEmitter } from '@angular/core';
 import { ClockService } from '../../services/clock.service';
 import { SolarService } from '../../services/solar.service';
 import { WeatherService } from '../../services/weather.service';
@@ -10,19 +9,19 @@ import { ImageCycleService } from '../../services/image-cycle.service';
 @Component({
   selector: 'app-debug-overlay',
   templateUrl: './debug-overlay.html',
-  styleUrl: './debug-overlay.scss',
-  standalone: true,
-  imports: [JsonPipe],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrls: ['./debug-overlay.scss'],
+  changeDetection: ChangeDetectionStrategy.Default,
 })
 export class DebugOverlayComponent {
-  readonly close = output<void>();
+  @Output() close = new EventEmitter<void>();
 
-  readonly clockService = inject(ClockService);
-  readonly solarService = inject(SolarService);
-  readonly weatherService = inject(WeatherService);
-  readonly trainService = inject(TrainService);
-  readonly calendarService = inject(CalendarService);
-  readonly imageCycleService = inject(ImageCycleService);
+  constructor(
+    readonly clockService: ClockService,
+    readonly solarService: SolarService,
+    readonly weatherService: WeatherService,
+    readonly trainService: TrainService,
+    readonly calendarService: CalendarService,
+    readonly imageCycleService: ImageCycleService,
+  ) {}
 }
 

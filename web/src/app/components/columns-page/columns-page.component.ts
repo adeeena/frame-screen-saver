@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal, ViewChild, ElementRef, effect, untracked, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, ViewChild, ElementRef, AfterViewChecked, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import moment from 'moment';
 import { ClockService } from '../../services/clock.service';
@@ -6,9 +6,7 @@ import { TrainService, Departure } from '../../services/train.service';
 import { CalendarService, CalendarDay, CalendarEvent } from '../../services/calendar.service';
 import { WeatherService } from '../../services/weather.service';
 import { SolarService } from '../../services/solar.service';
-import { FormatDateTimePipe } from '../../pipes/format-date-time.pipe';
-import { FeatherIconDirective } from '../../directives/feather-icon.directive';
-import { serverConfig } from '../../../server.config';
+import { ScreensaverConfigService } from '../../services/screensaver-config.service';
 
 const MAX_MINUTES = 60;
 
@@ -36,95 +34,91 @@ const WEATHER_ICON_MAP: Readonly<Record<string, string>> = {
 @Component({
   selector: 'app-columns-page',
   templateUrl: './columns-page.html',
-  styleUrl: './columns-page.scss',
-  standalone: true,
-  imports: [FormatDateTimePipe, FeatherIconDirective],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrls: ['./columns-page.scss'],
+  changeDetection: ChangeDetectionStrategy.Default,
 })
-export class ColumnsPageComponent {
-  readonly clockService = inject(ClockService);
-  readonly trainService = inject(TrainService);
-  readonly calendarService = inject(CalendarService);
-  readonly weatherService = inject(WeatherService);
-  readonly solarService = inject(SolarService);
-  readonly config = serverConfig;
-  readonly sidebarLayout = input(false);
-  private readonly platformId = inject(PLATFORM_ID);
+export class ColumnsPageComponent implements AfterViewChecked {
+  @Input() sidebarLayout = false;
 
   @ViewChild('calendarRef') private calendarRef?: ElementRef<HTMLElement>;
 
-  private readonly _trimCount = signal(0);
+  private trimCount = 0;
+  private _trimPending = false;
+  private _lastCandidateKey = '';
 
-  /** Source days: past events removed, max 4 days, before overflow trimming */
-  private readonly candidateDays = computed((): readonly CalendarDay[] => {
-    void this.clockService.time();
-    const now = this.clockService.nowMs();
-    const todayStr = moment(now).format('YYYY-MM-DD');
-    const nowTime = moment(now).format('HH:mm');
+  constructor(
+    readonly clockService: ClockService,
+    readonly trainService: TrainService,
+    readonly calendarService: CalendarService,
+    readonly weatherService: WeatherService,
+    readonly solarService: SolarService,
+    readonly configService: ScreensaverConfigService,
+    @Inject(PLATFORM_ID) private readonly platformId: object,
+  ) {}
+
+  get config() { return this.configService.config()?.appSettings ?? null; }
+
+  get candidateDays(): readonly CalendarDay[] {
+    const nowMs = this.clockService.nowMs();
+    const todayStr = moment(nowMs).format('YYYY-MM-DD');
+    const nowTime = moment(nowMs).format('HH:mm');
     return this.calendarService.days()
-      .map(day => {
+      .map((day) => {
         if (day.date === todayStr) {
-          const events = day.events.filter(e => e.isAllDay || e.startTime >= nowTime);
+          const events = day.events.filter((e) => e.isAllDay || e.startTime >= nowTime);
           return { ...day, events };
         }
         return day;
       })
-      .filter(d => d.events.length > 0)
-      .slice(0, this.config.calendar.maxDisplayDays);
-  });
+      .filter((d) => d.events.length > 0)
+      .slice(0, this.config?.calendar?.maxDisplayDays ?? 2);
+  }
 
-  /** Days to actually render, trimmed to avoid container overflow */
-  readonly displayDays = computed((): readonly CalendarDay[] => {
-    void this.clockService.time();
-    let days = [...this.candidateDays()] as CalendarDay[];
-    let remaining = this._trimCount();
+  get displayDays(): readonly CalendarDay[] {
+    let days = [...this.candidateDays] as CalendarDay[];
+    let remaining = this.trimCount;
     while (remaining > 0 && days.length > 0) {
       const last = days[days.length - 1];
       const isOnlyDay = days.length === 1;
       if (!isOnlyDay && last.events.length <= 1) {
-        // Remove the whole last day
         days = days.slice(0, -1);
       } else if (last.events.length > 1) {
-        // Trim last event of last day
         days = [...days.slice(0, -1), { ...last, events: last.events.slice(0, -1) }];
       } else {
-        // Only one event in only day — can't trim further
         break;
       }
       remaining--;
     }
     return days;
-  });
+  }
 
-  readonly weatherIconName = computed(() => {
+  get weatherIconName(): string {
     const code = this.weatherService.symbolCode();
     const key = code.replace(/_(day|night|polartwilight)$/, '');
     return WEATHER_ICON_MAP[key] ?? 'cloud';
-  });
+  }
 
-  constructor() {
-    // Reset trim whenever source data changes
-    effect(() => {
-      this.candidateDays();
-      untracked(() => this._trimCount.set(0));
-    });
+  ngAfterViewChecked(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
 
-    if (isPlatformBrowser(this.platformId)) {
-      // After each change to displayDays, check overflow after two animation frames
-      // (first rAF: Angular renders; second rAF: browser paints)
-      effect(() => {
-        this.displayDays(); // subscribe
-        untracked(() => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const el = this.calendarRef?.nativeElement;
-              if (el && el.scrollHeight > el.clientHeight + 2) {
-                this._trimCount.update(v => v + 1);
-              }
-            });
-          });
+    // Reset trim count when the underlying data changes
+    const key = this.candidateDays.map((d) => d.date + ':' + d.events.length).join('|');
+    if (key !== this._lastCandidateKey) {
+      this._lastCandidateKey = key;
+      this.trimCount = 0;
+      this._trimPending = false;
+    }
+
+    // Trim one event at a time if the calendar container overflows
+    if (!this._trimPending) {
+      const el = this.calendarRef?.nativeElement;
+      if (el && el.scrollHeight > el.clientHeight + 2) {
+        this._trimPending = true;
+        setTimeout(() => {
+          this.trimCount++;
+          this._trimPending = false;
         });
-      });
+      }
     }
   }
 
@@ -132,11 +126,36 @@ export class ColumnsPageComponent {
     return Math.max(0, Math.min(100, 100 - (dep.minutesUntilDeparture / MAX_MINUTES) * 100));
   }
 
+  get futureDepartures(): readonly Departure[] {
+    // Use Date.now() (real UTC ms) — not clockService, whose nowMs() can be
+    // offset if browser timezone ≠ server timezone (common on embedded Pi).
+    // moment() parses the ISO departure string robustly across all formats.
+    const nowMs = Date.now();
+    return this.trainService.departures().filter(
+      (dep) => moment(dep.expectedDeparture).valueOf() >= nowMs,
+    );
+  }
+
   minutesUntil(dep: Departure): number {
-    void this.clockService.time();
+    // Same rationale: Date.now() avoids clock-service timezone offset issues.
     const now = Math.floor(Date.now() / 60000) * 60000;
-    const dep_min = Math.floor(new Date(dep.expectedDeparture).getTime() / 60000) * 60000;
+    const dep_min = Math.floor(moment(dep.expectedDeparture).valueOf() / 60000) * 60000;
     return Math.max(0, Math.round((dep_min - now) / 60000));
+  }
+
+  /** Returns the departure time to display in the server's local timezone.
+   *  Prefers the server-computed displayTime field (populated after server rebuild).
+   *  Falls back to converting the ISO departure string using the server's UTC offset
+   *  (from clockService) — handles both UTC 'Z' strings (PRIM) and offset strings. */
+  departureTime(dep: Departure): string {
+    if (dep.displayTime) return dep.displayTime;
+    const offset = this.clockService.utcOffset();
+    if (offset) {
+      // moment().utcOffset() shifts the display to the given offset without
+      // changing the underlying UTC value. Handles Z, +02:00, and bare strings.
+      return moment(dep.expectedDeparture).utcOffset(offset).format('HH:mm');
+    }
+    return moment.parseZone(dep.expectedDeparture).format('HH:mm');
   }
 
   dayLabelParts(day: CalendarDay): { accent: string; normal: string } {

@@ -8,3 +8,10 @@ services:
     ports:
       - "4500:4000"
     container_name: frame-screen-saver-web
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - MEDIA_DIR=/media
+      - PRIM_API_KEY=${PRIM_API_KEY}
+    volumes:
+      - ../media:/media:ro

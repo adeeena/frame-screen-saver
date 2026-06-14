@@ -2,7 +2,7 @@
 // Never reference $variables outside this file â€” use var(--token) everywhere.
 
 :root {
-  // â”€â”€ Silversea Brand Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Silversea Brand Palette 
   --ss-titanium:      #323234;
   --ss-yellow:        #f0bc75;
   --ss-yellow-dark:   #ff9d00;
@@ -18,14 +18,14 @@
   --ss-neutral-60:    #646468;
   --ss-neutral-70:    #4b4b4e;
 
-  // â”€â”€ Transilien Lines â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Transilien Lines 
   --transilien-n:     #00A88F;
   --transilien-n-fg:  #ffffff;
 
-  // â”€â”€ Screensaver Semantic Tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Screensaver Semantic Tokens 
   --frame-outer:      #101016;
   --frame-inner:      #ffffff;
-  --overlay-dark:     rgba(0, 0, 0, 0.45);
+  --overlay-dark:     rgba(0, 0, 0, 0.60);
   --overlay-columns:  rgba(10, 10, 14, 0.45);
 
   --text-primary:     var(--ss-white);
@@ -34,24 +34,32 @@
   --accent:           var(--ss-yellow);
   --accent-dim:       rgba(240, 188, 117, 0.55);
 
-  // â”€â”€ Font Families â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Font Families 
   --font-display:  'DidotLTPro', 'Didot', 'Bodoni MT', Georgia, serif;
   --font-body:     'AvenirNextLTPro', 'Avenir Next', 'Futura', Helvetica, sans-serif;
 
-  // â”€â”€ Spacing (relative to dvw for TV) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Spacing (relative to dvw for TV) 
+  // Custom properties need @supports for dvw: unlike regular CSS declarations,
+  // browsers store custom property values as raw tokens without validation.
+  // The dvw value would overwrite vw and then fail at the var() use-site.
   --space-xs:   0.5vw;
-  --space-xs:   0.5dvw;
   --space-s:    1vw;
-  --space-s:    1dvw;
   --space-m:    2vw;
-  --space-m:    2dvw;
   --space-l:    3vw;
-  --space-l:    3dvw;
   --space-xl:   5vw;
-  --space-xl:   5dvw;
 
-  // â”€â”€ Transitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Transitions 
   --transition-fast:   0.15s ease;
   --transition-medium: 0.35s ease;
+}
+
+@supports (width: 1dvw) {
+  :root {
+    --space-xs:   0.5dvw;
+    --space-s:    1dvw;
+    --space-m:    2dvw;
+    --space-l:    3dvw;
+    --space-xl:   5dvw;
+  }
 }
 

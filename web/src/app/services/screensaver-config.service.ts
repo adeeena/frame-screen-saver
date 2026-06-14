@@ -1,6 +1,7 @@
-import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 // ─── Config model ─────────────────────────────────────────────────────────────
 
@@ -10,6 +11,8 @@ export interface AnimationSettings {
   columnsPageTimeoutMs: number;
   frameChangeAfterCycles: number;
   autoReloadIntervalHours: number;
+  /** How many images to include in each gallery shuffle (default 10). */
+  gallerySize: number;
 }
 
 export interface FontSettings {
@@ -92,36 +95,41 @@ export interface ScreensaverConfig {
 
 @Injectable({ providedIn: 'root' })
 export class ScreensaverConfigService {
-  private readonly http = inject(HttpClient);
-  private readonly platformId = inject(PLATFORM_ID);
+  private readonly _config$ = new BehaviorSubject<ScreensaverConfig | null>(null);
+  private readonly _saveStatus$ = new BehaviorSubject<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-  readonly config = signal<ScreensaverConfig | null>(null);
-  readonly saveStatus = signal<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  readonly config$: Observable<ScreensaverConfig | null> = this._config$.asObservable();
 
-  constructor() {
+  constructor(
+    private readonly http: HttpClient,
+    @Inject(PLATFORM_ID) private readonly platformId: object,
+  ) {
     if (!isPlatformBrowser(this.platformId)) return;
     this.load();
   }
 
+  config(): ScreensaverConfig | null { return this._config$.value; }
+  saveStatus(): 'idle' | 'saving' | 'saved' | 'error' { return this._saveStatus$.value; }
+
   load(): void {
     this.http.get<ScreensaverConfig>('/screensaver.config.json').subscribe({
-      next: (cfg) => this.config.set(cfg),
+      next: (cfg) => this._config$.next(cfg),
       error: (err) => console.error('Failed to load screensaver.config.json', err),
     });
   }
 
   save(cfg: ScreensaverConfig): void {
-    this.saveStatus.set('saving');
+    this._saveStatus$.next('saving');
     this.http.post<{ success: boolean }>('/api/config', cfg).subscribe({
       next: () => {
-        this.config.set(cfg);
-        this.saveStatus.set('saved');
-        setTimeout(() => this.saveStatus.set('idle'), 2000);
+        this._config$.next(cfg);
+        this._saveStatus$.next('saved');
+        setTimeout(() => this._saveStatus$.next('idle'), 2000);
       },
       error: (err) => {
         console.error('Failed to save config', err);
-        this.saveStatus.set('error');
-        setTimeout(() => this.saveStatus.set('idle'), 3000);
+        this._saveStatus$.next('error');
+        setTimeout(() => this._saveStatus$.next('idle'), 3000);
       },
     });
   }

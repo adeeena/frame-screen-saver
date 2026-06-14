@@ -4,7 +4,8 @@
     "coverPageTimeoutMs": 5000,
     "columnsPageTimeoutMs": 10000,
     "frameChangeAfterCycles": 10,
-    "autoReloadIntervalHours": 6
+    "autoReloadIntervalHours": 6,
+    "gallerySize": 10
   },
   "displaySettings": {
     "isGrainEffectEnabled": true,

@@ -1,8 +1,8 @@
-import { Injectable, signal, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
+import { Injectable, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval, switchMap, catchError, of, startWith } from 'rxjs';
+import { Subject, interval, of } from 'rxjs';
+import { switchMap, catchError, startWith, takeUntil } from 'rxjs/operators';
 
 export interface Departure {
   readonly line: string;
@@ -11,26 +11,24 @@ export interface Departure {
   readonly destination: string;
   readonly scheduledDeparture: string;
   readonly expectedDeparture: string;
+  /** Pre-formatted local time string (HH:mm) — computed server-side to avoid client timezone issues. */
+  readonly displayTime: string;
   readonly minutesUntilDeparture: number;
   readonly status: 'onTime' | 'delayed' | 'unknown';
 }
 
-@Injectable({
-  providedIn: 'root',
-})
-export class TrainService {
-  private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly platformId = inject(PLATFORM_ID);
+@Injectable({ providedIn: 'root' })
+export class TrainService implements OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+  private _departures: readonly Departure[] = [];
 
-  private readonly _departures = signal<readonly Departure[]>([]);
-
-  readonly departures = this._departures.asReadonly();
-
-  constructor() {
+  constructor(
+    private readonly http: HttpClient,
+    @Inject(PLATFORM_ID) private readonly platformId: object,
+  ) {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    interval(20 * 60 * 1000)
+    interval(2 * 60 * 1000) // 2 min: matches server cache TTL so stale trains don't linger
       .pipe(
         startWith(0),
         switchMap(() =>
@@ -41,9 +39,16 @@ export class TrainService {
             }),
           ),
         ),
-        takeUntilDestroyed(this.destroyRef),
+        takeUntil(this.destroy$),
       )
-      .subscribe((data) => this._departures.set(data));
+      .subscribe((data) => { this._departures = data; });
+  }
+
+  departures(): readonly Departure[] { return this._departures; }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 

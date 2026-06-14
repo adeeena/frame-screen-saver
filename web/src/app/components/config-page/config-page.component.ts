@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject } from 'rxjs';
+import { filter, take, takeUntil } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import {
   ScreensaverConfigService,
@@ -24,17 +26,11 @@ export type ConfigSection =
 @Component({
   selector: 'app-config-page',
   templateUrl: './config-page.html',
-  styleUrl: './config-page.scss',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrls: ['./config-page.scss'],
+  changeDetection: ChangeDetectionStrategy.Default,
 })
-export class ConfigPageComponent implements OnInit {
-  private readonly router = inject(Router);
-  readonly configService = inject(ScreensaverConfigService);
-
-  readonly activeSection = signal<ConfigSection>('animation');
-  readonly draft = signal<ScreensaverConfig | null>(null);
-
+export class ConfigPageComponent implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   readonly sections: { id: ConfigSection; label: string; icon: string }[] = [
     { id: 'animation', label: 'Animation', icon: '◷' },
     { id: 'display',   label: 'Display',   icon: '⬜' },
@@ -44,22 +40,33 @@ export class ConfigPageComponent implements OnInit {
     { id: 'calendar',  label: 'Calendar',  icon: '⬚' },
   ];
 
-  readonly saveStatus = this.configService.saveStatus;
+  activeSection: ConfigSection = 'animation';
+  draft: ScreensaverConfig | null = null;
+
+  constructor(
+    private readonly router: Router,
+    readonly configService: ScreensaverConfigService,
+  ) {}
+
+  saveStatus(): 'idle' | 'saving' | 'saved' | 'error' {
+    return this.configService.saveStatus();
+  }
 
   ngOnInit(): void {
-    const cfg = this.configService.config();
-    if (cfg) {
-      this.draft.set(structuredClone(cfg));
-    } else {
-      // Config not yet loaded — wait for it
-      const interval = setInterval(() => {
-        const c = this.configService.config();
-        if (c) {
-          this.draft.set(structuredClone(c));
-          clearInterval(interval);
-        }
-      }, 100);
-    }
+    this.configService.config$
+      .pipe(
+        filter((c): c is ScreensaverConfig => c !== null),
+        take(1),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((cfg) => {
+        this.draft = JSON.parse(JSON.stringify(cfg));
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   close(): void {
@@ -67,96 +74,77 @@ export class ConfigPageComponent implements OnInit {
   }
 
   save(): void {
-    const d = this.draft();
-    if (d) this.configService.save(d);
+    if (this.draft) this.configService.save(this.draft);
   }
 
   reset(): void {
     const cfg = this.configService.config();
-    if (cfg) this.draft.set(structuredClone(cfg));
+    if (cfg) this.draft = JSON.parse(JSON.stringify(cfg));
   }
 
   // ─── Section patch helpers ─────────────────────────────────────────────────
 
   patchAnimation(changes: Partial<AnimationSettings>): void {
-    this.draft.update(d => !d ? d : {
-      ...d,
-      animationSettings: { ...d.animationSettings, ...changes },
-    });
+    if (!this.draft) return;
+    this.draft = { ...this.draft, animationSettings: { ...this.draft.animationSettings, ...changes } };
   }
 
   patchDisplay(changes: Partial<DisplaySettings>): void {
-    this.draft.update(d => !d ? d : {
-      ...d,
-      displaySettings: { ...d.displaySettings, ...changes },
-    });
+    if (!this.draft) return;
+    this.draft = { ...this.draft, displaySettings: { ...this.draft.displaySettings, ...changes } };
   }
 
   patchColors(changes: Partial<ColorSettings>): void {
-    this.draft.update(d => !d ? d : {
-      ...d,
-      displaySettings: {
-        ...d.displaySettings,
-        colors: { ...d.displaySettings.colors, ...changes },
-      },
-    });
+    if (!this.draft) return;
+    this.draft = {
+      ...this.draft,
+      displaySettings: { ...this.draft.displaySettings, colors: { ...this.draft.displaySettings.colors, ...changes } },
+    };
   }
 
   patchMedia(changes: Partial<MediaSettings>): void {
-    this.draft.update(d => !d ? d : {
-      ...d,
-      displaySettings: {
-        ...d.displaySettings,
-        media: { ...d.displaySettings.media, ...changes },
-      },
-    });
+    if (!this.draft) return;
+    this.draft = {
+      ...this.draft,
+      displaySettings: { ...this.draft.displaySettings, media: { ...this.draft.displaySettings.media, ...changes } },
+    };
   }
 
   patchLocation(changes: Partial<LocationSettings>): void {
-    this.draft.update(d => !d ? d : {
-      ...d,
-      appSettings: {
-        ...d.appSettings,
-        location: { ...d.appSettings.location, ...changes },
-      },
-    });
+    if (!this.draft) return;
+    this.draft = {
+      ...this.draft,
+      appSettings: { ...this.draft.appSettings, location: { ...this.draft.appSettings.location, ...changes } },
+    };
   }
 
   patchAppTime(changes: { timezone?: string; timeFormat?: string; dateFormat?: string }): void {
-    this.draft.update(d => !d ? d : {
-      ...d,
-      appSettings: { ...d.appSettings, ...changes },
-    });
+    if (!this.draft) return;
+    this.draft = { ...this.draft, appSettings: { ...this.draft.appSettings, ...changes } };
   }
 
   patchWeather(changes: Partial<WeatherSettings>): void {
-    this.draft.update(d => !d ? d : {
-      ...d,
-      appSettings: {
-        ...d.appSettings,
-        weather: { ...d.appSettings.weather, ...changes },
-      },
-    });
+    if (!this.draft) return;
+    this.draft = {
+      ...this.draft,
+      appSettings: { ...this.draft.appSettings, weather: { ...this.draft.appSettings.weather, ...changes } },
+    };
   }
 
   patchTransit(changes: Partial<TransitSettings>): void {
-    this.draft.update(d => !d ? d : {
-      ...d,
-      appSettings: {
-        ...d.appSettings,
-        transit: { ...d.appSettings.transit, ...changes },
-      },
-    });
+    if (!this.draft) return;
+    this.draft = {
+      ...this.draft,
+      appSettings: { ...this.draft.appSettings, transit: { ...this.draft.appSettings.transit, ...changes } },
+    };
   }
 
   patchCalendar(changes: Partial<CalendarSettings>): void {
-    this.draft.update(d => !d ? d : {
-      ...d,
-      appSettings: {
-        ...d.appSettings,
-        calendar: { ...d.appSettings.calendar, ...changes },
-      },
-    });
+    if (!this.draft) return;
+    this.draft = {
+      ...this.draft,
+      appSettings: { ...this.draft.appSettings, calendar: { ...this.draft.appSettings.calendar, ...changes } },
+    };
   }
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -176,6 +164,14 @@ export class ConfigPageComponent implements OnInit {
   nullableStr(event: Event): string | null {
     const v = (event.target as HTMLInputElement).value.trim();
     return v === '' ? null : v;
+  }
+
+  patchFontSetting(key: 'clock' | 'headers' | 'default', event: Event): void {
+    if (!this.draft) return;
+    const val = this.strVal(event);
+    this.patchDisplay({
+      fontSettings: { ...this.draft.displaySettings.fontSettings, [key]: val },
+    });
   }
 
   patchWeatherUnits(event: Event): void {

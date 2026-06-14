@@ -22,12 +22,8 @@ RUN npm ci --omit=dev
 # Copy compiled application
 COPY --from=builder /build/dist/frame-screen-saver/ dist/frame-screen-saver/
 
-# Bake in the media folder
-COPY media/ /media/
-
 ENV NODE_ENV=production
 ENV PORT=4000
-ENV MEDIA_DIR=/media
 
 EXPOSE 4000
-CMD ["node", "dist/frame-screen-saver/server/server.mjs"]
+CMD ["node", "dist/frame-screen-saver/server/main.js"]
