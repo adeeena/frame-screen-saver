@@ -8,10 +8,19 @@ services:
     ports:
       - "4500:4000"
     container_name: frame-screen-saver-web
+    restart: unless-stopped
     environment:
       - NODE_ENV=production
       - PORT=4000
       - MEDIA_DIR=/media
-      - PRIM_API_KEY=${PRIM_API_KEY}
+      # Transit API keys — set the one matching your provider in .env
+      - PRIM_API_KEY=${PRIM_API_KEY:-}
+      - NAVITIA_TOKEN=${NAVITIA_TOKEN:-}
     volumes:
       - ../media:/media:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/api/clock', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
