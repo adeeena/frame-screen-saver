@@ -6,7 +6,10 @@ import {
   OnDestroy,
   AfterViewInit,
   ViewChild,
+  Inject,
+  PLATFORM_ID,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Subject } from 'rxjs';
 import { filter, skip, take, takeUntil } from 'rxjs/operators';
 import { gsap } from 'gsap';
@@ -92,12 +95,15 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
     private readonly router: Router,
     private readonly configService: ScreensaverConfigService,
     private readonly ngZone: NgZone,
+    @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {
     // Read persisted dim level from localStorage
     if (typeof localStorage !== 'undefined') {
       const stored = parseFloat(localStorage.getItem(TheFrameComponent.DIM_STORAGE_KEY) ?? '0') || 0;
       this.dimLevel = Math.min(TheFrameComponent.DIM_MAX, Math.max(TheFrameComponent.DIM_MIN, stored));
     }
+
+    if (!isPlatformBrowser(this.platformId)) return;
 
     // skip(1) because setRefresh$ fires once immediately on first gallery load
     this.imageCycleService.setRefresh$
@@ -106,6 +112,8 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.ngZone.runOutsideAngular(() => {
       this.initElements();
       this.buildTimeline();
