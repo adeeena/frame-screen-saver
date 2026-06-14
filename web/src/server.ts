@@ -1,3 +1,6 @@
+// Zone.js MUST be the very first import in the SSR bundle entry point.
+// The browser build gets it via polyfills.ts; the server builder does not.
+import 'zone.js/dist/zone-node';
 import 'dotenv/config';
 import { ngExpressEngine } from '@nguniversal/express-engine';
 import { AppServerModule } from './app/app-server.module';
