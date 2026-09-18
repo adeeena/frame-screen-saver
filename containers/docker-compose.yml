@@ -13,11 +13,13 @@ services:
       - NODE_ENV=production
       - PORT=4000
       - MEDIA_DIR=/media
+      - MESSAGES_FILE=/data/messages.json
       # Transit API keys — set the one matching your provider in .env
       - PRIM_API_KEY=${PRIM_API_KEY:-}
       - NAVITIA_TOKEN=${NAVITIA_TOKEN:-}
     volumes:
       - ../media:/media:ro
+      - ../runtime-data:/data
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/api/clock', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s

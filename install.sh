@@ -7,6 +7,8 @@ readonly REPOSITORY_BRANCH="${REPOSITORY_BRANCH:-main}"
 readonly INSTALL_DIR="${INSTALL_DIR:-$HOME/frame-screen-saver}"
 readonly COMPOSE_DIR="$INSTALL_DIR/containers"
 readonly ENV_FILE="$COMPOSE_DIR/.env"
+readonly DATA_DIR="$INSTALL_DIR/runtime-data"
+readonly MESSAGES_FILE="$DATA_DIR/messages.json"
 
 log() {
   printf '\n\033[1;32m==> %s\033[0m\n' "$*"
@@ -112,6 +114,17 @@ elif [[ -e "$INSTALL_DIR" ]]; then
 else
   log "Cloning repository into $INSTALL_DIR"
   git clone --branch "$REPOSITORY_BRANCH" --single-branch "$REPOSITORY_URL" "$INSTALL_DIR"
+fi
+
+if [[ ! -f "$MESSAGES_FILE" ]]; then
+  log "Creating persistent message storage"
+  mkdir -p "$DATA_DIR"
+  if [[ -f "$INSTALL_DIR/media/messages.json" ]]; then
+    cp "$INSTALL_DIR/media/messages.json" "$MESSAGES_FILE"
+  else
+    printf '[]\n' >"$MESSAGES_FILE"
+  fi
+  chmod 600 "$MESSAGES_FILE"
 fi
 
 if [[ ! -f "$ENV_FILE" ]]; then
