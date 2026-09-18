@@ -1302,6 +1302,11 @@ app.use(
     maxAge: '1y',
     index: false,
     redirect: false,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('screensaver.config.json')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    },
   }),
 );
 

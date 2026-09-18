@@ -8,7 +8,8 @@ RUN npm ci
 
 # Copy source and compile
 COPY web/ ./
-RUN npm run build
+RUN npm run build:browser -- --configuration production \
+	&& npm run build:server -- --configuration production
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runtime
