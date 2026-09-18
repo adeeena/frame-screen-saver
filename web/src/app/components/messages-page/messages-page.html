@@ -1,0 +1,81 @@
+<main class="messages-page">
+    <header class="messages-page__header">
+        <div class="messages-page__heading"><span>Frame</span> Messages</div>
+        <button class="messages-page__close" type="button" (click)="close()" aria-label="Close messages">
+            <i [feather]="'x'"></i>
+        </button>
+    </header>
+
+    <div class="messages-page__content">
+        <section class="messages-page__composer" aria-labelledby="composer-title">
+            <div class="messages-page__section-heading" id="composer-title">
+                {{ editingId ? 'Edit message' : 'New message' }}
+            </div>
+
+            <label class="messages-page__label" for="message-text">Message</label>
+            <textarea id="message-text" class="messages-page__textarea" maxlength="2048" rows="6" [(ngModel)]="text"
+                placeholder="Write a message for the frame"></textarea>
+            <div class="messages-page__field-meta">{{ text.length }} / 2048</div>
+
+            <label class="messages-page__label" for="message-expiration">Expiration</label>
+            <input id="message-expiration" class="messages-page__input" type="datetime-local" [max]="maxExpiresAt"
+                [(ngModel)]="expiresAt" />
+            <div class="messages-page__field-meta">Up to one week from now</div>
+
+            <div class="messages-page__error" *ngIf="error">{{ error }}</div>
+            <div class="messages-page__actions">
+                <button class="messages-page__button messages-page__button--primary" type="button"
+                    [disabled]="!isValid() || saving" (click)="save()">
+                    {{ saving ? 'Saving...' : (editingId ? 'Save changes' : 'Publish message') }}
+                </button>
+                <button class="messages-page__button" type="button" *ngIf="editingId"
+                    (click)="resetForm()">Cancel</button>
+            </div>
+        </section>
+
+        <section class="messages-page__library" aria-labelledby="library-title">
+            <div class="messages-page__section-heading messages-page__section-heading--history" id="library-title">
+                <span>Message history</span>
+                <div class="messages-page__history-actions">
+                    <button class="messages-page__button messages-page__button--compact" type="button"
+                        [disabled]="loading || historyActionPending" (click)="purgeExpired()">
+                        Purge expired
+                    </button>
+                    <button class="messages-page__button messages-page__button--compact messages-page__button--danger"
+                        type="button" [disabled]="loading || historyActionPending || messages.length === 0"
+                        (click)="requestClearAll()">
+                        Clear all
+                    </button>
+                </div>
+            </div>
+            <div class="messages-page__clear-confirmation" *ngIf="clearConfirmationVisible">
+                <span>Clear every message? This cannot be undone.</span>
+                <div class="messages-page__clear-confirmation-actions">
+                    <button class="messages-page__button messages-page__button--compact" type="button"
+                        (click)="cancelClearAll()">Cancel</button>
+                    <button class="messages-page__button messages-page__button--compact messages-page__button--danger"
+                        type="button" (click)="clearAll()">Confirm clear all</button>
+                </div>
+            </div>
+            <div class="messages-page__notice" role="status" *ngIf="historyNotice">{{ historyNotice }}</div>
+            <div class="messages-page__loading" *ngIf="loading">Loading...</div>
+            <div class="messages-page__empty" *ngIf="!loading && messages.length === 0">No messages</div>
+
+            <article class="messages-page__message" *ngFor="let message of messages"
+                [class.messages-page__message--expired]="!isActive(message)">
+                <div class="messages-page__message-state">{{ isActive(message) ? 'Active' : 'Expired' }}</div>
+                <div class="messages-page__message-text">{{ message.text }}</div>
+                <time class="messages-page__message-expiry">Expires {{ message.expiresAt | date:'medium' }}</time>
+                <div class="messages-page__message-actions">
+                    <button class="messages-page__icon-button" type="button" (click)="edit(message)"
+                        title="Edit message" aria-label="Edit message"><i [feather]="'edit-2'"></i></button>
+                    <button class="messages-page__icon-button messages-page__icon-button--danger" type="button"
+                        *ngIf="isActive(message)" (click)="expire(message)" title="Expire now"
+                        aria-label="Expire message now">
+                        <i [feather]="'trash-2'"></i>
+                    </button>
+                </div>
+            </article>
+        </section>
+    </div>
+</main>

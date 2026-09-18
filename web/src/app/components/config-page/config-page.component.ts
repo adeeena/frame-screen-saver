@@ -12,6 +12,7 @@ import {
   LocationSettings,
   WeatherSettings,
   TransitSettings,
+  TransitRouteSettings,
   CalendarSettings,
 } from '../../services/screensaver-config.service';
 
@@ -32,12 +33,12 @@ export type ConfigSection =
 export class ConfigPageComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   readonly sections: { id: ConfigSection; label: string; icon: string }[] = [
-    { id: 'animation', label: 'Animation', icon: '◷' },
-    { id: 'display',   label: 'Display',   icon: '⬜' },
-    { id: 'location',  label: 'Location & Time', icon: '◎' },
-    { id: 'weather',   label: 'Weather',   icon: '☁' },
-    { id: 'transit',   label: 'Transit',   icon: '⇌' },
-    { id: 'calendar',  label: 'Calendar',  icon: '⬚' },
+    { id: 'animation', label: 'Animation', icon: 'film' },
+    { id: 'display',   label: 'Display',   icon: 'monitor' },
+    { id: 'location',  label: 'Location & Time', icon: 'map-pin' },
+    { id: 'weather',   label: 'Weather',   icon: 'cloud' },
+    { id: 'transit',   label: 'Transit',   icon: 'repeat' },
+    { id: 'calendar',  label: 'Calendar',  icon: 'calendar' },
   ];
 
   activeSection: ConfigSection = 'animation';
@@ -139,6 +140,44 @@ export class ConfigPageComponent implements OnInit, OnDestroy {
     };
   }
 
+  addTransitEntry(): void {
+    if (!this.draft) return;
+    const transit = this.draft.appSettings.transit;
+    const id = `route-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    const entry: TransitRouteSettings = {
+      id,
+      provider: 'prim',
+      stopId: '',
+      stopLabel: '',
+      lineLabel: '',
+      lineColor: '666666',
+      lineTextColor: 'ffffff',
+      direction: '',
+      maxDepartures: 2,
+      primLineRef: null,
+      navitiaRegion: null,
+      gtfsRtUrl: null,
+      destinationFilter: null,
+      availableFrom: null,
+      availableUntil: null,
+    };
+    this.patchTransit({ entries: [...transit.entries, entry] });
+  }
+
+  patchTransitEntry(entryId: string, changes: Partial<TransitRouteSettings>): void {
+    if (!this.draft) return;
+    const entries = this.draft.appSettings.transit.entries.map((entry) =>
+      entry.id === entryId ? { ...entry, ...changes } : entry,
+    );
+    this.patchTransit({ entries });
+  }
+
+  removeTransitEntry(entryId: string): void {
+    if (!this.draft) return;
+    const entries = this.draft.appSettings.transit.entries.filter((entry) => entry.id !== entryId);
+    this.patchTransit({ entries });
+  }
+
   patchCalendar(changes: Partial<CalendarSettings>): void {
     if (!this.draft) return;
     this.draft = {
@@ -155,6 +194,10 @@ export class ConfigPageComponent implements OnInit, OnDestroy {
 
   numVal(event: Event): number {
     return Number((event.target as HTMLInputElement).value);
+  }
+
+  millisecondsVal(event: Event): number {
+    return Math.round(this.numVal(event) * 1000);
   }
 
   boolVal(event: Event): boolean {

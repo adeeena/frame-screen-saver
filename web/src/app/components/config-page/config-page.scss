@@ -55,6 +55,11 @@
     align-items: center;
     justify-content: center;
 
+    i {
+      width: 1em;
+      height: 1em;
+    }
+
     &:hover {
       color: var(--accent);
       border-color: var(--accent);
@@ -118,11 +123,14 @@
   }
 
   &__nav-icon {
+    display: block;
     font-size: 1.3vw;
     font-size: 1.3dvw;
     opacity: 0.7;
     width: 1.5vw;
     width: 1.5dvw;
+    height: 1.5vw;
+    height: 1.5dvw;
     text-align: center;
   }
 
@@ -160,6 +168,13 @@
     padding-bottom: 0.8dvw;
     border-bottom: 1px solid rgba(240, 188, 117, 0.2);
     letter-spacing: 0.04em;
+
+    &--actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
   }
 
   &__fields {
@@ -204,6 +219,48 @@
     padding-bottom: 0.5vw;
     padding-bottom: 0.5dvw;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  &__transit-entry-heading {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    margin-top: 1.5vw;
+    margin-top: 1.5dvw;
+    padding-bottom: 0.7vw;
+    padding-bottom: 0.7dvw;
+    border-bottom: 1px solid rgba(240, 188, 117, 0.35);
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 1vw;
+    font-size: 1dvw;
+  }
+
+  &__remove-entry {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.5vw;
+    width: 2.5dvw;
+    height: 2.5vw;
+    height: 2.5dvw;
+    padding: 0.65vw;
+    padding: 0.65dvw;
+    border: 1px solid rgba(255, 143, 132, 0.35);
+    border-radius: 0.3vw;
+    background: transparent;
+    color: #ff8f84;
+    cursor: pointer;
+  }
+
+  &__empty-entries {
+    grid-column: 1 / -1;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+    text-align: center;
   }
 
   &__label {
@@ -435,5 +492,210 @@
     font-size: 1.2vw;
     font-size: 1.2dvw;
     letter-spacing: 0.1em;
+  }
+
+  @media (max-width: 800px) {
+    &__header {
+      padding: 0.75rem 1rem;
+    }
+
+    &__header-title {
+      font-size: 1.35rem;
+      letter-spacing: 0;
+    }
+
+    &__close {
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 0.25rem;
+      font-size: 1rem;
+    }
+
+    &__body {
+      min-height: 0;
+      flex-direction: column;
+    }
+
+    &__nav {
+      width: 100%;
+      flex-direction: row;
+      padding: 0;
+      gap: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      border-right: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    &__nav-item {
+      flex: 0 0 auto;
+      min-height: 3rem;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-left: 0;
+      border-bottom: 2px solid transparent;
+
+      &--active {
+        border-bottom-color: var(--accent);
+      }
+    }
+
+    &__nav-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      font-size: 1rem;
+    }
+
+    &__nav-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    &__content {
+      min-width: 0;
+      padding: 1.25rem 1rem 2rem;
+    }
+
+    &__section {
+      max-width: none;
+    }
+
+    &__section-title {
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      font-size: 1.35rem;
+      letter-spacing: 0;
+
+      &--actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+    }
+
+    &__fields {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    &__field {
+      gap: 0.5rem;
+
+      &--toggle {
+        padding: 0.5rem 0;
+      }
+    }
+
+    &__field-group-title {
+      margin-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    &__transit-entry-heading {
+      margin-top: 1rem;
+      padding-bottom: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    &__remove-entry {
+      width: 2.75rem;
+      height: 2.75rem;
+      padding: 0.75rem;
+      border-radius: 0.25rem;
+    }
+
+    &__label {
+      font-size: 0.75rem;
+    }
+
+    &__input {
+      min-height: 2.75rem;
+      padding: 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 1rem;
+
+      &--hex {
+        width: 8rem;
+      }
+    }
+
+    &__select {
+      padding-right: 2.5rem;
+      background-position: right 0.75rem center;
+      background-size: 0.65rem;
+    }
+
+    &__hint {
+      font-size: 0.75rem;
+    }
+
+    &__color-row {
+      gap: 0.75rem;
+    }
+
+    &__color-swatch {
+      width: 3rem;
+      height: 2.75rem;
+      padding: 0.125rem;
+      border-radius: 0.25rem;
+    }
+
+    &__toggle {
+      padding: 0.5rem 0;
+
+      input:checked + .config-page__toggle-track::after {
+        transform: translateX(1.5rem);
+      }
+
+      &-track {
+        width: 3.25rem;
+        height: 1.75rem;
+        border-radius: 1rem;
+
+        &::after {
+          top: 0.2rem;
+          left: 0.2rem;
+          width: 1.35rem;
+          height: 1.35rem;
+        }
+      }
+    }
+
+    &__footer {
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+    }
+
+    &__footer-status {
+      min-width: 0;
+      flex: 1;
+    }
+
+    &__footer-actions {
+      gap: 0.5rem;
+    }
+
+    &__status {
+      font-size: 0.75rem;
+    }
+
+    &__btn {
+      min-height: 2.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+    }
+
+    &__loading {
+      padding: 1rem;
+      font-size: 1rem;
+      text-align: center;
+    }
   }
 }

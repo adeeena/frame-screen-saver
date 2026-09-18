@@ -8,7 +8,7 @@ To have the application running on full screen, launch it in a browser (in kiosk
 
 To do so in macOS:
 
-`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --kiosk http://localhost:4200`
+`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --kiosk http://localhost:4400`
 
 
 
@@ -33,7 +33,7 @@ To start a local development server, run:
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Once the server is running, open your browser and navigate to `http://localhost:4400/`. The application will automatically reload whenever you modify any of the source files.
 
 ## Code scaffolding
 

@@ -21,6 +21,7 @@ export class ClockService implements OnDestroy {
   private serverTimeOffset = 0;
   private _hasSynced = false;
   private _utcOffset = '';
+  private _nowMs = Date.now();
 
   constructor(
     private readonly http: HttpClient,
@@ -47,19 +48,19 @@ export class ClockService implements OnDestroy {
         if (response) {
           this.serverTimeOffset = Date.now() - moment(response.time).valueOf();
           this._hasSynced = true;
-          this._time = moment(Date.now() - this.serverTimeOffset).format('YYYY-MM-DD HH:mm:ss');
+          this.updateCurrentTime();
           if (response.utcOffset) this._utcOffset = response.utcOffset;
           this._error = null;
         }
       });
 
-    // Update time every minute (only after first sync)
-    timer(0, 60 * 1000)
+    // Capture one instant for every display so timezone clocks cannot cross a
+    // minute boundary before the cached local clock does.
+    timer(0, 1000)
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         if (!this._hasSynced) return;
-        const syncedTime = Date.now() - this.serverTimeOffset;
-        this._time = moment(syncedTime).format('YYYY-MM-DD HH:mm:ss');
+        this.updateCurrentTime();
       });
   }
 
@@ -69,7 +70,12 @@ export class ClockService implements OnDestroy {
   utcOffset(): string { return this._utcOffset; }
 
   /** Synced current time in milliseconds */
-  nowMs(): number { return Date.now() - this.serverTimeOffset; }
+  nowMs(): number { return this._nowMs; }
+
+  private updateCurrentTime(): void {
+    this._nowMs = Date.now() - this.serverTimeOffset;
+    this._time = moment(this._nowMs).format('YYYY-MM-DD HH:mm:ss');
+  }
 
   ngOnDestroy(): void {
     this.destroy$.next();

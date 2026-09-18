@@ -1,7 +1,7 @@
 // Zone.js MUST be the very first import in the SSR bundle entry point.
 // The browser build gets it via polyfills.ts; the server builder does not.
 import 'zone.js/dist/zone-node';
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { ngExpressEngine } from '@nguniversal/express-engine';
 import { AppServerModule } from './app/app-server.module';
 import { APP_BASE_HREF } from '@angular/common';
@@ -9,13 +9,21 @@ import express, { Request, Response, NextFunction } from 'express';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import path from 'path';
+import { randomBytes } from 'crypto';
 import https from 'https';
 import momentTz from 'moment-timezone';
 import axios from 'axios';
 import sharp from 'sharp';
 import fs from 'fs-extra';
+import WebSocket, { WebSocketServer } from 'ws';
 import { transit_realtime } from 'gtfs-realtime-bindings';
-import { serverConfig } from './server.config';
+import { serverConfig, TransitConfig } from './server.config';
+
+// Resolve .env relative to this file (web/.env), not process.cwd() — the working
+// directory the server is launched from varies (repo root vs web/) and dotenv's
+// default cwd-relative lookup silently finds nothing, leaving API keys undefined.
+const webRoot = path.resolve(__dirname, '../../..');
+dotenv.config({ path: path.join(webRoot, '.env') });
 
 // Node.js bundles its own CA store which may not include corporate/enterprise root CAs
 // that are present in the OS certificate store. Using a dedicated agent for all
@@ -24,10 +32,10 @@ const externalAgent = new https.Agent({ rejectUnauthorized: false });
 const externalAxios = axios.create({ httpsAgent: externalAgent });
 
 // ─── Media directory (resolved once at startup) ───────────────────────────────
-// Default: up 4 levels from web/dist/frame-screen-saver/server/ → repo root / media
+// Relative overrides are anchored to web/, matching the location of web/.env.
 const mediaDir = process.env['MEDIA_DIR']
-  ? path.resolve(process.env['MEDIA_DIR'])
-  : path.resolve(__dirname, '../../../../media');
+  ? path.resolve(webRoot, process.env['MEDIA_DIR'])
+  : path.resolve(webRoot, '../media');
 
 const browserDistFolder = join(__dirname, '../browser');
 const indexHtml = existsSync(join(browserDistFolder, 'index.original.html'))
@@ -58,6 +66,18 @@ interface SolarData {
   readonly type: 'sunrise' | 'sunset';
   readonly time: string;
   readonly utcOffset: string;
+  readonly events: readonly {
+    readonly type: 'sunrise' | 'sunset';
+    readonly time: string;
+  }[];
+}
+
+interface StoredMessage {
+  readonly id: string;
+  readonly text: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly expiresAt: string;
 }
 
 interface WeatherData {
@@ -67,6 +87,30 @@ interface WeatherData {
   readonly windSpeed: number;
   readonly windDirection: number;
   readonly uvIndex: number | null;
+}
+
+interface HourlyForecastPoint {
+  readonly time: string;
+  /** Pre-formatted local time string (HH:mm) — computed server-side to avoid client timezone issues. */
+  readonly hourLabel: string;
+  readonly temperature: number;
+  /** Expected precipitation (mm) in the hour following this point. */
+  readonly precipitation: number;
+  /** Cloud cover percentage (0–100). */
+  readonly cloudCoverage: number;
+  readonly symbolCode: string;
+}
+
+interface WeatherForecastData {
+  readonly hourly: readonly HourlyForecastPoint[];
+  readonly todayMin: number;
+  readonly todayMax: number;
+  readonly todayCloudMin: number;
+  readonly todayCloudMax: number;
+  /** Total expected precipitation (mm) over the next 12 hours. */
+  readonly next12hPrecipitation: number;
+  readonly willRain: boolean;
+  readonly willBeSunny: boolean;
 }
 
 interface Departure {
@@ -100,7 +144,8 @@ interface CalendarDay {
 
 const solarCache: Cache<SolarData> = { data: null, expiresAt: 0 };
 const weatherCache: Cache<WeatherData> = { data: null, expiresAt: 0 };
-const transitCache: Cache<readonly Departure[]> = { data: null, expiresAt: 0 };
+const weatherForecastCache: Cache<WeatherForecastData> = { data: null, expiresAt: 0 };
+const transitCaches = new Map<string, Cache<readonly Departure[]>>();
 const calendarCache: Cache<readonly CalendarDay[]> = { data: null, expiresAt: 0 };
 
 // ─── Weather symbol map ───────────────────────────────────────────────────────
@@ -163,6 +208,10 @@ async function solarHandler(_req: Request, res: Response): Promise<void> {
     const todayData = await getSolarData(now.format('YYYY-MM-DD'));
     const todaySunrise = momentTz.parseZone(todayData.sunrise.time);
     const todaySunset = momentTz.parseZone(todayData.sunset.time);
+    const tomorrow = now.clone().add(1, 'day');
+    const tomorrowData = await getSolarData(tomorrow.format('YYYY-MM-DD'));
+    const tomorrowSunrise = momentTz.parseZone(tomorrowData.sunrise.time);
+    const tomorrowSunset = momentTz.parseZone(tomorrowData.sunset.time);
     let nextEventTime: momentTz.Moment;
     let nextEventType: 'sunrise' | 'sunset';
     if (now.isBefore(todaySunrise)) {
@@ -172,10 +221,8 @@ async function solarHandler(_req: Request, res: Response): Promise<void> {
       nextEventType = 'sunset';
       nextEventTime = todaySunset;
     } else {
-      const tomorrow = now.clone().add(1, 'day');
-      const tomorrowData = await getSolarData(tomorrow.format('YYYY-MM-DD'));
       nextEventType = 'sunrise';
-      nextEventTime = momentTz(tomorrowData.sunrise.time);
+      nextEventTime = tomorrowSunrise;
     }
     const data: SolarData = {
       type: nextEventType,
@@ -183,6 +230,12 @@ async function solarHandler(_req: Request, res: Response): Promise<void> {
       // so the client pipe (moment.parseZone) can display in the correct timezone.
       time: nextEventTime.format(),
       utcOffset: nextEventTime.format('Z'),
+      events: [
+        { type: 'sunrise', time: todaySunrise.format() },
+        { type: 'sunset', time: todaySunset.format() },
+        { type: 'sunrise', time: tomorrowSunrise.format() },
+        { type: 'sunset', time: tomorrowSunset.format() },
+      ],
     };
     solarCache.data = data;
     solarCache.expiresAt = nextEventTime.valueOf();
@@ -233,6 +286,82 @@ async function weatherHandler(_req: Request, res: Response): Promise<void> {
     console.error('Weather handler error:', error);
     if (weatherCache.data) { res.json(weatherCache.data); }
     else { res.json({ temperature: 0, symbolCode: 'clearsky_day', weatherLabel: 'Unknown', windSpeed: 0, windDirection: 0, uvIndex: null }); }
+  }
+}
+
+async function weatherForecastHandler(_req: Request, res: Response): Promise<void> {
+  try {
+    if (weatherForecastCache.data && Date.now() < weatherForecastCache.expiresAt) {
+      res.json(weatherForecastCache.data);
+      return;
+    }
+    const { latitude, longitude } = serverConfig.location;
+    const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${latitude}&lon=${longitude}`;
+    const resp = await externalAxios.get<{
+      properties: {
+        timeseries: Array<{
+          time: string;
+          data: {
+            instant: { details: { air_temperature: number; cloud_area_fraction?: number } };
+            next_1_hours?: {
+              summary: { symbol_code: string };
+              details?: { precipitation_amount?: number };
+            };
+          };
+        }>;
+      };
+    }>(url, { headers: { 'User-Agent': 'frame-screen-saver/1.0' } });
+
+    // The compact endpoint only carries an hourly next_1_hours breakdown for the near
+    // term (~2 days) before falling back to 6-hourly steps — filter those out.
+    const HOURS_AHEAD = 24;
+    const hourly: HourlyForecastPoint[] = resp.data.properties.timeseries
+      .filter((entry) => entry.data.next_1_hours)
+      .slice(0, HOURS_AHEAD)
+      .map((entry) => ({
+        time: entry.time,
+        hourLabel: momentTz.parseZone(entry.time).tz(serverConfig.timezone).format('HH:mm'),
+        temperature: Math.round(entry.data.instant.details.air_temperature),
+        precipitation: entry.data.next_1_hours?.details?.precipitation_amount ?? 0,
+        cloudCoverage: Math.round(entry.data.instant.details.cloud_area_fraction ?? 0),
+        symbolCode: entry.data.next_1_hours?.summary.symbol_code ?? 'clearsky_day',
+      }));
+
+    const today = momentTz.tz(serverConfig.timezone).format('YYYY-MM-DD');
+    const todayEntries = hourly.filter(
+      (h) => momentTz.parseZone(h.time).tz(serverConfig.timezone).format('YYYY-MM-DD') === today,
+    );
+    const source = todayEntries.length > 0 ? todayEntries : hourly;
+    const temps = source.map((h) => h.temperature);
+    const clouds = source.map((h) => h.cloudCoverage);
+    const next12hPrecipitation = hourly.slice(0, 12).reduce((sum, h) => sum + h.precipitation, 0);
+    const willRain = source.some((h) => h.precipitation >= 0.2 || /rain|sleet|snow|thunder/.test(h.symbolCode));
+    const daylightEntries = source.filter((h) => {
+      const hour = momentTz.parseZone(h.time).tz(serverConfig.timezone).hour();
+      return hour >= 8 && hour <= 20;
+    });
+    const clearCount = daylightEntries.filter((h) => /^(clearsky|fair)/.test(h.symbolCode)).length;
+    const willBeSunny = !willRain && daylightEntries.length > 0 && clearCount / daylightEntries.length >= 0.5;
+
+    const data: WeatherForecastData = {
+      hourly,
+      todayMin: temps.length > 0 ? Math.min(...temps) : 0,
+      todayMax: temps.length > 0 ? Math.max(...temps) : 0,
+      todayCloudMin: clouds.length > 0 ? Math.min(...clouds) : 0,
+      todayCloudMax: clouds.length > 0 ? Math.max(...clouds) : 0,
+      next12hPrecipitation: Math.round(next12hPrecipitation * 10) / 10,
+      willRain,
+      willBeSunny,
+    };
+    const expiresHeader = resp.headers['expires'] as string | undefined;
+    const expiresAt = expiresHeader ? new Date(expiresHeader).getTime() : Date.now() + 30 * 60 * 1000;
+    weatherForecastCache.data = data;
+    weatherForecastCache.expiresAt = expiresAt;
+    res.json(data);
+  } catch (error) {
+    console.error('Weather forecast handler error:', error);
+    if (weatherForecastCache.data) { res.json(weatherForecastCache.data); }
+    else { res.json({ hourly: [], todayMin: 0, todayMax: 0, todayCloudMin: 0, todayCloudMax: 0, next12hPrecipitation: 0, willRain: false, willBeSunny: false }); }
   }
 }
 
@@ -312,11 +441,11 @@ async function imageHandler(req: Request, res: Response): Promise<void> {
 // ─── Transit providers ───────────────────────────────────────────────────────
 
 /** Navitia (open-source, navitia.io) — covers 40+ countries, requires NAVITIA_TOKEN env var */
-async function fetchDeparturesNavitia(now: momentTz.Moment): Promise<readonly Departure[]> {
+async function fetchDeparturesNavitia(config: TransitConfig, now: momentTz.Moment): Promise<readonly Departure[]> {
   const token = process.env['NAVITIA_TOKEN'];
-  const region = serverConfig.transit.navitiaRegion ?? 'fr-idf';
+  const region = config.navitiaRegion ?? 'fr-idf';
   if (!token) return [];
-  const url = `https://api.navitia.io/v1/coverage/${region}/stop_areas/${encodeURIComponent(serverConfig.transit.stopId)}/departures?count=${serverConfig.transit.maxDepartures * 3}&depth=1&disable_disruption=false`;
+  const url = `https://api.navitia.io/v1/coverage/${region}/stop_areas/${encodeURIComponent(config.stopId)}/departures?count=${config.maxDepartures * 3}&depth=1&disable_disruption=false`;
   const resp = await externalAxios.get<{
     departures: Array<{
       stop_date_time: {
@@ -341,8 +470,8 @@ async function fetchDeparturesNavitia(now: momentTz.Moment): Promise<readonly De
     const isDelayed = expected.diff(scheduled, 'seconds') > 30;
     return {
       line: d.route.line.code,
-      lineColor: d.route.line.color ?? serverConfig.transit.lineColor,
-      lineTextColor: d.route.line.text_color ?? serverConfig.transit.lineTextColor,
+      lineColor: d.route.line.color ?? config.lineColor,
+      lineTextColor: d.route.line.text_color ?? config.lineTextColor,
       destination: d.route.direction.stop_point.name,
       scheduledDeparture: scheduled.format(),
       expectedDeparture: expected.format(),
@@ -353,19 +482,19 @@ async function fetchDeparturesNavitia(now: momentTz.Moment): Promise<readonly De
   })
   .filter((d) => d.minutesUntilDeparture >= 0)
   .sort((a, b) => a.expectedDeparture.localeCompare(b.expectedDeparture))
-  .slice(0, serverConfig.transit.maxDepartures);
+  .slice(0, config.maxDepartures);
   return departures;
 }
 
 /** PRIM (Île-de-France Mobilités) SIRI Stop Monitoring */
-async function fetchDeparturesPrim(now: momentTz.Moment): Promise<readonly Departure[]> {
+async function fetchDeparturesPrim(config: TransitConfig, now: momentTz.Moment): Promise<readonly Departure[]> {
   const apiKey = process.env['PRIM_API_KEY'];
   if (!apiKey) return [];
-  const url = `https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=${encodeURIComponent(serverConfig.transit.stopId)}`;
+  const url = `https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=${encodeURIComponent(config.stopId)}`;
   const resp = await externalAxios.get(url, { headers: { apikey: apiKey } });
   type Visit = { MonitoredVehicleJourney: { DestinationName?: Array<{ value: string }>; MonitoredCall: { AimedDepartureTime: string; ExpectedDepartureTime?: string; DepartureStatus?: string } } };
   const visits: Visit[] = (resp.data as { Siri?: { ServiceDelivery?: { StopMonitoringDelivery?: Array<{ MonitoredStopVisit?: Visit[] }> } } })?.Siri?.ServiceDelivery?.StopMonitoringDelivery?.[0]?.MonitoredStopVisit ?? [];
-  const { destinationFilter } = serverConfig.transit;
+  const { destinationFilter } = config;
   return visits
     .map((visit) => {
       const journey = visit.MonitoredVehicleJourney;
@@ -381,7 +510,7 @@ async function fetchDeparturesPrim(now: momentTz.Moment): Promise<readonly Depar
       const minutesUntilDeparture = Math.max(0, rawMinutes);
       const rawStatus = call.DepartureStatus;
       const status: 'onTime' | 'delayed' | 'unknown' = rawStatus === 'onTime' ? 'onTime' : rawStatus === 'delayed' ? 'delayed' : 'unknown';
-      return { line: serverConfig.transit.lineLabel, destination: journey.DestinationName?.[0]?.value ?? serverConfig.transit.direction, scheduledDeparture: scheduledMoment.format(), expectedDeparture: expectedMoment.format(), displayTime: expectedMoment.format('HH:mm'), minutesUntilDeparture, status };
+      return { line: config.lineLabel, destination: journey.DestinationName?.[0]?.value ?? config.direction, scheduledDeparture: scheduledMoment.format(), expectedDeparture: expectedMoment.format(), displayTime: expectedMoment.format('HH:mm'), minutesUntilDeparture, status };
     })
     .filter((d) => !destinationFilter || d.destination.toLowerCase().includes(destinationFilter.toLowerCase()))
     .filter((_, i, arr) => {
@@ -391,12 +520,12 @@ async function fetchDeparturesPrim(now: momentTz.Moment): Promise<readonly Depar
       return momentTz.parseZone(dep.expectedDeparture).diff(now, 'minutes') >= 0;
     })
     .sort((a, b) => a.expectedDeparture.localeCompare(b.expectedDeparture))
-    .slice(0, serverConfig.transit.maxDepartures);
+    .slice(0, config.maxDepartures);
 }
 
 /** BKK Futár REST API (Budapest) — no API key required */
-async function fetchDeparturesBkk(now: momentTz.Moment): Promise<readonly Departure[]> {
-  const url = `https://futar.bkk.hu/api/query/v1/ws/otp/api/0/departures-for-stop?stopId=${encodeURIComponent(serverConfig.transit.stopId)}&minutesBefore=0&minutesAfter=120&limit=${serverConfig.transit.maxDepartures * 3}`;
+async function fetchDeparturesBkk(config: TransitConfig, now: momentTz.Moment): Promise<readonly Departure[]> {
+  const url = `https://futar.bkk.hu/api/query/v1/ws/otp/api/0/departures-for-stop?stopId=${encodeURIComponent(config.stopId)}&minutesBefore=0&minutesAfter=120&limit=${config.maxDepartures * 3}`;
   const resp = await externalAxios.get<{
     data: {
       entry: {
@@ -425,8 +554,8 @@ async function fetchDeparturesBkk(now: momentTz.Moment): Promise<readonly Depart
       const minutesUntil = Math.max(0, Math.round(expected.diff(now, 'minutes')));
       const isDelayed = st.predictedDepartureTime !== undefined && st.predictedDepartureTime !== st.departureTime;
       return {
-        line: route?.shortName ?? serverConfig.transit.lineLabel,
-        destination: trip?.tripHeadsign ?? serverConfig.transit.direction,
+        line: route?.shortName ?? config.lineLabel,
+        destination: trip?.tripHeadsign ?? config.direction,
         scheduledDeparture: scheduled.format(),
         expectedDeparture: expected.format(),
         displayTime: expected.format('HH:mm'),
@@ -436,14 +565,14 @@ async function fetchDeparturesBkk(now: momentTz.Moment): Promise<readonly Depart
     })
     .filter((d) => d.minutesUntilDeparture >= 0)
     .sort((a, b) => a.expectedDeparture.localeCompare(b.expectedDeparture))
-    .slice(0, serverConfig.transit.maxDepartures);
+    .slice(0, config.maxDepartures);
   return departures;
 }
 
 /** Generic GTFS-RT TripUpdates feed.
  *  Requires `gtfsRtUrl` in config and a stop_id from the static GTFS. */
-async function fetchDeparturesGtfsRt(now: momentTz.Moment): Promise<readonly Departure[]> {
-  const { gtfsRtUrl, stopId } = serverConfig.transit;
+async function fetchDeparturesGtfsRt(config: TransitConfig, now: momentTz.Moment): Promise<readonly Departure[]> {
+  const { gtfsRtUrl, stopId } = config;
   if (!gtfsRtUrl) throw new Error('gtfsRtUrl is required for gtfs-rt provider');
   const resp = await externalAxios.get(gtfsRtUrl, { responseType: 'arraybuffer' });
   const feed = transit_realtime.FeedMessage.decode(
@@ -463,8 +592,8 @@ async function fetchDeparturesGtfsRt(now: momentTz.Moment): Promise<readonly Dep
       const expected = scheduled.clone().add(delayMs, 'ms');
       const minutesUntil = Math.max(0, Math.round(expected.diff(now, 'minutes')));
       departures.push({
-        line: serverConfig.transit.lineLabel,
-        destination: serverConfig.transit.direction,
+        line: config.lineLabel,
+        destination: config.direction,
         scheduledDeparture: scheduled.format(),
         expectedDeparture: expected.format(),
         displayTime: expected.format('HH:mm'),
@@ -476,28 +605,17 @@ async function fetchDeparturesGtfsRt(now: momentTz.Moment): Promise<readonly Dep
   return departures
     .filter((d) => d.minutesUntilDeparture >= 0)
     .sort((a, b) => a.expectedDeparture.localeCompare(b.expectedDeparture))
-    .slice(0, serverConfig.transit.maxDepartures);
+    .slice(0, config.maxDepartures);
 }
 
-async function transitHandler(_req: Request, res: Response): Promise<void> {
-  try {
-    if (transitCache.data && Date.now() < transitCache.expiresAt) { res.json(transitCache.data); return; }
-    const now = momentTz.tz(serverConfig.timezone);
-    let departures: readonly Departure[];
-    switch (serverConfig.transit.provider) {
-      case 'navitia': departures = await fetchDeparturesNavitia(now); break;
-      case 'bkk':     departures = await fetchDeparturesBkk(now); break;
-      case 'gtfs-rt': departures = await fetchDeparturesGtfsRt(now); break;
-      case 'prim':
-      default:        departures = await fetchDeparturesPrim(now); break;
-    }
-    transitCache.data = departures;
-    transitCache.expiresAt = Date.now() + 2 * 60 * 1000; // 2 min: short enough that past trains don't linger
-    res.json(departures);
-  } catch (error) {
-    const msg = (error as { response?: { status?: number; data?: unknown }; message?: string })?.response?.data ?? (error as Error)?.message ?? error;
-    console.error('Transit handler error:', msg);
-    if (transitCache.data) { res.json(transitCache.data); } else { res.json([]); }
+async function fetchDepartures(config: TransitConfig): Promise<readonly Departure[]> {
+  const now = momentTz.tz(serverConfig.timezone);
+  switch (config.provider) {
+    case 'navitia': return fetchDeparturesNavitia(config, now);
+    case 'bkk':     return fetchDeparturesBkk(config, now);
+    case 'gtfs-rt': return fetchDeparturesGtfsRt(config, now);
+    case 'prim':
+    default:        return fetchDeparturesPrim(config, now);
   }
 }
 
@@ -513,16 +631,12 @@ async function calendarHandler(_req: Request, res: Response): Promise<void> {
     const today = momentTz.tz(serverConfig.timezone).startOf('day');
     const maxDate = today.clone().add(serverConfig.calendar.daysAhead, 'days').endOf('day');
     const allEvents: Array<CalendarEventEntry & { date: string }> = [];
-    for (const key of Object.keys(parsed)) {
-      const event = parsed[key];
-      if (!event || event.type !== 'VEVENT') continue;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const vEvent = event as any;
-      const startDate: Date = vEvent.start as Date;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const addEvent = (vEvent: any, startDate: Date, endDate: Date): void => {
       const start = momentTz.tz(startDate, serverConfig.timezone);
-      if (!start.isBetween(today, maxDate, undefined, '[]')) continue;
-      const isAllDay = (startDate as Date & { dateOnly?: boolean }).dateOnly === true;
-      const endDate: Date = (vEvent.end as Date | undefined) ?? startDate;
+      if (!start.isBetween(today, maxDate, undefined, '[]')) return;
+      const isAllDay = vEvent.datetype === 'date';
       const end = momentTz.tz(endDate, serverConfig.timezone);
       allEvents.push({
         date: start.format('YYYY-MM-DD'),
@@ -532,6 +646,37 @@ async function calendarHandler(_req: Request, res: Response): Promise<void> {
         location: (vEvent.location as string | undefined) ?? '',
         isAllDay,
       });
+    };
+
+    for (const key of Object.keys(parsed)) {
+      const event = parsed[key];
+      if (!event || event.type !== 'VEVENT') continue;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vEvent = event as any;
+      const startDate: Date = vEvent.start as Date;
+      const endDate: Date = (vEvent.end as Date | undefined) ?? startDate;
+
+      if (!vEvent.rrule) { addEvent(vEvent, startDate, endDate); continue; }
+
+      // Recurring event: node-ical only keeps the master's original DTSTART, which is
+      // often in the past, so expand the rrule to find occurrences within the display
+      // window instead of relying on the single start/end above.
+      const durationMs = endDate.getTime() - startDate.getTime();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const overridesByDay: Record<string, any> = vEvent.recurrences ?? {};
+      const exdateDays = new Set(Object.keys(vEvent.exdate ?? {}));
+      const occurrences: Date[] = vEvent.rrule.between(today.toDate(), maxDate.toDate(), true);
+      for (const occStart of occurrences) {
+        const dayKey = occStart.toISOString().slice(0, 10);
+        if (exdateDays.has(dayKey)) continue;
+        const override = overridesByDay[dayKey];
+        if (override) {
+          if (override.status === 'CANCELLED') continue;
+          addEvent(override, override.start as Date, (override.end as Date | undefined) ?? (override.start as Date));
+        } else {
+          addEvent(vEvent, occStart, new Date(occStart.getTime() + durationMs));
+        }
+      }
     }
     allEvents.sort((a, b) => {
       if (a.isAllDay !== b.isAllDay) return a.isAllDay ? -1 : 1;
@@ -852,11 +997,143 @@ async function resizeHandler(req: Request, res: Response): Promise<void> {
 app.use(express.json());
 
 const configFilePath = path.join(browserDistFolder, 'screensaver.config.json');
+const messagesFilePath = process.env['MESSAGES_FILE']
+  ? path.resolve(process.env['MESSAGES_FILE'])
+  : path.join(mediaDir, 'messages.json');
+const messageRetentionMs = 30 * 24 * 60 * 60 * 1000;
+const maxMessageLifetimeMs = 7 * 24 * 60 * 60 * 1000;
+let messageSocketServer: WebSocketServer | null = null;
+
+interface TransitRouteConfig extends TransitConfig {
+  readonly id: string;
+  readonly availableFrom?: string | null;
+  readonly availableUntil?: string | null;
+}
+
+interface RuntimeTransitSettings {
+  readonly isEnabled: boolean;
+  readonly entries: readonly TransitRouteConfig[];
+}
+
+interface LegacyTransitSettings extends Partial<TransitConfig> {
+  readonly isEnabled?: boolean;
+  readonly entries?: readonly Partial<TransitRouteConfig>[];
+  readonly secondary?: Partial<TransitConfig>;
+  readonly rerE?: {
+    readonly openingDate?: string;
+    readonly toMagenta?: Partial<TransitConfig>;
+    readonly toSaintLazare?: Partial<TransitConfig>;
+  };
+}
+
+function defaultTransitEntries(): readonly TransitRouteConfig[] {
+  const openingDate = serverConfig.rerE.openingDate;
+  return [
+    { id: 'maule-n', ...serverConfig.transit },
+    { id: 'epone-j', ...serverConfig.transitSecondary, availableUntil: openingDate },
+    { id: 'epone-e-magenta', ...serverConfig.rerE.toMagenta, availableFrom: openingDate },
+    { id: 'epone-e-saint-lazare', ...serverConfig.rerE.toSaintLazare, availableFrom: openingDate },
+  ];
+}
+
+async function readTransitSettings(): Promise<RuntimeTransitSettings> {
+  const config = await fs.readJson(configFilePath).catch(() => ({})) as {
+    appSettings?: { transit?: LegacyTransitSettings };
+  };
+  const persisted = config.appSettings?.transit ?? {};
+  const defaults = defaultTransitEntries();
+  const sourceEntries = Array.isArray(persisted.entries) && persisted.entries.length > 0
+    ? persisted.entries
+    : [persisted, persisted.secondary, persisted.rerE?.toMagenta, persisted.rerE?.toSaintLazare];
+  const seenIds = new Set<string>();
+  const entries = sourceEntries
+    .filter((entry): entry is Partial<TransitRouteConfig> => Boolean(entry))
+    .map((entry, index) => {
+      const fallback = defaults[index] ?? defaults[0];
+      const preferredId = entry.id?.trim() || `transit-${index + 1}`;
+      const id = seenIds.has(preferredId) ? `${preferredId}-${index + 1}` : preferredId;
+      seenIds.add(id);
+      return { ...fallback, ...entry, id } as TransitRouteConfig;
+    });
+  return {
+    isEnabled: persisted.isEnabled !== false,
+    entries,
+  };
+}
+
+function isTransitRouteAvailable(route: TransitRouteConfig): boolean {
+  const today = momentTz.tz(serverConfig.timezone).startOf('day');
+  if (route.availableFrom && today.isBefore(momentTz.tz(route.availableFrom, serverConfig.timezone))) return false;
+  if (route.availableUntil && !today.isBefore(momentTz.tz(route.availableUntil, serverConfig.timezone))) return false;
+  return true;
+}
+
+function clearTransitCaches(): void {
+  transitCaches.clear();
+}
+
+async function readMessages(): Promise<StoredMessage[]> {
+  const messages = await fs.readJson(messagesFilePath).catch(() => [] as StoredMessage[]);
+  if (!Array.isArray(messages)) return [];
+
+  const purgeBefore = Date.now() - messageRetentionMs;
+  const retained = messages.filter((message): message is StoredMessage =>
+    typeof message?.id === 'string'
+    && typeof message?.text === 'string'
+    && typeof message?.createdAt === 'string'
+    && typeof message?.updatedAt === 'string'
+    && typeof message?.expiresAt === 'string'
+    && Date.parse(message.expiresAt) >= purgeBefore,
+  );
+
+  if (retained.length !== messages.length) await writeMessages(retained);
+  return retained;
+}
+
+async function writeMessages(messages: readonly StoredMessage[]): Promise<void> {
+  const temporaryPath = `${messagesFilePath}.tmp`;
+  await fs.outputJson(temporaryPath, messages, { spaces: 2 });
+  await fs.move(temporaryPath, messagesFilePath, { overwrite: true });
+}
+
+async function purgeExpiredMessages(): Promise<number> {
+  const messages = await readMessages();
+  const now = Date.now();
+  const retained = messages.filter((message) => Date.parse(message.expiresAt) > now);
+  const deletedCount = messages.length - retained.length;
+  if (deletedCount > 0) await writeMessages(retained);
+  return deletedCount;
+}
+
+async function broadcastActiveMessages(): Promise<void> {
+  if (!messageSocketServer) return;
+  const messages = (await readMessages()).filter((message) => Date.parse(message.expiresAt) > Date.now());
+  const payload = JSON.stringify({ type: 'messages.changed', messages });
+  messageSocketServer.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) client.send(payload);
+  });
+}
+
+function parseMessageInput(body: unknown): { text: string; expiresAt: string } | null {
+  if (!body || typeof body !== 'object') return null;
+  const value = body as { text?: unknown; expiresAt?: unknown };
+  if (typeof value.text !== 'string' || typeof value.expiresAt !== 'string') return null;
+
+  const text = value.text.trim();
+  const expiresAtMs = Date.parse(value.expiresAt);
+  if (!text || text.length > 2048 || !Number.isFinite(expiresAtMs)) return null;
+  if (expiresAtMs > Date.now() + maxMessageLifetimeMs) return null;
+  return { text, expiresAt: new Date(expiresAtMs).toISOString() };
+}
 
 app.get('/api/config', async (_req: Request, res: Response): Promise<void> => {
   try {
     const config = await fs.readJson(configFilePath);
-    res.json(config);
+    const transit = await readTransitSettings();
+    res.json({
+      ...config,
+      appSettings: { ...config.appSettings, transit },
+    });
   } catch {
     res.status(404).json({ message: 'Config file not found.' });
   }
@@ -865,6 +1142,7 @@ app.get('/api/config', async (_req: Request, res: Response): Promise<void> => {
 app.post('/api/config', async (req: Request, res: Response): Promise<void> => {
   try {
     await fs.writeJson(configFilePath, req.body, { spaces: 2 });
+    clearTransitCaches();
     res.json({ success: true });
   } catch (error) {
     console.error('Failed to write config:', error);
@@ -872,13 +1150,145 @@ app.post('/api/config', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+app.get('/api/messages', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const messages = await readMessages();
+    const result = req.query['active'] === 'true'
+      ? messages.filter((message) => Date.parse(message.expiresAt) > Date.now())
+      : messages;
+    const now = Date.now();
+    res.json(result.sort((a, b) => {
+      const activeDifference = Number(Date.parse(b.expiresAt) > now) - Number(Date.parse(a.expiresAt) > now);
+      return activeDifference || Date.parse(a.expiresAt) - Date.parse(b.expiresAt);
+    }));
+  } catch (error) {
+    console.error('Failed to read messages:', error);
+    res.status(500).json({ message: 'Failed to read messages.' });
+  }
+});
+
+app.post('/api/messages', async (req: Request, res: Response): Promise<void> => {
+  const input = parseMessageInput(req.body);
+  if (!input) {
+    res.status(400).json({ message: 'Text and a valid expiration within one week are required.' });
+    return;
+  }
+
+  try {
+    const now = new Date().toISOString();
+    const message: StoredMessage = {
+      id: randomBytes(12).toString('hex'),
+      text: input.text,
+      expiresAt: input.expiresAt,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const messages = await readMessages();
+    await writeMessages([...messages, message]);
+    await broadcastActiveMessages();
+    res.status(201).json(message);
+  } catch (error) {
+    console.error('Failed to create message:', error);
+    res.status(500).json({ message: 'Failed to create message.' });
+  }
+});
+
+app.put('/api/messages/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+  const input = parseMessageInput(req.body);
+  if (!input) {
+    res.status(400).json({ message: 'Text and a valid expiration within one week are required.' });
+    return;
+  }
+
+  try {
+    const messages = await readMessages();
+    const index = messages.findIndex((message) => message.id === req.params.id);
+    if (index < 0) { res.status(404).json({ message: 'Message not found.' }); return; }
+
+    const updated: StoredMessage = {
+      ...messages[index],
+      text: input.text,
+      expiresAt: input.expiresAt,
+      updatedAt: new Date().toISOString(),
+    };
+    messages[index] = updated;
+    await writeMessages(messages);
+    await broadcastActiveMessages();
+    res.json(updated);
+  } catch (error) {
+    console.error('Failed to update message:', error);
+    res.status(500).json({ message: 'Failed to update message.' });
+  }
+});
+
+app.delete('/api/messages/expired', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const deletedCount = await purgeExpiredMessages();
+    if (deletedCount > 0) await broadcastActiveMessages();
+    res.json({ deletedCount });
+  } catch (error) {
+    console.error('Failed to purge expired messages:', error);
+    res.status(500).json({ message: 'Failed to purge expired messages.' });
+  }
+});
+
+app.delete('/api/messages', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const deletedCount = (await readMessages()).length;
+    await writeMessages([]);
+    if (deletedCount > 0) await broadcastActiveMessages();
+    res.json({ deletedCount });
+  } catch (error) {
+    console.error('Failed to clear messages:', error);
+    res.status(500).json({ message: 'Failed to clear messages.' });
+  }
+});
+
+app.delete('/api/messages/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+  try {
+    const messages = await readMessages();
+    const index = messages.findIndex((message) => message.id === req.params.id);
+    if (index < 0) { res.status(404).json({ message: 'Message not found.' }); return; }
+
+    const now = new Date().toISOString();
+    const deleted: StoredMessage = { ...messages[index], expiresAt: now, updatedAt: now };
+    messages[index] = deleted;
+    await writeMessages(messages);
+    await broadcastActiveMessages();
+    res.json(deleted);
+  } catch (error) {
+    console.error('Failed to expire message:', error);
+    res.status(500).json({ message: 'Failed to expire message.' });
+  }
+});
+
 app.get('/api/clock', clockHandler);
 app.get('/api/solar/next-event', solarHandler);
 app.get('/api/weather', weatherHandler);
+app.get('/api/weather/forecast', weatherForecastHandler);
 app.get('/api/image/list', imageListHandler);
 app.get('/api/image/meta', imageMetaHandler);
 app.get('/api/image', imageHandler);
-app.get('/api/transit', transitHandler);
+app.get('/api/transit/routes', async (_req: Request, res: Response): Promise<void> => {
+  const settings = await readTransitSettings();
+  if (!settings.isEnabled) { res.json([]); return; }
+
+  const result = await Promise.all(settings.entries.filter(isTransitRouteAvailable).map(async (route) => {
+    const cache = transitCaches.get(route.id) ?? { data: null, expiresAt: 0 };
+    transitCaches.set(route.id, cache);
+    try {
+      if (!cache.data || Date.now() >= cache.expiresAt) {
+        cache.data = await fetchDepartures(route);
+        cache.expiresAt = Date.now() + 2 * 60 * 1000;
+      }
+    } catch (error) {
+      const message = (error as Error)?.message ?? error;
+      console.error(`Transit route ${route.id} error:`, message);
+    }
+    return { id: route.id, departures: cache.data ?? [] };
+  }));
+  res.json(result);
+});
 app.get('/api/calendar', calendarHandler);
 app.get('/api/gallery', galleryHandler);
 app.get('/api/resize', resizeHandler);
@@ -906,6 +1316,16 @@ app.get('*', (req: Request, res: Response) => {
 });
 
 const port = process.env['PORT'] || 4000;
-app.listen(port, () => {
+const httpServer = app.listen(port, () => {
   console.log(`Node Express server listening on http://localhost:${port}`);
+});
+
+messageSocketServer = new WebSocketServer({ server: httpServer, path: '/api/messages/live' });
+messageSocketServer.on('connection', async (socket) => {
+  try {
+    const messages = (await readMessages()).filter((message) => Date.parse(message.expiresAt) > Date.now());
+    socket.send(JSON.stringify({ type: 'messages.changed', messages }));
+  } catch (error) {
+    console.error('Failed to initialize messages WebSocket:', error);
+  }
 });

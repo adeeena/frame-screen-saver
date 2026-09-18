@@ -2,34 +2,8 @@ import { ChangeDetectionStrategy, Component, Input, ViewChild, ElementRef, After
 import { isPlatformBrowser } from '@angular/common';
 import moment from 'moment';
 import { ClockService } from '../../services/clock.service';
-import { TrainService, Departure } from '../../services/train.service';
 import { CalendarService, CalendarDay, CalendarEvent } from '../../services/calendar.service';
-import { WeatherService } from '../../services/weather.service';
-import { SolarService } from '../../services/solar.service';
 import { ScreensaverConfigService } from '../../services/screensaver-config.service';
-
-const MAX_MINUTES = 60;
-
-const WEATHER_ICON_MAP: Readonly<Record<string, string>> = {
-  clearsky: 'sun',
-  fair: 'sun',
-  partlycloudy: 'cloud',
-  cloudy: 'cloud',
-  fog: 'wind',
-  lightrain: 'cloud-drizzle',
-  lightrainshowers: 'cloud-drizzle',
-  rain: 'cloud-rain',
-  rainshowers: 'cloud-rain',
-  heavyrain: 'cloud-rain',
-  heavyrainshowers: 'cloud-rain',
-  lightsnow: 'cloud-snow',
-  snow: 'cloud-snow',
-  heavysnow: 'cloud-snow',
-  sleet: 'cloud-snow',
-  lightsleet: 'cloud-snow',
-  thunder: 'cloud-lightning',
-  rainandthunder: 'cloud-lightning',
-} as const;
 
 @Component({
   selector: 'app-columns-page',
@@ -48,15 +22,43 @@ export class ColumnsPageComponent implements AfterViewChecked {
 
   constructor(
     readonly clockService: ClockService,
-    readonly trainService: TrainService,
     readonly calendarService: CalendarService,
-    readonly weatherService: WeatherService,
-    readonly solarService: SolarService,
     readonly configService: ScreensaverConfigService,
     @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {}
 
+  private static readonly SAO_PAULO_TZ = 'America/Sao_Paulo';
+
   get config() { return this.configService.config()?.appSettings ?? null; }
+
+  get saoPauloTime(): string {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: ColumnsPageComponent.SAO_PAULO_TZ,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(this.clockService.nowMs());
+  }
+
+  /** Offset of the frame's local timezone relative to São Paulo, e.g. "+5:00". */
+  get saoPauloOffsetLabel(): string {
+    const nowMs = this.clockService.nowMs();
+    const localTz = this.config?.timezone ?? 'Europe/Paris';
+    const diff = this.tzOffsetMinutes(localTz, nowMs) - this.tzOffsetMinutes(ColumnsPageComponent.SAO_PAULO_TZ, nowMs);
+    const sign = diff >= 0 ? '+' : '-';
+    const abs = Math.abs(diff);
+    return `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, '0')}`;
+  }
+
+  /** Minutes east of UTC for the given IANA timezone at the given instant. */
+  private tzOffsetMinutes(timeZone: string, atMs: number): number {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'shortOffset' }).formatToParts(atMs);
+    const match = parts.find((p) => p.type === 'timeZoneName')?.value.match(/GMT([+-]\d+)(?::(\d+))?/);
+    if (!match) return 0;
+    const hours = parseInt(match[1], 10);
+    const minutes = match[2] ? parseInt(match[2], 10) : 0;
+    return hours * 60 + (hours < 0 ? -minutes : minutes);
+  }
 
   get candidateDays(): readonly CalendarDay[] {
     const nowMs = this.clockService.nowMs();
@@ -92,12 +94,6 @@ export class ColumnsPageComponent implements AfterViewChecked {
     return days;
   }
 
-  get weatherIconName(): string {
-    const code = this.weatherService.symbolCode();
-    const key = code.replace(/_(day|night|polartwilight)$/, '');
-    return WEATHER_ICON_MAP[key] ?? 'cloud';
-  }
-
   ngAfterViewChecked(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
@@ -120,42 +116,6 @@ export class ColumnsPageComponent implements AfterViewChecked {
         });
       }
     }
-  }
-
-  departureProgress(dep: Departure): number {
-    return Math.max(0, Math.min(100, 100 - (dep.minutesUntilDeparture / MAX_MINUTES) * 100));
-  }
-
-  get futureDepartures(): readonly Departure[] {
-    // Use Date.now() (real UTC ms) — not clockService, whose nowMs() can be
-    // offset if browser timezone ≠ server timezone (common on embedded Pi).
-    // moment() parses the ISO departure string robustly across all formats.
-    const nowMs = Date.now();
-    return this.trainService.departures().filter(
-      (dep) => moment(dep.expectedDeparture).valueOf() >= nowMs,
-    );
-  }
-
-  minutesUntil(dep: Departure): number {
-    // Same rationale: Date.now() avoids clock-service timezone offset issues.
-    const now = Math.floor(Date.now() / 60000) * 60000;
-    const dep_min = Math.floor(moment(dep.expectedDeparture).valueOf() / 60000) * 60000;
-    return Math.max(0, Math.round((dep_min - now) / 60000));
-  }
-
-  /** Returns the departure time to display in the server's local timezone.
-   *  Prefers the server-computed displayTime field (populated after server rebuild).
-   *  Falls back to converting the ISO departure string using the server's UTC offset
-   *  (from clockService) — handles both UTC 'Z' strings (PRIM) and offset strings. */
-  departureTime(dep: Departure): string {
-    if (dep.displayTime) return dep.displayTime;
-    const offset = this.clockService.utcOffset();
-    if (offset) {
-      // moment().utcOffset() shifts the display to the given offset without
-      // changing the underlying UTC value. Handles Z, +02:00, and bare strings.
-      return moment(dep.expectedDeparture).utcOffset(offset).format('HH:mm');
-    }
-    return moment.parseZone(dep.expectedDeparture).format('HH:mm');
   }
 
   dayLabelParts(day: CalendarDay): { accent: string; normal: string } {

@@ -1,6 +1,6 @@
 Set-Location $PSScriptRoot
 
-# Dev workflow: Express (API + SSR) on :4000, Angular HMR dev server on :4200
+# Dev workflow: Express (API + SSR) on :4000, Angular HMR dev server on :4400
 # The Angular dev server proxies /api and /media to localhost:4000 via proxy.conf.json.
 #
 # Usage: .\start-dev.ps1
@@ -20,9 +20,9 @@ Write-Host 'Express API server starting on http://localhost:4000 (job id: ' $api
 Write-Host 'Waiting 2s for Express to be ready...'
 Start-Sleep -Seconds 2
 
-# Start the Angular dev server on port 4200 (proxies /api -> :4000)
+# Start the Angular dev server on port 4400 (proxies /api -> :4000)
 try {
-    node node_modules/@angular/cli/bin/ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.json
+    node node_modules/@angular/cli/bin/ng serve --host 0.0.0.0 --port 4400 --proxy-config proxy.conf.json
 } finally {
     Write-Host 'Stopping Express API server...'
     Stop-Job $apiJob

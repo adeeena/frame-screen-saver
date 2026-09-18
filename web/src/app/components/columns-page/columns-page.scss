@@ -23,8 +23,8 @@
       display: flex;
       -webkit-flex-direction: column;
       flex-direction: column;
-      gap: 2vw;
-      gap: 2dvw;
+      gap: 1vw;
+      gap: 1dvw;
     }
 
     &--right {
@@ -71,8 +71,8 @@
     flex-shrink: 0;
     // flex gap (gap: 2vw on parent) is not supported in Chrome ≤ 83.
     // Explicit margin ensures the divider always has breathing room.
-    margin-top: 1.5vw;
-    margin-bottom: 1.5vw;
+    margin-top: 0.6vw;
+    margin-bottom: 0.6vw;
   }
 
   &__weather {
@@ -83,14 +83,51 @@
     // gap unsupported in Chrome ≤ 83 on flex — use margin-right on children instead
   }
 
+  &__sao-paulo {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+  }
+
+  &__sao-paulo-city {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    line-height: 1;
+    color: var(--text-secondary);
+    margin-right: 0.8vw;
+    margin-right: 0.8dvw;
+  }
+
+  &__sao-paulo-time {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    line-height: 1;
+    color: var(--accent);
+    margin-left: auto;
+  }
+
+  &__sao-paulo-offset {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 1.4vw;
+    font-size: 1.4dvw;
+    line-height: 1;
+    color: var(--accent);
+  }
+
   &__weather-icon {
     display: inline-flex;
     -webkit-align-items: center;
     align-items: center;
-    width: 1.6vw;
-    width: 1.6dvw;
-    height: 1.6vw;
-    height: 1.6dvw;
+    width: 1.9vw;
+    width: 1.9dvw;
+    height: 1.9vw;
+    height: 1.9dvw;
     margin-right: 0.8vw;
 
     svg {
@@ -108,10 +145,10 @@
     display: inline-flex;
     -webkit-align-items: center;
     align-items: center;
-    width: 1.6vw;
-    width: 1.6dvw;
-    height: 1.6vw;
-    height: 1.6dvw;
+    width: 1.9vw;
+    width: 1.9dvw;
+    height: 1.9vw;
+    height: 1.9dvw;
     margin-right: 0.5vw;
 
     svg {
@@ -130,6 +167,7 @@
     font-weight: 700;
     font-size: 1.6vw;
     font-size: 1.6dvw;
+    line-height: 1;
     color: var(--accent);
     margin-right: 0.8vw;
   }
@@ -139,12 +177,17 @@
     font-weight: 300;
     font-size: 1.6vw;
     font-size: 1.6dvw;
+    line-height: 1;
     color: var(--text-secondary);
     margin-right: 0.8vw;
   }
 
   &__uv {
     margin-right: 0.8vw;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: baseline;
+    align-items: baseline;
   }
 
   &__solar {
@@ -161,6 +204,7 @@
     font-weight: 300;
     font-size: 1.6vw;
     font-size: 1.6dvw;
+    line-height: 1;
     color: var(--text-secondary);
   }
 
@@ -194,122 +238,6 @@
   }
 
   &__no-events {
-    font-family: var(--font-body);
-    font-weight: 300;
-    font-size: 1.2vw;
-    font-size: 1.2dvw;
-    color: var(--text-muted);
-  }
-}
-
-//  Transilien widget 
-.transilien {
-
-  &__header {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-align-items: center;
-    align-items: center;
-    margin-bottom: 1.5vw;
-    margin-bottom: 1.5dvw;
-  }
-
-  &__line-badge {
-    display: grid;
-    -webkit-flex-shrink: 0;
-    flex-shrink: 0;
-    width: 2.8vw;
-    width: 2.8dvw;
-    height: 2.8vw;
-    height: 2.8dvw;
-    background-color: var(--transilien-n);
-    color: var(--transilien-n-fg);
-    font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 1.6vw;
-    font-size: 1.6dvw;
-    line-height: 3vw;
-    line-height: 3dvw;
-    border-radius: 0.3vw;
-    border-radius: 0.3dvw;
-    -webkit-font-smoothing: antialiased;
-    text-align: center;
-    margin-right: 1vw;
-  }
-
-  &__direction {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-align-items: center;
-    align-items: center;
-    // gap replaced by margin-right on __arrow
-  }
-
-  &__arrow {
-    color: var(--accent);
-    font-size: 1.4vw;
-    font-size: 1.4dvw;
-    margin-right: 0.5vw;
-  }
-
-  &__destination {
-    font-family: var(--font-body);
-    font-weight: 300;
-    font-size: 1.6vw;
-    font-size: 1.6dvw;
-    color: var(--text-secondary);
-  }
-
-  &__departures {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: row;
-    flex-direction: row;
-    -webkit-align-items: baseline;
-    align-items: baseline;
-    -webkit-justify-content: space-between;
-    justify-content: space-between;
-  }
-
-  &__departure {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: row;
-    flex-direction: row;
-    -webkit-align-items: baseline;
-    align-items: baseline;
-    // gap replaced by margin-right on __departure-time
-  }
-
-  &__departure-time {
-    font-family: var(--font-body);
-    font-weight: 300;
-    font-size: 1.6vw;
-    font-size: 1.6dvw;
-    color: var(--text-primary);
-    -webkit-flex-shrink: 0;
-    flex-shrink: 0;
-    margin-right: 1vw;
-  }
-
-  &__departure-minutes {
-    font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 1.6vw;
-    font-size: 1.6dvw;
-    color: var(--accent);
-    -webkit-flex-shrink: 0;
-    flex-shrink: 0;
-  }
-
-  &__departure-unit {
-    font-weight: 300;
-    font-size: 1.1vw;
-    font-size: 1.1dvw;
-    color: var(--accent);
-  }
-
-  &__no-data {
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.2vw;
@@ -378,7 +306,7 @@
       transform: translateX(-50%);
       top: var(--line-top);
       bottom: var(--line-bottom);
-      width: 0.15rem;
+      width: 0.08rem;
       background-color: $line-color;
     }
   }

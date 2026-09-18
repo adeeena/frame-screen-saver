@@ -14,20 +14,40 @@ import { Subject } from 'rxjs';
 import { filter, skip, take, takeUntil } from 'rxjs/operators';
 import { gsap } from 'gsap';
 import { Router } from '@angular/router';
-import { ScreensaverConfigService } from '../../services/screensaver-config.service';
+import { ScreensaverConfig, ScreensaverConfigService } from '../../services/screensaver-config.service';
 import { CoverPageComponent } from '../cover-page/cover-page.component';
 import { ColumnsPageComponent } from '../columns-page/columns-page.component';
+import { TransportPageComponent } from '../transport-page/transport-page.component';
+import { WeatherPageComponent } from '../weather-page/weather-page.component';
 import { DebugOverlayComponent } from '../debug-overlay/debug-overlay.component';
 import { ImageCycleService } from '../../services/image-cycle.service';
 import { KeyboardService } from '../../services/keyboard.service';
 
-const TIMINGS = {
-  page1Duration: 10,
-  page2Duration: 5,
-  page3Duration: 10,
-  crossfadeDuration: 0.4,
-  pauseCountdown: 30,
-} as const;
+interface FrameTimings {
+  readonly stillImageDuration: number;
+  readonly coverPageDuration: number;
+  readonly columnsPageDuration: number;
+  readonly transportPageDuration: number;
+  readonly weatherPageDuration: number;
+  readonly transitionDuration: number;
+}
+
+const DEFAULT_TIMINGS: FrameTimings = {
+  stillImageDuration: 5,
+  coverPageDuration: 10,
+  columnsPageDuration: 10,
+  transportPageDuration: 10,
+  weatherPageDuration: 10,
+  transitionDuration: 0.4,
+};
+
+const PAUSE_COUNTDOWN_SECONDS = 30;
+
+const seconds = (milliseconds: number | undefined, fallback: number): number =>
+  Number.isFinite(milliseconds) && milliseconds! > 0 ? milliseconds! / 1000 : fallback;
+
+const frameChangeCycles = (cycles: number | undefined): number =>
+  Number.isFinite(cycles) && cycles! > 0 ? Math.floor(cycles!) : 10;
 
 interface FrameElements {
   readonly imageA: HTMLDivElement;
@@ -35,6 +55,8 @@ interface FrameElements {
   readonly overlay: HTMLDivElement;
   readonly cover: HTMLElement;
   readonly columns: HTMLElement;
+  readonly transport: HTMLElement;
+  readonly weather: HTMLElement;
 }
 
 @Component({
@@ -52,16 +74,20 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   @ViewChild('progressBar') private progressBar!: ElementRef<HTMLDivElement>;
   @ViewChild('coverPage', { read: ElementRef }) private coverPageEl!: ElementRef<HTMLElement>;
   @ViewChild('columnsPage', { read: ElementRef }) private columnsPageEl!: ElementRef<HTMLElement>;
+  @ViewChild('transportPage', { read: ElementRef }) private transportPageEl!: ElementRef<HTMLElement>;
+  @ViewChild('weatherPage', { read: ElementRef }) private weatherPageEl!: ElementRef<HTMLElement>;
 
   isPaused = false;
   showDebug = false;
-  currentPage: 1 | 2 | 3 = 1;
+  currentPage: 1 | 2 | 3 | 4 | 5 = 1;
   frameStyle: 0 | 1 | 2 | 3 | 4 = (Math.floor(Math.random() * 5)) as 0 | 1 | 2 | 3 | 4;
 
   private mainTimeline!: gsap.core.Timeline;
   private pauseTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private pauseBarTween: gsap.core.Tween | null = null;
-  private frameIntervalId: ReturnType<typeof setInterval> | null = null;
+  private timings = DEFAULT_TIMINGS;
+  private frameChangeAfterCycles = 10;
+  private completedImageCycles = 0;
   private els!: FrameElements;
   private activeLayer: 'a' | 'b' = 'a';
   /** Measured pixel size of the image area — used to request correctly-sized images. */
@@ -114,15 +140,15 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    const loadedConfig = this.configService.config();
+    if (loadedConfig) this.applyAnimationSettings(loadedConfig.animationSettings);
+
     this.ngZone.runOutsideAngular(() => {
       this.initElements();
       this.buildTimeline();
     });
     this.setupKeyboard();
 
-    this.frameIntervalId = setInterval(() => this.advanceFrameStyle(), 5 * 60 * 1000);
-
-    // Auto-reload: read interval from config once it loads, then schedule.
     this.configService.config$
       .pipe(
         filter((cfg) => cfg !== null),
@@ -130,6 +156,13 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe((cfg) => {
+        if (cfg !== loadedConfig) {
+          this.applyAnimationSettings(cfg!.animationSettings);
+          this.ngZone.runOutsideAngular(() => {
+            this.mainTimeline.kill();
+            this.buildTimeline();
+          });
+        }
         const hours = cfg!.animationSettings.autoReloadIntervalHours;
         if (hours > 0) {
           setTimeout(() => location.reload(), hours * 60 * 60 * 1000);
@@ -147,6 +180,18 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       .subscribe(() => this.initImages());
   }
 
+  private applyAnimationSettings(settings: ScreensaverConfig['animationSettings']): void {
+    this.timings = {
+      stillImageDuration: seconds(settings.stillImageTimeoutMs, DEFAULT_TIMINGS.stillImageDuration),
+      coverPageDuration: seconds(settings.coverPageTimeoutMs, DEFAULT_TIMINGS.coverPageDuration),
+      columnsPageDuration: seconds(settings.columnsPageTimeoutMs, DEFAULT_TIMINGS.columnsPageDuration),
+      transportPageDuration: seconds(settings.transportPageTimeoutMs, DEFAULT_TIMINGS.transportPageDuration),
+      weatherPageDuration: seconds(settings.weatherPageTimeoutMs, DEFAULT_TIMINGS.weatherPageDuration),
+      transitionDuration: seconds(settings.pageTransitionDurationMs, DEFAULT_TIMINGS.transitionDuration),
+    };
+    this.frameChangeAfterCycles = frameChangeCycles(settings.frameChangeAfterCycles);
+  }
+
   private initElements(): void {
     this.els = {
       imageA: this.imageA.nativeElement,
@@ -154,6 +199,8 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       overlay: this.infoOverlay.nativeElement,
       cover: this.coverPageEl.nativeElement,
       columns: this.columnsPageEl.nativeElement,
+      transport: this.transportPageEl.nativeElement,
+      weather: this.weatherPageEl.nativeElement,
     };
   }
 
@@ -186,37 +233,60 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
 
   private buildTimeline(): void {
     const { els } = this;
+    const timings = this.timings;
     const run = <T>(fn: () => T) => this.ngZone.run(fn);
     gsap.set(els.overlay, { opacity: 0 });
     gsap.set(els.cover, { opacity: 0, x: '-2vw' });
     gsap.set(els.columns, { opacity: 0, x: '-2vw' });
+    gsap.set(els.transport, { opacity: 0, x: '-2vw' });
+    gsap.set(els.weather, { opacity: 0, x: '-2vw' });
 
     this.mainTimeline = gsap
       .timeline()
       .addLabel('page1', 0)
       .call(() => run(() => { this.currentPage = 1; }), [], 'page1')
-      .addLabel('page2', TIMINGS.page1Duration)
-      .to(els.overlay, { opacity: 1, duration: TIMINGS.crossfadeDuration }, 'page2')
-      .to(els.cover, { opacity: 1, x: 0, duration: TIMINGS.crossfadeDuration }, 'page2')
+      .addLabel('page2', timings.stillImageDuration)
+      .to(els.overlay, { opacity: 1, duration: timings.transitionDuration }, 'page2')
+      .to(els.cover, { opacity: 1, x: 0, duration: timings.transitionDuration }, 'page2')
       .call(() => run(() => { this.currentPage = 2; }), [], 'page2')
-      .addLabel('page3', `page2+=${TIMINGS.crossfadeDuration + TIMINGS.page2Duration}`)
-      .to(els.cover, { opacity: 0, x: '2vw', duration: TIMINGS.crossfadeDuration }, 'page3')
-      .to(els.columns, { opacity: 1, x: 0, duration: TIMINGS.crossfadeDuration }, 'page3')
+      .addLabel('page3', `page2+=${timings.transitionDuration + timings.coverPageDuration}`)
+      .to(els.cover, { opacity: 0, x: '2vw', duration: timings.transitionDuration }, 'page3')
+      .to(els.columns, { opacity: 1, x: 0, duration: timings.transitionDuration }, 'page3')
       .call(() => run(() => { this.currentPage = 3; }), [], 'page3')
-      .addLabel('end', `page3+=${TIMINGS.crossfadeDuration + TIMINGS.page3Duration}`)
-      .to(els.overlay, { opacity: 0, duration: TIMINGS.crossfadeDuration }, 'end')
-      .to(els.columns, { opacity: 0, x: '2vw', duration: TIMINGS.crossfadeDuration }, 'end')
+      .addLabel('page4', `page3+=${timings.transitionDuration + timings.columnsPageDuration}`)
+      .to(els.columns, { opacity: 0, x: '2vw', duration: timings.transitionDuration }, 'page4')
+      .to(els.transport, { opacity: 1, x: 0, duration: timings.transitionDuration }, 'page4')
+      .call(() => run(() => { this.currentPage = 4; }), [], `page4+=${timings.transitionDuration}`)
+      .addLabel('messagePause', `page4+=${timings.transitionDuration}`)
+      .addPause('messagePause')
+      .addLabel('page5', 'messagePause+=0.01')
+      .to(els.transport, { opacity: 0, x: '2vw', duration: timings.transitionDuration }, 'page5')
+      .to(els.weather, { opacity: 1, x: 0, duration: timings.transitionDuration }, 'page5')
+      .call(() => run(() => { this.currentPage = 5; }), [], 'page5')
+      .addLabel('end', `page5+=${timings.transitionDuration + timings.weatherPageDuration}`)
+      .to(els.overlay, { opacity: 0, duration: timings.transitionDuration }, 'end')
+      .to(els.weather, { opacity: 0, x: '2vw', duration: timings.transitionDuration }, 'end')
       .call(() => run(() => {
         gsap.set(els.cover, { x: '-2vw' });
         gsap.set(els.columns, { x: '-2vw' });
+        gsap.set(els.transport, { x: '-2vw' });
+        gsap.set(els.weather, { x: '-2vw' });
         this.currentPage = 1;
         this.advanceImage();
       }));
   }
 
+  onMessageCycleComplete(): void {
+    if (this.currentPage === 4 && !this.isPaused) this.mainTimeline.resume();
+  }
+
   private startKenBurns(el: HTMLElement): void {
     this.kenBurnsTween?.kill();
-    const totalDuration = TIMINGS.page1Duration + TIMINGS.page2Duration + TIMINGS.page3Duration;
+    const totalDuration = this.timings.stillImageDuration
+      + this.timings.coverPageDuration
+      + this.timings.columnsPageDuration
+      + this.timings.transportPageDuration
+      + this.timings.weatherPageDuration;
     const dx = (Math.random() - 0.5) * 2;   // subtle random pan ±1%
     const dy = (Math.random() - 0.5) * 1.5; // subtle random pan ±0.75%
     gsap.set(el, { scale: 1, xPercent: 0, yPercent: 0, transformOrigin: 'center center' });
@@ -238,10 +308,10 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
         this.els.imageB.style.backgroundImage = `url('${this.resizedUrl(current)}')`;
       }
       this.startKenBurns(this.els.imageB);
-      gsap.to(this.els.imageB, { opacity: 1, duration: TIMINGS.crossfadeDuration });
+      gsap.to(this.els.imageB, { opacity: 1, duration: this.timings.transitionDuration });
       gsap.to(this.els.imageA, {
         opacity: 0,
-        duration: TIMINGS.crossfadeDuration,
+        duration: this.timings.transitionDuration,
         onComplete: () => {
           const next = this.imageCycleService.nextImage();
           if (next) {
@@ -256,10 +326,10 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
         this.els.imageA.style.backgroundImage = `url('${this.resizedUrl(current)}')`;
       }
       this.startKenBurns(this.els.imageA);
-      gsap.to(this.els.imageA, { opacity: 1, duration: TIMINGS.crossfadeDuration });
+      gsap.to(this.els.imageA, { opacity: 1, duration: this.timings.transitionDuration });
       gsap.to(this.els.imageB, {
         opacity: 0,
-        duration: TIMINGS.crossfadeDuration,
+        duration: this.timings.transitionDuration,
         onComplete: () => {
           const next = this.imageCycleService.nextImage();
           if (next) {
@@ -271,17 +341,25 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       this.activeLayer = 'a';
     }
 
-    gsap.delayedCall(TIMINGS.crossfadeDuration, () => {
+    this.completedImageCycles += 1;
+    if (this.completedImageCycles >= this.frameChangeAfterCycles) {
+      this.completedImageCycles = 0;
+      this.ngZone.run(() => this.advanceFrameStyle());
+    }
+
+    gsap.delayedCall(this.timings.transitionDuration, () => {
       this.mainTimeline.restart();
     });
   }
 
   private skipToNextImage(): void {
     this.mainTimeline.kill();
-    gsap.killTweensOf([this.els.overlay, this.els.cover, this.els.columns]);
+    gsap.killTweensOf([this.els.overlay, this.els.cover, this.els.columns, this.els.transport, this.els.weather]);
     gsap.set(this.els.overlay, { opacity: 0 });
     gsap.set(this.els.cover, { opacity: 0, x: '-2vw' });
     gsap.set(this.els.columns, { opacity: 0, x: '-2vw' });
+    gsap.set(this.els.transport, { opacity: 0, x: '-2vw' });
+    gsap.set(this.els.weather, { opacity: 0, x: '-2vw' });
     this.advanceImage();
   }
 
@@ -298,6 +376,10 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
           this.mainTimeline.seek('page2');
         } else if (page === 2) {
           this.mainTimeline.seek('page3');
+        } else if (page === 3) {
+          this.mainTimeline.seek('page4');
+        } else if (page === 4) {
+          this.mainTimeline.resume();
         } else {
           this.skipToNextImage();
         }
@@ -374,10 +456,10 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
     gsap.set(bar, { scaleX: 1 });
     this.pauseBarTween = gsap.to(bar, {
       scaleX: 0,
-      duration: TIMINGS.pauseCountdown,
+      duration: PAUSE_COUNTDOWN_SECONDS,
       ease: 'none',
     });
-    this.pauseTimeoutId = setTimeout(() => this.resumeTimeline(), TIMINGS.pauseCountdown * 1000);
+    this.pauseTimeoutId = setTimeout(() => this.resumeTimeline(), PAUSE_COUNTDOWN_SECONDS * 1000);
   }
 
   private resumeTimeline(): void {
@@ -393,7 +475,6 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.frameIntervalId !== null) clearInterval(this.frameIntervalId);
     if (this.pauseTimeoutId !== null) clearTimeout(this.pauseTimeoutId);
     if (this.cogHideTimeoutId !== null) clearTimeout(this.cogHideTimeoutId);
     this.kenBurnsTween?.kill();

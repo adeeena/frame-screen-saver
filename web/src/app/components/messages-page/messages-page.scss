@@ -1,0 +1,236 @@
+@use '../../design-system' as ds;
+
+.messages-page {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  background: #0d0d12;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+
+  &__header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5vw 3vw;
+    padding: 1.5dvw 3dvw;
+    background: rgba(13, 13, 18, 0.96);
+    border-bottom: 1px solid rgba(240, 188, 117, 0.2);
+  }
+
+  &__heading {
+    font-family: var(--font-display);
+    font-size: 2vw;
+    font-size: 2dvw;
+
+    span { color: var(--accent); }
+  }
+
+  &__close,
+  &__icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3vw;
+    width: 3dvw;
+    height: 3vw;
+    height: 3dvw;
+    padding: 0.8vw;
+    padding: 0.8dvw;
+    border: 1px solid rgba(240, 188, 117, 0.3);
+    border-radius: 0.3vw;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover { color: var(--accent); border-color: var(--accent); }
+  }
+
+  &__content {
+    display: grid;
+    grid-template-columns: minmax(18rem, 0.8fr) minmax(24rem, 1.2fr);
+    gap: 4vw;
+    gap: 4dvw;
+    padding: 3vw;
+    padding: 3dvw;
+  }
+
+  &__composer {
+    position: sticky;
+    top: 8vw;
+    top: 8dvw;
+    align-self: start;
+  }
+
+  &__section-heading {
+    padding-bottom: 0.8vw;
+    padding-bottom: 0.8dvw;
+    margin-bottom: 1.8vw;
+    margin-bottom: 1.8dvw;
+    border-bottom: 1px solid rgba(240, 188, 117, 0.2);
+    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+
+    &--history {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1vw;
+      gap: 1dvw;
+    }
+  }
+
+  &__label {
+    display: block;
+    margin: 1.2vw 0 0.5vw;
+    margin: 1.2dvw 0 0.5dvw;
+    color: var(--text-secondary);
+    font-size: 0.9vw;
+    font-size: 0.9dvw;
+    text-transform: uppercase;
+  }
+
+  &__textarea,
+  &__input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.9vw 1vw;
+    padding: 0.9dvw 1dvw;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.3vw;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    font: 300 1.05vw/1.5 var(--font-body);
+
+    &:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+  }
+
+  &__textarea { resize: vertical; min-height: 10vw; }
+
+  &__field-meta {
+    margin-top: 0.35vw;
+    margin-top: 0.35dvw;
+    color: var(--text-muted);
+    font-size: 0.75vw;
+    font-size: 0.75dvw;
+    text-align: right;
+  }
+
+  &__actions,
+  &__message-actions { display: flex; gap: 0.8vw; gap: 0.8dvw; }
+
+  &__actions { margin-top: 1.8vw; margin-top: 1.8dvw; }
+
+  &__button {
+    padding: 0.75vw 1.3vw;
+    padding: 0.75dvw 1.3dvw;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 0.3vw;
+    background: transparent;
+    color: var(--text-secondary);
+    font: 500 0.9vw var(--font-body);
+    cursor: pointer;
+
+    &--primary { background: var(--accent); border-color: var(--accent); color: #18130e; }
+    &--compact { padding: 0.5vw 0.8vw; font-size: 0.72vw; white-space: nowrap; }
+    &--danger:not(:disabled) { color: #ff8f84; border-color: rgba(255, 143, 132, 0.45); }
+    &:disabled { opacity: 0.4; cursor: default; }
+  }
+
+  &__history-actions {
+    display: flex;
+    gap: 0.6vw;
+    gap: 0.6dvw;
+  }
+
+  &__clear-confirmation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(255, 143, 132, 0.45);
+    color: var(--text-secondary);
+  }
+
+  &__clear-confirmation-actions { display: flex; gap: 0.5rem; }
+
+  &__notice {
+    margin-bottom: 1rem;
+    color: var(--accent);
+  }
+
+  &__error { margin-top: 1vw; color: #ff8f84; }
+  &__loading,
+  &__empty { color: var(--text-muted); }
+
+  &__library {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__empty {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  &__message {
+    position: relative;
+    padding: 1.4vw 5vw 1.4vw 1.4vw;
+    padding: 1.4dvw 5dvw 1.4dvw 1.4dvw;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    &--expired { opacity: 0.55; }
+  }
+
+  &__message-state {
+    margin-bottom: 0.5vw;
+    color: var(--accent);
+    font-size: 0.72vw;
+    font-size: 0.72dvw;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  &__message-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1.05vw; line-height: 1.5; }
+  &__message-expiry { display: block; margin-top: 0.7vw; color: var(--text-muted); font-size: 0.8vw; }
+
+  &__message-actions { position: absolute; top: 1.4vw; right: 0; }
+  &__icon-button { width: 2.5vw; height: 2.5vw; padding: 0.7vw; }
+  &__icon-button--danger:hover { color: #ff8f84; border-color: #ff8f84; }
+
+  @media (max-width: 800px) {
+    &__heading { font-size: 1.5rem; }
+    &__close { width: 2.75rem; height: 2.75rem; padding: 0.75rem; }
+    &__content { grid-template-columns: 1fr; padding: 1.5rem; gap: 3rem; }
+    &__composer { position: static; }
+    &__section-heading { font-size: 1.35rem; }
+    &__section-heading--history { align-items: stretch; flex-direction: column; gap: 0.75rem; }
+    &__history-actions { gap: 0.5rem; }
+    &__clear-confirmation { align-items: stretch; flex-direction: column; }
+    &__clear-confirmation-actions .messages-page__button { flex: 1; }
+    &__label { font-size: 0.75rem; margin-top: 1rem; }
+    &__textarea, &__input { padding: 0.75rem; font-size: 1rem; }
+    &__field-meta, &__message-state, &__message-expiry { font-size: 0.75rem; }
+    &__button { min-height: 2.75rem; padding: 0.75rem 1rem; font-size: 0.9rem; }
+    &__button--compact { flex: 1; }
+    &__library { min-height: 20rem; }
+    &__message { padding: 1.25rem 6.5rem 1.25rem 0; }
+    &__message-text { font-size: 1rem; }
+    &__message-actions { top: 1.25rem; gap: 0.5rem; }
+    &__icon-button { width: 2.75rem; height: 2.75rem; padding: 0.8rem; }
+  }
+}

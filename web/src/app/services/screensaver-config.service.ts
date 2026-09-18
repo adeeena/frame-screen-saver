@@ -9,11 +9,28 @@ export interface AnimationSettings {
   stillImageTimeoutMs: number;
   coverPageTimeoutMs: number;
   columnsPageTimeoutMs: number;
+  transportPageTimeoutMs: number;
+  weatherPageTimeoutMs: number;
+  pageTransitionDurationMs: number;
+  messagePageTimeoutMs: number;
   frameChangeAfterCycles: number;
   autoReloadIntervalHours: number;
   /** How many images to include in each gallery shuffle (default 10). */
   gallerySize: number;
 }
+
+const animationDefaults: AnimationSettings = {
+  stillImageTimeoutMs: 5000,
+  coverPageTimeoutMs: 10000,
+  columnsPageTimeoutMs: 10000,
+  transportPageTimeoutMs: 10000,
+  weatherPageTimeoutMs: 10000,
+  pageTransitionDurationMs: 400,
+  messagePageTimeoutMs: 5000,
+  frameChangeAfterCycles: 10,
+  autoReloadIntervalHours: 6,
+  gallerySize: 10,
+};
 
 export interface FontSettings {
   clock: string;
@@ -52,8 +69,8 @@ export interface WeatherSettings {
   units: 'metric' | 'imperial';
 }
 
-export interface TransitSettings {
-  isEnabled: boolean;
+export interface TransitRouteSettings {
+  id: string;
   provider: string;
   stopId: string;
   stopLabel: string;
@@ -66,6 +83,13 @@ export interface TransitSettings {
   navitiaRegion: string | null;
   gtfsRtUrl: string | null;
   destinationFilter: string | null;
+  availableFrom: string | null;
+  availableUntil: string | null;
+}
+
+export interface TransitSettings {
+  isEnabled: boolean;
+  entries: TransitRouteSettings[];
 }
 
 export interface CalendarSettings {
@@ -112,9 +136,12 @@ export class ScreensaverConfigService {
   saveStatus(): 'idle' | 'saving' | 'saved' | 'error' { return this._saveStatus$.value; }
 
   load(): void {
-    this.http.get<ScreensaverConfig>('/screensaver.config.json').subscribe({
-      next: (cfg) => this._config$.next(cfg),
-      error: (err) => console.error('Failed to load screensaver.config.json', err),
+    this.http.get<ScreensaverConfig>('/api/config').subscribe({
+      next: (cfg) => this._config$.next({
+        ...cfg,
+        animationSettings: { ...animationDefaults, ...cfg.animationSettings },
+      }),
+      error: (err) => console.error('Failed to load screensaver configuration', err),
     });
   }
 

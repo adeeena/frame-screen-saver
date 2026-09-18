@@ -10,6 +10,12 @@ export interface SolarEventResponse {
   readonly type: 'sunrise' | 'sunset';
   readonly time: string;
   readonly utcOffset: string;
+  readonly events?: readonly SolarEvent[];
+}
+
+export interface SolarEvent {
+  readonly type: 'sunrise' | 'sunset';
+  readonly time: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -51,6 +57,7 @@ export class SolarService implements OnDestroy {
   }
 
   nextEvent(): SolarEventResponse | null { return this._nextEvent; }
+  events(): readonly SolarEvent[] { return this._nextEvent?.events ?? []; }
   error(): string | null { return this._error; }
 
   private calculateNextDelay(response: SolarEventResponse | number): number {

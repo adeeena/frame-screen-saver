@@ -1,0 +1,79 @@
+<div class="transport-page">
+
+    <div class="transport-page__columns">
+
+        <div class="transport-page__column">
+            <div class="transport-page__title">Transport</div>
+
+            <div class="transport-page__boards">
+                <div class="transit-board" *ngFor="let entry of transitEntries()">
+                    <div class="transit-board__header">
+                        <div class="transit-board__badge" [style.backgroundColor]="'#' + entry.lineColor"
+                            [style.color]="'#' + entry.lineTextColor">{{ entry.lineLabel }}</div>
+                        <div class="transit-board__route">
+                            <span class="transit-board__origin">{{ entry.stopLabel }}</span>
+                            <span class="transit-board__arrow">→</span>
+                            <span class="transit-board__destination">{{ entry.direction }}</span>
+                        </div>
+                    </div>
+                    <div class="transit-board__departures">
+                        <div class="transit-board__departure" *ngFor="let departure of departures(entry)">
+                            <span class="transit-board__time">{{ departure.displayTime }}</span>
+                            <span class="transit-board__minutes">{{ minutesUntil(departure) }}<span
+                                    class="transit-board__unit"> min</span></span>
+                        </div>
+                        <div class="transit-board__empty" *ngIf="departures(entry).length === 0">No upcoming departures
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transport-page__infobox" *ngIf="upcomingTransitOpening() as opening"
+                    [attr.aria-label]="opening.lineLabel + ' to ' + opening.stopLabel + ' is in ' + opening.days + ' days'">
+                    <span class="transport-page__infobox-label" aria-hidden="true">{{ opening.lineLabel }} to {{
+                        opening.stopLabel }}</span>
+                    <span class="transport-page__infobox-countdown" aria-hidden="true">
+                        <span class="transport-page__infobox-prefix">in</span>
+                        <span class="transport-page__infobox-days">{{ opening.days }}</span>
+                        <span class="transport-page__infobox-unit">days</span>
+                    </span>
+                </div>
+
+                <div class="transit-board__empty" *ngIf="transitEntries().length === 0 && !upcomingTransitOpening()">No
+                    transit entries</div>
+            </div>
+        </div>
+
+        <div class="transport-page__divider" role="separator"></div>
+
+        <div class="transport-page__column">
+            <div class="transport-page__title">Messages</div>
+
+            <div class="transport-page__messages">
+                <div class="transport-page__messages-empty" *ngIf="messagePages[0].length === 0">No messages</div>
+
+                <div class="message-timeline" *ngIf="messagePages[0].length > 0">
+                    <div class="message-timeline__page">
+                        <div class="message-timeline__row"
+                            *ngFor="let message of messagePages[currentMessagePage]; let last = last">
+                            <div class="message-timeline__spine" [class.message-timeline__spine--last]="last">
+                                <span class="message-timeline__dot"></span>
+                            </div>
+                            <div class="message-timeline__body">
+                                <div class="message-timeline__text">{{ message.text }}</div>
+                                <div class="message-timeline__expiry">{{ expiryCountdown(message) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="message-timeline__pagination" *ngIf="messagePages.length > 1" aria-hidden="true">
+                        <span class="message-timeline__page-dot"
+                            *ngFor="let page of messagePages; let pageIndex = index"
+                            [class.message-timeline__page-dot--active]="pageIndex === currentMessagePage"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
