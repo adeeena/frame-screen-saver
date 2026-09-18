@@ -89,7 +89,10 @@ fi
 if [[ -d "$INSTALL_DIR/.git" ]]; then
   log "Updating existing checkout in $INSTALL_DIR"
 
-  blocked_git_path="$(find "$INSTALL_DIR/.git" ! -writable -print -quit 2>/dev/null || true)"
+  blocked_git_path="$(find "$INSTALL_DIR/.git" -type d ! -writable -print -quit 2>/dev/null || true)"
+  if [[ -z "$blocked_git_path" && -e "$INSTALL_DIR/.git/FETCH_HEAD" && ! -w "$INSTALL_DIR/.git/FETCH_HEAD" ]]; then
+    blocked_git_path="$INSTALL_DIR/.git/FETCH_HEAD"
+  fi
   if [[ -n "$blocked_git_path" ]]; then
     fail "Git metadata is not writable: $blocked_git_path
 Repair its ownership, then rerun this installer:
