@@ -89,6 +89,18 @@ interface WeatherData {
   readonly uvIndex: number | null;
 }
 
+interface WorldCityConfig {
+  readonly name: string;
+  readonly latitude: number;
+  readonly longitude: number;
+}
+
+interface WorldCityWeather {
+  readonly name: string;
+  readonly temperature: number;
+  readonly symbolCode: string;
+}
+
 interface HourlyForecastPoint {
   readonly time: string;
   /** Pre-formatted local time string (HH:mm) — computed server-side to avoid client timezone issues. */
@@ -99,6 +111,8 @@ interface HourlyForecastPoint {
   /** Cloud cover percentage (0–100). */
   readonly cloudCoverage: number;
   readonly symbolCode: string;
+  /** UV index (clear-sky max) for this hour, when the provider reports one. */
+  readonly uvIndex: number | null;
 }
 
 interface WeatherForecastData {
@@ -107,6 +121,8 @@ interface WeatherForecastData {
   readonly todayMax: number;
   readonly todayCloudMin: number;
   readonly todayCloudMax: number;
+  readonly todayUvMin: number | null;
+  readonly todayUvMax: number | null;
   /** Total expected precipitation (mm) over the next 12 hours. */
   readonly next12hPrecipitation: number;
   readonly willRain: boolean;
@@ -145,6 +161,7 @@ interface CalendarDay {
 const solarCache: Cache<SolarData> = { data: null, expiresAt: 0 };
 const weatherCache: Cache<WeatherData> = { data: null, expiresAt: 0 };
 const weatherForecastCache: Cache<WeatherForecastData> = { data: null, expiresAt: 0 };
+const worldWeatherCaches = new Map<string, Cache<WorldCityWeather>>();
 const transitCaches = new Map<string, Cache<readonly Departure[]>>();
 const calendarCache: Cache<readonly CalendarDay[]> = { data: null, expiresAt: 0 };
 
@@ -305,7 +322,7 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
             instant: { details: { air_temperature: number; cloud_area_fraction?: number } };
             next_1_hours?: {
               summary: { symbol_code: string };
-              details?: { precipitation_amount?: number };
+              details?: { precipitation_amount?: number; ultraviolet_index_clear_sky_max?: number };
             };
           };
         }>;
@@ -325,6 +342,9 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
         precipitation: entry.data.next_1_hours?.details?.precipitation_amount ?? 0,
         cloudCoverage: Math.round(entry.data.instant.details.cloud_area_fraction ?? 0),
         symbolCode: entry.data.next_1_hours?.summary.symbol_code ?? 'clearsky_day',
+        uvIndex: entry.data.next_1_hours?.details?.ultraviolet_index_clear_sky_max != null
+          ? Math.round(entry.data.next_1_hours.details.ultraviolet_index_clear_sky_max)
+          : null,
       }));
 
     const today = momentTz.tz(serverConfig.timezone).format('YYYY-MM-DD');
@@ -334,6 +354,7 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
     const source = todayEntries.length > 0 ? todayEntries : hourly;
     const temps = source.map((h) => h.temperature);
     const clouds = source.map((h) => h.cloudCoverage);
+    const uvValues = source.map((h) => h.uvIndex).filter((uv): uv is number => uv !== null);
     const next12hPrecipitation = hourly.slice(0, 12).reduce((sum, h) => sum + h.precipitation, 0);
     const willRain = source.some((h) => h.precipitation >= 0.2 || /rain|sleet|snow|thunder/.test(h.symbolCode));
     const daylightEntries = source.filter((h) => {
@@ -349,6 +370,8 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
       todayMax: temps.length > 0 ? Math.max(...temps) : 0,
       todayCloudMin: clouds.length > 0 ? Math.min(...clouds) : 0,
       todayCloudMax: clouds.length > 0 ? Math.max(...clouds) : 0,
+      todayUvMin: uvValues.length > 0 ? Math.min(...uvValues) : null,
+      todayUvMax: uvValues.length > 0 ? Math.max(...uvValues) : null,
       next12hPrecipitation: Math.round(next12hPrecipitation * 10) / 10,
       willRain,
       willBeSunny,
@@ -361,8 +384,50 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
   } catch (error) {
     console.error('Weather forecast handler error:', error);
     if (weatherForecastCache.data) { res.json(weatherForecastCache.data); }
-    else { res.json({ hourly: [], todayMin: 0, todayMax: 0, todayCloudMin: 0, todayCloudMax: 0, next12hPrecipitation: 0, willRain: false, willBeSunny: false }); }
+    else { res.json({ hourly: [], todayMin: 0, todayMax: 0, todayCloudMin: 0, todayCloudMax: 0, todayUvMin: null, todayUvMax: null, next12hPrecipitation: 0, willRain: false, willBeSunny: false }); }
   }
+}
+
+async function fetchWorldCityWeather(city: WorldCityConfig): Promise<WorldCityWeather> {
+  const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${city.latitude}&lon=${city.longitude}`;
+  const resp = await externalAxios.get<{
+    properties: {
+      timeseries: Array<{
+        data: {
+          instant: { details: { air_temperature: number } };
+          next_1_hours?: { summary: { symbol_code: string } };
+        };
+      }>;
+    };
+  }>(url, { headers: { 'User-Agent': 'frame-screen-saver/1.0' } });
+  const timeseries = resp.data.properties.timeseries[0];
+  return {
+    name: city.name,
+    temperature: Math.round(timeseries.data.instant.details.air_temperature),
+    symbolCode: timeseries.data.next_1_hours?.summary?.symbol_code ?? 'clearsky_day',
+  };
+}
+
+async function worldWeatherHandler(_req: Request, res: Response): Promise<void> {
+  const config = await fs.readJson(configFilePath).catch(() => ({})) as {
+    appSettings?: { worldClock?: { cities?: WorldCityConfig[] } };
+  };
+  const cities = config.appSettings?.worldClock?.cities ?? [];
+
+  const result = await Promise.all(cities.map(async (city) => {
+    const cache = worldWeatherCaches.get(city.name) ?? { data: null, expiresAt: 0 };
+    worldWeatherCaches.set(city.name, cache);
+    try {
+      if (!cache.data || Date.now() >= cache.expiresAt) {
+        cache.data = await fetchWorldCityWeather(city);
+        cache.expiresAt = Date.now() + 30 * 60 * 1000;
+      }
+    } catch (error) {
+      console.error(`World-clock weather for ${city.name} error:`, (error as Error)?.message ?? error);
+    }
+    return cache.data ?? { name: city.name, temperature: 0, symbolCode: 'clearsky_day' };
+  }));
+  res.json(result);
 }
 
 async function imageListHandler(_req: Request, res: Response): Promise<void> {
@@ -444,7 +509,10 @@ async function imageHandler(req: Request, res: Response): Promise<void> {
 async function fetchDeparturesNavitia(config: TransitConfig, now: momentTz.Moment): Promise<readonly Departure[]> {
   const token = process.env['NAVITIA_TOKEN'];
   const region = config.navitiaRegion ?? 'fr-idf';
-  if (!token) return [];
+  if (!token) {
+    console.error(`Navitia departures for stop ${config.stopId} skipped: NAVITIA_TOKEN is not set.`);
+    return [];
+  }
   const url = `https://api.navitia.io/v1/coverage/${region}/stop_areas/${encodeURIComponent(config.stopId)}/departures?count=${config.maxDepartures * 3}&depth=1&disable_disruption=false`;
   const resp = await externalAxios.get<{
     departures: Array<{
@@ -489,7 +557,10 @@ async function fetchDeparturesNavitia(config: TransitConfig, now: momentTz.Momen
 /** PRIM (Île-de-France Mobilités) SIRI Stop Monitoring */
 async function fetchDeparturesPrim(config: TransitConfig, now: momentTz.Moment): Promise<readonly Departure[]> {
   const apiKey = process.env['PRIM_API_KEY'];
-  if (!apiKey) return [];
+  if (!apiKey) {
+    console.error(`PRIM departures for stop ${config.stopId} skipped: PRIM_API_KEY is not set.`);
+    return [];
+  }
   const url = `https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=${encodeURIComponent(config.stopId)}`;
   const resp = await externalAxios.get(url, { headers: { apikey: apiKey } });
   type Visit = { MonitoredVehicleJourney: { DestinationName?: Array<{ value: string }>; MonitoredCall: { AimedDepartureTime: string; ExpectedDepartureTime?: string; DepartureStatus?: string } } };
@@ -995,6 +1066,12 @@ async function resizeHandler(req: Request, res: Response): Promise<void> {
 // ─── API routes ────────────────────────────────────────────────────────────────
 
 app.use(express.json());
+// Dynamic JSON responses must always be revalidated — browsers reopening a stale
+// tab/session must not reuse a heuristically-cached config/gallery/messages payload.
+app.use('/api', (_req: Request, res: Response, next: NextFunction) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 
 const configFilePath = path.join(browserDistFolder, 'screensaver.config.json');
 const messagesFilePath = process.env['MESSAGES_FILE']
@@ -1266,6 +1343,7 @@ app.get('/api/clock', clockHandler);
 app.get('/api/solar/next-event', solarHandler);
 app.get('/api/weather', weatherHandler);
 app.get('/api/weather/forecast', weatherForecastHandler);
+app.get('/api/weather/world', worldWeatherHandler);
 app.get('/api/image/list', imageListHandler);
 app.get('/api/image/meta', imageMetaHandler);
 app.get('/api/image', imageHandler);
@@ -1280,6 +1358,10 @@ app.get('/api/transit/routes', async (_req: Request, res: Response): Promise<voi
       if (!cache.data || Date.now() >= cache.expiresAt) {
         cache.data = await fetchDepartures(route);
         cache.expiresAt = Date.now() + 2 * 60 * 1000;
+        // Surface unexpectedly-empty successful fetches — likely a stale destinationFilter/lineRef.
+        if (cache.data.length === 0) {
+          console.warn(`Transit route ${route.id} (${route.provider}, stop ${route.stopId}) returned 0 departures.`);
+        }
       }
     } catch (error) {
       const message = (error as Error)?.message ?? error;
