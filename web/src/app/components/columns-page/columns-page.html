@@ -15,10 +15,20 @@
     <!-- <div class="columns-page__divider" role="separator"></div> -->
     <div class="columns-page__divider" role="separator"></div>
 
+    <div class="columns-page__widget columns-page__compact-city" *ngFor="let city of compactCities">
+      <span class="columns-page__compact-city-name">{{ city.name }}</span>
+      <span class="columns-page__compact-city-icon" [feather]="city.iconName"></span>
+      <span class="columns-page__compact-city-temp">{{ city.temperature }}°</span>
+    </div>
+
     <div class="columns-page__widget columns-page__sao-paulo">
       <span class="columns-page__sao-paulo-city">São Paulo</span>
       <span class="columns-page__sao-paulo-offset">{{ saoPauloOffsetLabel }}</span>
       <span class="columns-page__sao-paulo-time">{{ saoPauloTime }}</span>
+      <ng-container *ngIf="saoPauloWeather as weather">
+        <span class="columns-page__sao-paulo-icon" [feather]="weather.iconName"></span>
+        <span class="columns-page__sao-paulo-temp">{{ weather.temperature }}°</span>
+      </ng-container>
     </div>
 
     <!-- Future widget slot -->

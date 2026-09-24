@@ -133,6 +133,14 @@
       "icsUrl": "",
       "daysAhead": 7,
       "maxDisplayDays": 2
+    },
+    "worldClock": {
+      "cities": [
+        { "name": "Basel", "latitude": 47.5596, "longitude": 7.5886 },
+        { "name": "Budapest", "latitude": 47.4979, "longitude": 19.0402 },
+        { "name": "Nice", "latitude": 43.7102, "longitude": 7.2620 },
+        { "name": "São Paulo", "latitude": -23.5505, "longitude": -46.6333 }
+      ]
     }
   }
 }

@@ -99,6 +99,16 @@ export interface CalendarSettings {
   maxDisplayDays: number;
 }
 
+export interface WorldClockCity {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface WorldClockSettings {
+  cities: WorldClockCity[];
+}
+
 export interface AppSettings {
   location: LocationSettings;
   timezone: string;
@@ -107,6 +117,7 @@ export interface AppSettings {
   weather: WeatherSettings;
   transit: TransitSettings;
   calendar: CalendarSettings;
+  worldClock?: WorldClockSettings;
 }
 
 export interface ScreensaverConfig {

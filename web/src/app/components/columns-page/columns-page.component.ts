@@ -4,6 +4,8 @@ import moment from 'moment';
 import { ClockService } from '../../services/clock.service';
 import { CalendarService, CalendarDay, CalendarEvent } from '../../services/calendar.service';
 import { ScreensaverConfigService } from '../../services/screensaver-config.service';
+import { WeatherService } from '../../services/weather.service';
+import { weatherIconName } from '../../services/weather-icon';
 
 @Component({
   selector: 'app-columns-page',
@@ -24,12 +26,34 @@ export class ColumnsPageComponent implements AfterViewChecked {
     readonly clockService: ClockService,
     readonly calendarService: CalendarService,
     readonly configService: ScreensaverConfigService,
+    readonly weatherService: WeatherService,
     @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {}
 
   private static readonly SAO_PAULO_TZ = 'America/Sao_Paulo';
+  private static readonly SAO_PAULO_CITY = 'São Paulo';
+  /** Cities shown compact (no time/offset) — same timezone as the frame's local timezone. */
+  static readonly COMPACT_CITY_NAMES: readonly string[] = ['Basel', 'Budapest', 'Nice'];
 
   get config() { return this.configService.config()?.appSettings ?? null; }
+
+  /** Compact-only cities (name + icon + temp), in configured order. */
+  get compactCities(): readonly { name: string; iconName: string; temperature: number }[] {
+    return ColumnsPageComponent.COMPACT_CITY_NAMES
+      .map((name) => this.cityWeather(name))
+      .filter((c): c is { name: string; iconName: string; temperature: number } => c !== null);
+  }
+
+  get saoPauloWeather(): { iconName: string; temperature: number } | null {
+    const city = this.cityWeather(ColumnsPageComponent.SAO_PAULO_CITY);
+    return city ? { iconName: city.iconName, temperature: city.temperature } : null;
+  }
+
+  private cityWeather(name: string): { name: string; iconName: string; temperature: number } | null {
+    const city = this.weatherService.worldCities().find((c) => c.name === name);
+    if (!city) return null;
+    return { name, iconName: weatherIconName(city.symbolCode), temperature: city.temperature };
+  }
 
   get saoPauloTime(): string {
     return new Intl.DateTimeFormat('en-GB', {

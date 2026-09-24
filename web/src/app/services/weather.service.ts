@@ -13,6 +13,12 @@ interface WeatherData {
   readonly uvIndex: number | null;
 }
 
+export interface WorldCityWeather {
+  readonly name: string;
+  readonly temperature: number;
+  readonly symbolCode: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class WeatherService implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
@@ -23,6 +29,7 @@ export class WeatherService implements OnDestroy {
   private _windSpeed = 0;
   private _windDirection = 0;
   private _uvIndex: number | null = null;
+  private _worldCities: readonly WorldCityWeather[] = [];
   private _error: string | null = null;
 
   constructor(
@@ -56,6 +63,23 @@ export class WeatherService implements OnDestroy {
           this._error = null;
         }
       });
+
+    interval(30 * 60 * 1000)
+      .pipe(
+        startWith(0),
+        switchMap(() =>
+          this.http.get<WorldCityWeather[]>('/api/weather/world').pipe(
+            catchError((err) => {
+              console.error('Could not fetch world-clock weather.', err);
+              return of(null);
+            }),
+          ),
+        ),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((data) => {
+        if (data) this._worldCities = data;
+      });
   }
 
   temperature(): number { return this._temperature; }
@@ -64,6 +88,7 @@ export class WeatherService implements OnDestroy {
   windSpeed(): number { return this._windSpeed; }
   windDirection(): number { return this._windDirection; }
   uvIndex(): number | null { return this._uvIndex; }
+  worldCities(): readonly WorldCityWeather[] { return this._worldCities; }
   error(): string | null { return this._error; }
 
   ngOnDestroy(): void {
