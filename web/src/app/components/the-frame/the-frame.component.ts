@@ -72,6 +72,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   @ViewChild('imageB') private imageB!: ElementRef<HTMLDivElement>;
   @ViewChild('infoOverlay') private infoOverlay!: ElementRef<HTMLDivElement>;
   @ViewChild('progressBar') private progressBar!: ElementRef<HTMLDivElement>;
+  @ViewChild('outerFrame') private outerFrame!: ElementRef<HTMLDivElement>;
   @ViewChild('coverPage', { read: ElementRef }) private coverPageEl!: ElementRef<HTMLElement>;
   @ViewChild('columnsPage', { read: ElementRef }) private columnsPageEl!: ElementRef<HTMLElement>;
   @ViewChild('transportPage', { read: ElementRef }) private transportPageEl!: ElementRef<HTMLElement>;
@@ -80,7 +81,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   isPaused = false;
   showDebug = false;
   currentPage: 1 | 2 | 3 | 4 | 5 = 1;
-  frameStyle: 0 | 1 | 2 | 3 | 4 = (Math.floor(Math.random() * 5)) as 0 | 1 | 2 | 3 | 4;
+  frameStyle: 0 | 1 | 2 | 3 | 4 | 5 = (Math.floor(Math.random() * 6)) as 0 | 1 | 2 | 3 | 4 | 5;
 
   private mainTimeline!: gsap.core.Timeline;
   private pauseTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -145,6 +146,9 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
 
     this.ngZone.runOutsideAngular(() => {
       this.initElements();
+      // Hide the whole frame (chrome + image) until the first image is ready, so
+      // neither the pre-config frame style nor an empty image layer is ever visible.
+      gsap.set(this.outerFrame.nativeElement, { opacity: 0 });
       this.buildTimeline();
     });
     this.setupKeyboard();
@@ -220,6 +224,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       this.els.imageB.style.backgroundImage = `url('${this.resizedUrl(next)}')`;
     }
     this.activeLayer = 'a';
+    gsap.to(this.outerFrame.nativeElement, { opacity: 1, duration: 0.6 });
   }
 
   /** Converts a /media/<pack>/content/<file> URL into /api/resize?file=<pack>/content/<file>&w=<w>&h=<h> */
@@ -438,7 +443,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   }
 
   private advanceFrameStyle(): void {
-    this.frameStyle = ((this.frameStyle + 1) % 5) as 0 | 1 | 2 | 3 | 4;
+    this.frameStyle = ((this.frameStyle + 1) % 6) as 0 | 1 | 2 | 3 | 4 | 5;
   }
 
   private togglePause(): void {

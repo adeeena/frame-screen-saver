@@ -84,6 +84,20 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
       }
     }
 
+    //  Style 5 — Louvre Gilt 
+    // Near-black body, rich cream mat, dense ornate gold moulding (deepest relief of the set)
+    &.the-frame--style-5 {
+      --f-outer-pad:   4.5vw;
+      --f-inner-brd:   3.5vw;
+      --f-bg-from:     #0d0904;
+      --f-bg-to:       #1a1206;
+      --f-mat-color:   #f7ecd2;
+      @supports (width: 1dvw) {
+        --f-outer-pad:   4.5dvw;
+        --f-inner-brd:   3.5dvw;
+      }
+    }
+
     padding: var(--f-outer-pad);
     background-color: var(--frame-outer);
     background-image: linear-gradient(135deg, var(--f-bg-from), var(--f-bg-to));
@@ -208,7 +222,25 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
         0 0 0 22px #7a5510,   // deep bronze
         0 0 0 26px #050300;   // outer black
     }
-
+    //  Style 5: Louvre Gilt 
+    // Ornate repeating gold mouldings, richer/deeper relief than Gilded Baroque
+    .the-frame--style-5 & {
+      box-shadow:
+        inset #{$inner-line} 0 0 rgba(215, 180, 90, 0.6),
+        inset 0 #{$inner-line} 0 rgba(215, 180, 90, 0.6),
+        inset #{-$inner-line} 0 0 rgba(245, 215, 140, 0.8),
+        inset 0 #{-$inner-line} 0 rgba(245, 215, 140, 0.8),
+        0 0 0 2px  #f0d485,   // bright gold highlight
+        0 0 0 4px  #1a1300,   // dark groove
+        0 0 0 8px  #c99a2e,   // ornate band
+        0 0 0 10px #0f0b00,   // dark groove
+        0 0 0 15px #e8c368,   // raised bead
+        0 0 0 17px #120d00,   // dark groove
+        0 0 0 22px #a87a1c,   // recessed gold
+        0 0 0 24px #0a0700,   // dark groove
+        0 0 0 30px #d4ad4a,   // outer moulding
+        0 0 0 34px rgba(5, 4, 0, 0.4); // soft fade to frame body
+    }
     // Inset shadow on the image area â€” softens the hard frameâ†”image boundary
     &::after {
       content: '';
