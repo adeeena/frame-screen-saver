@@ -1,4 +1,4 @@
-# Samsung :tm: The Frame :tm: -like screen saver, on steroids!
+# Ambient Display
 
 ## Development time
 
@@ -21,19 +21,40 @@ To do so in macOS:
 
 
 
-# FrameScreenSaver
-
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.2.
+This application uses Angular CLI 11.2 and an Express API server.
 
 ## Development server
 
-To start a local development server, run:
+To start the Angular development server and Express API, run:
 
-```bash
-ng serve
+```powershell
+.\start-dev.ps1
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4400/`. The application will automatically reload whenever you modify any of the source files.
+Open `http://localhost:4400/`. API requests are proxied to `http://localhost:4000/`.
+
+## Configuration
+
+Runtime product identity, copy, media packs, location, world clocks, weather, transit, calendar, and message policy are stored in `public/screensaver.config.json`. The configuration page edits the deployed copy through `/api/config`.
+
+Set `SCREENSAVER_CONFIG_FILE` to load and save an external deployment-specific JSON file instead of the bundled configuration. This is the recommended production setup.
+
+Secrets and machine-specific paths belong in environment variables, not JSON:
+
+- `CALENDAR_ICS_URL`
+- `PRIM_API_KEY`
+- `NAVITIA_TOKEN`
+- `MEDIA_DIR`
+- `MESSAGES_FILE`
+- `MET_NO_USER_AGENT`
+- `APP_TIMEZONE`, `APP_LATITUDE`, and `APP_LONGITUDE` optionally override location settings
+- `ALLOW_INSECURE_TLS=true` disables outbound certificate verification only when an enterprise proxy makes that unavoidable
+
+World-clock cities use `role: "compact"` for weather-only rows and `role: "featured"` with an IANA `timezone` for the combined time, offset, and weather row. Only one featured city is supported.
+
+Automatic reloads first probe `/api/clock`. The page reloads only after a successful server response; network errors, timeouts, and HTTP errors are retried every 20 minutes.
+
+UI translations are stored in `public/translations.json` as flat translation keys grouped by locale. Set `appSettings.locale` in the runtime configuration or use the Language control. Missing regional keys fall back from the full locale to its language (for example `fr-FR` to `fr`), then to `defaultLocale`, and finally to the key itself.
 
 ## Code scaffolding
 
@@ -58,6 +79,8 @@ ng build
 ```
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+
+Production bundles target current Chrome, Edge, Firefox, Safari, iOS Safari, and Firefox ESR releases. Legacy ES5 browsers such as Internet Explorer are not supported.
 
 ## Running unit tests
 

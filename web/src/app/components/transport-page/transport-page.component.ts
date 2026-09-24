@@ -6,7 +6,6 @@ import { TrainService, Departure } from '../../services/train.service';
 import { Message, MessageService } from '../../services/message.service';
 import { ScreensaverConfigService, TransitRouteSettings } from '../../services/screensaver-config.service';
 
-const messagesPerPage = 3;
 const defaultMessagePageDurationMs = 5000;
 const defaultTransportPageDurationMs = 10000;
 
@@ -58,6 +57,16 @@ export function nextTransitOpening(
 export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private pageTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private transitEntriesSource: readonly TransitRouteSettings[] | null = null;
+  private transitEntriesDay = '';
+  private transitEntriesEnabled = false;
+  private transitEntriesCache: readonly TransitRouteSettings[] = [];
+  private openingSource: readonly TransitRouteSettings[] | null = null;
+  private openingDay = '';
+  private openingCache: TransitOpening | null = null;
+  private departuresSource: ReturnType<TrainService['routes']> | null = null;
+  private departuresMinute = -1;
+  private readonly departuresCache = new Map<string, readonly Departure[]>();
 
   @Input() active = false;
   @Output() messageCycleComplete = new EventEmitter<void>();
@@ -75,16 +84,35 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
     const transit = this.configService.config()?.appSettings.transit;
     if (!transit?.isEnabled) return [];
     const today = moment().startOf('day');
-    return transit.entries.filter((entry) =>
+    const day = today.format('YYYY-MM-DD');
+    if (
+      transit.entries === this.transitEntriesSource
+      && day === this.transitEntriesDay
+      && transit.isEnabled === this.transitEntriesEnabled
+    ) {
+      return this.transitEntriesCache;
+    }
+
+    this.transitEntriesSource = transit.entries;
+    this.transitEntriesDay = day;
+    this.transitEntriesEnabled = transit.isEnabled;
+    this.transitEntriesCache = transit.entries.filter((entry) =>
       (!entry.availableFrom || !today.isBefore(moment(entry.availableFrom)))
       && (!entry.availableUntil || today.isBefore(moment(entry.availableUntil))),
     );
+    return this.transitEntriesCache;
   }
 
   upcomingTransitOpening(): TransitOpening | null {
     const transit = this.configService.config()?.appSettings.transit;
     if (!transit?.isEnabled) return null;
-    return nextTransitOpening(transit.entries);
+    const day = moment().format('YYYY-MM-DD');
+    if (transit.entries === this.openingSource && day === this.openingDay) return this.openingCache;
+
+    this.openingSource = transit.entries;
+    this.openingDay = day;
+    this.openingCache = nextTransitOpening(transit.entries);
+    return this.openingCache;
   }
 
   ngOnInit(): void {
@@ -109,9 +137,22 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
 
   departures(entry: TransitRouteSettings): readonly Departure[] {
     const nowMs = Date.now();
-    return this.trainService.departures(entry.id).filter((departure) =>
+    const minute = Math.floor(nowMs / 60000);
+    const source = this.trainService.routes();
+    if (source !== this.departuresSource || minute !== this.departuresMinute) {
+      this.departuresSource = source;
+      this.departuresMinute = minute;
+      this.departuresCache.clear();
+    }
+
+    const cached = this.departuresCache.get(entry.id);
+    if (cached) return cached;
+
+    const departures = this.trainService.departures(entry.id).filter((departure) =>
       moment(departure.expectedDeparture).valueOf() >= nowMs,
     );
+    this.departuresCache.set(entry.id, departures);
+    return departures;
   }
 
   minutesUntil(dep: Departure): number {
@@ -132,6 +173,7 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
 
   private paginate(messages: readonly Message[]): readonly (readonly Message[])[] {
     if (messages.length === 0) return [[]];
+    const messagesPerPage = this.configService.messages().itemsPerPage;
     const pages: Message[][] = [];
     for (let index = 0; index < messages.length; index += messagesPerPage) {
       pages.push(messages.slice(index, index + messagesPerPage));

@@ -130,9 +130,10 @@ fi
 if [[ ! -f "$ENV_FILE" ]]; then
   log "Creating $ENV_FILE"
   cat >"$ENV_FILE" <<'EOF'
-# Add the token required by the transit provider configured in web/src/server.config.ts.
+# Add credentials required by the providers enabled in screensaver.config.json.
 PRIM_API_KEY=
 NAVITIA_TOKEN=
+CALENDAR_ICS_URL=
 EOF
   chmod 600 "$ENV_FILE"
 fi

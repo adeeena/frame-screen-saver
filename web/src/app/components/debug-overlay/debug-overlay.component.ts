@@ -5,6 +5,7 @@ import { WeatherService } from '../../services/weather.service';
 import { TrainService } from '../../services/train.service';
 import { CalendarService } from '../../services/calendar.service';
 import { ImageCycleService } from '../../services/image-cycle.service';
+import { ScreensaverConfigService } from '../../services/screensaver-config.service';
 
 @Component({
   selector: 'app-debug-overlay',
@@ -22,6 +23,7 @@ export class DebugOverlayComponent {
     readonly trainService: TrainService,
     readonly calendarService: CalendarService,
     readonly imageCycleService: ImageCycleService,
+    readonly configService: ScreensaverConfigService,
   ) {}
 }
 

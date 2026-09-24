@@ -59,7 +59,7 @@
     font-size: 1.6dvw;
     letter-spacing: normal;
     text-transform: none;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     margin-top: 0.1vw;
     margin-top: 0.1dvw;
   }
@@ -83,25 +83,25 @@
     // gap unsupported in Chrome ≤ 83 on flex — use margin-right on children instead
   }
 
-  &__sao-paulo {
+  &__city-clock {
     display: -webkit-flex;
     display: flex;
     -webkit-align-items: center;
     align-items: center;
   }
 
-  &__sao-paulo-city {
+  &__city-clock-name {
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.6vw;
     font-size: 1.6dvw;
     line-height: 1;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     margin-right: 0.8vw;
     margin-right: 0.8dvw;
   }
 
-  &__sao-paulo-time {
+  &__city-clock-time {
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.6vw;
@@ -111,7 +111,7 @@
     margin-left: auto;
   }
 
-  &__sao-paulo-offset {
+  &__city-clock-offset {
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.4vw;
@@ -120,7 +120,7 @@
     color: var(--accent);
   }
 
-  &__sao-paulo-icon {
+  &__city-clock-icon {
     display: inline-flex;
     -webkit-align-items: center;
     align-items: center;
@@ -128,10 +128,9 @@
     width: 1.4dvw;
     height: 1.4vw;
     height: 1.4dvw;
-    margin-left: 0.6vw;
-    // Feather glyphs sit slightly high in their viewBox — nudge down to meet the text baseline.
-    -webkit-transform: translateY(0.15vw);
-    transform: translateY(0.15vw);
+    margin-left: 1vw;
+    margin-left: 1dvw;
+    margin-bottom: 0.2rem;
 
     svg {
       width: 100%;
@@ -144,7 +143,7 @@
     }
   }
 
-  &__sao-paulo-temp {
+  &__city-clock-temperature {
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.6vw;
@@ -517,24 +516,6 @@
     font-size: 1.8dvw;
   }
   .columns-page__agenda-no-events {
-    font-size: 1vw;
-    font-size: 1dvw;
-  }
-
-  //  Transit badge sizing 
-  .transilien__line-badge {
-    width: 2.2vw;
-    width: 2.2dvw;
-    height: 2.2vw;
-    height: 2.2dvw;
-    font-size: 1.1vw;
-    font-size: 1.1dvw;
-  }
-  .transilien__departure-time {
-    font-size: 1.2vw;
-    font-size: 1.2dvw;
-  }
-  .transilien__route-name {
     font-size: 1vw;
     font-size: 1dvw;
   }

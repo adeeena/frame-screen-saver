@@ -39,16 +39,16 @@ describe('nextTransitOpening', () => {
   it('groups the earliest routes sharing an opening date', () => {
     const opening = nextTransitOpening([
       route('later', 'T', 'Later', '2027-05-01'),
-      route('e-1', 'E', 'Épône - Mézières', '2027-02-27'),
-      route('e-2', 'E', 'Épône - Mézières', '2027-02-27'),
+      route('future-1', 'X', 'Central Station', '2027-02-27'),
+      route('future-2', 'X', 'Central Station', '2027-02-27'),
     ], Date.parse('2026-09-18T12:00:00Z'));
 
-    expect(opening).toEqual({ lineLabel: 'E', stopLabel: 'Épône - Mézières', days: 162 });
+    expect(opening).toEqual({ lineLabel: 'X', stopLabel: 'Central Station', days: 162 });
   });
 
   it('ignores routes that are already available', () => {
     expect(nextTransitOpening([
-      route('active', 'N', 'Maule', '2026-01-01'),
+      route('active', 'A', 'Central Station', '2026-01-01'),
     ], Date.parse('2026-09-18T12:00:00Z'))).toBeNull();
   });
 });

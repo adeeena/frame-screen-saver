@@ -21,17 +21,16 @@
       <span class="columns-page__compact-city-temp">{{ city.temperature }}°</span>
     </div>
 
-    <div class="columns-page__divider" role="separator"></div>
-
-    <div class="columns-page__widget columns-page__sao-paulo">
-      <span class="columns-page__sao-paulo-city">São Paulo</span>
-      <span class="columns-page__sao-paulo-offset">{{ saoPauloOffsetLabel }}</span>
-      <span class="columns-page__sao-paulo-time">{{ saoPauloTime }}</span>
-      <ng-container *ngIf="saoPauloWeather as weather">
-        <span class="columns-page__sao-paulo-icon" [feather]="weather.iconName"></span>
-        <span class="columns-page__sao-paulo-temp">{{ weather.temperature }}°</span>
-      </ng-container>
-    </div>
+    <ng-container *ngIf="featuredCity as city">
+      <div class="columns-page__divider" role="separator"></div>
+      <div class="columns-page__widget columns-page__city-clock">
+        <span class="columns-page__city-clock-name">{{ city.name }}</span>
+        <span class="columns-page__city-clock-offset">{{ featuredCityOffsetLabel }}</span>
+        <span class="columns-page__city-clock-time">{{ featuredCityTime }}</span>
+        <span class="columns-page__city-clock-icon" [feather]="city.iconName"></span>
+        <span class="columns-page__city-clock-temperature">{{ city.temperature }}°</span>
+      </div>
+    </ng-container>
 
     <!-- Future widget slot -->
     <div class="columns-page__widget-slot" aria-label="Widget slot"></div>
@@ -41,7 +40,7 @@
   <!-- RIGHT PANEL -->
   <div class="columns-page__panel columns-page__panel--right">
 
-    <div class="columns-page__agenda-header">Upcoming events</div>
+    <div class="columns-page__agenda-header">{{ 'pages.agenda.title' | translate }}</div>
 
     <div class="columns-page__calendar" #calendarRef>
       <ng-container *ngFor="let day of displayDays; let isFirstDay = first">
@@ -61,7 +60,9 @@
           </div>
         </div>
       </ng-container>
-      <div class="columns-page__no-events" *ngIf="displayDays.length === 0">No upcoming events</div>
+      <div class="columns-page__no-events" *ngIf="displayDays.length === 0">
+        {{ 'empty.events' | translate }}
+      </div>
     </div>
 
   </div>

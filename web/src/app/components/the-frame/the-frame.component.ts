@@ -10,8 +10,9 @@ import {
   PLATFORM_ID,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { filter, skip, take, takeUntil } from 'rxjs/operators';
+import { filter, skip, take, takeUntil, timeout } from 'rxjs/operators';
 import { gsap } from 'gsap';
 import { Router } from '@angular/router';
 import { ScreensaverConfig, ScreensaverConfigService } from '../../services/screensaver-config.service';
@@ -42,6 +43,8 @@ const DEFAULT_TIMINGS: FrameTimings = {
 };
 
 const PAUSE_COUNTDOWN_SECONDS = 30;
+const AUTO_RELOAD_RETRY_MS = 20 * 60 * 1000;
+const SERVER_PROBE_TIMEOUT_MS = 10 * 1000;
 
 const seconds = (milliseconds: number | undefined, fallback: number): number =>
   Number.isFinite(milliseconds) && milliseconds! > 0 ? milliseconds! / 1000 : fallback;
@@ -67,6 +70,8 @@ interface FrameElements {
 })
 export class TheFrameComponent implements AfterViewInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  private readonly reduceMotion = typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   @ViewChild('imageA') private imageA!: ElementRef<HTMLDivElement>;
   @ViewChild('imageB') private imageB!: ElementRef<HTMLDivElement>;
@@ -85,6 +90,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
 
   private mainTimeline!: gsap.core.Timeline;
   private pauseTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private autoReloadTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private pauseBarTween: gsap.core.Tween | null = null;
   private timings = DEFAULT_TIMINGS;
   private frameChangeAfterCycles = 10;
@@ -109,16 +115,12 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
 
   showCog = false;
   private cogHideTimeoutId: ReturnType<typeof setTimeout> | null = null;
-
-  onMouseMove(): void {
-    this.showCog = true;
-    if (this.cogHideTimeoutId !== null) clearTimeout(this.cogHideTimeoutId);
-    this.cogHideTimeoutId = setTimeout(() => { this.showCog = false; }, 3000);
-  }
+  private pointerMoveHandler: (() => void) | null = null;
 
   constructor(
     private readonly imageCycleService: ImageCycleService,
     private readonly keyboardService: KeyboardService,
+    private readonly http: HttpClient,
     private readonly router: Router,
     private readonly configService: ScreensaverConfigService,
     private readonly ngZone: NgZone,
@@ -150,6 +152,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       // neither the pre-config frame style nor an empty image layer is ever visible.
       gsap.set(this.outerFrame.nativeElement, { opacity: 0 });
       this.buildTimeline();
+      this.setupPointerActivity();
     });
     this.setupKeyboard();
 
@@ -169,7 +172,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
         }
         const hours = cfg!.animationSettings.autoReloadIntervalHours;
         if (hours > 0) {
-          setTimeout(() => location.reload(), hours * 60 * 60 * 1000);
+          this.scheduleAutoReload(hours * 60 * 60 * 1000);
         }
       });
 
@@ -191,7 +194,9 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       columnsPageDuration: seconds(settings.columnsPageTimeoutMs, DEFAULT_TIMINGS.columnsPageDuration),
       transportPageDuration: seconds(settings.transportPageTimeoutMs, DEFAULT_TIMINGS.transportPageDuration),
       weatherPageDuration: seconds(settings.weatherPageTimeoutMs, DEFAULT_TIMINGS.weatherPageDuration),
-      transitionDuration: seconds(settings.pageTransitionDurationMs, DEFAULT_TIMINGS.transitionDuration),
+      transitionDuration: this.reduceMotion
+        ? 0
+        : seconds(settings.pageTransitionDurationMs, DEFAULT_TIMINGS.transitionDuration),
     };
     this.frameChangeAfterCycles = frameChangeCycles(settings.frameChangeAfterCycles);
   }
@@ -206,6 +211,19 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       transport: this.transportPageEl.nativeElement,
       weather: this.weatherPageEl.nativeElement,
     };
+  }
+
+  private setupPointerActivity(): void {
+    this.pointerMoveHandler = () => {
+      if (!this.showCog) {
+        this.ngZone.run(() => { this.showCog = true; });
+      }
+      if (this.cogHideTimeoutId !== null) clearTimeout(this.cogHideTimeoutId);
+      this.cogHideTimeoutId = setTimeout(() => {
+        this.ngZone.run(() => { this.showCog = false; });
+      }, 3000);
+    };
+    this.outerFrame.nativeElement.addEventListener('pointermove', this.pointerMoveHandler, { passive: true });
   }
 
   private initImages(): void {
@@ -287,16 +305,20 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
 
   private startKenBurns(el: HTMLElement): void {
     this.kenBurnsTween?.kill();
+    if (this.reduceMotion) {
+      gsap.set(el, { scale: 1, xPercent: 0, yPercent: 0, transformOrigin: 'center center' });
+      return;
+    }
     const totalDuration = this.timings.stillImageDuration
       + this.timings.coverPageDuration
       + this.timings.columnsPageDuration
       + this.timings.transportPageDuration
       + this.timings.weatherPageDuration;
-    const dx = (Math.random() - 0.5) * 2;   // subtle random pan ±1%
-    const dy = (Math.random() - 0.5) * 1.5; // subtle random pan ±0.75%
+    const dx = (Math.random() - 0.5) * 8; // random pan ±4%
+    const dy = (Math.random() - 0.5) * 6; // random pan ±3%
     gsap.set(el, { scale: 1, xPercent: 0, yPercent: 0, transformOrigin: 'center center' });
     this.kenBurnsTween = gsap.to(el, {
-      scale: 1.04,
+      scale: 1.16,
       xPercent: dx,
       yPercent: dy,
       duration: totalDuration,
@@ -427,6 +449,33 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       .subscribe(() => location.reload());
   }
 
+  private scheduleAutoReload(delayMs: number): void {
+    if (this.autoReloadTimeoutId !== null) clearTimeout(this.autoReloadTimeoutId);
+    this.ngZone.runOutsideAngular(() => {
+      this.autoReloadTimeoutId = setTimeout(() => {
+        this.autoReloadTimeoutId = null;
+        this.probeServerAndReload();
+      }, delayMs);
+    });
+  }
+
+  private probeServerAndReload(): void {
+    this.http.get<unknown>('/api/clock')
+      .pipe(
+        timeout(SERVER_PROBE_TIMEOUT_MS),
+        take(1),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: () => this.reloadPage(),
+        error: () => this.scheduleAutoReload(AUTO_RELOAD_RETRY_MS),
+      });
+  }
+
+  private reloadPage(): void {
+    location.reload();
+  }
+
   navigateToConfig(): void {
     this.mainTimeline.pause();
     this.router.navigate(['/config']);
@@ -481,7 +530,11 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.pauseTimeoutId !== null) clearTimeout(this.pauseTimeoutId);
+    if (this.autoReloadTimeoutId !== null) clearTimeout(this.autoReloadTimeoutId);
     if (this.cogHideTimeoutId !== null) clearTimeout(this.cogHideTimeoutId);
+    if (this.pointerMoveHandler !== null) {
+      this.outerFrame.nativeElement.removeEventListener('pointermove', this.pointerMoveHandler);
+    }
     this.kenBurnsTween?.kill();
     this.destroy$.next();
     this.destroy$.complete();

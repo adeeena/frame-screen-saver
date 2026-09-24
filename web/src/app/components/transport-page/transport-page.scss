@@ -105,7 +105,7 @@
     font-weight: 500;
     font-size: 1.5vw;
     font-size: 1.5dvw;
-    color: var(--ss-titanium);
+    color: var(--palette-ink);
     margin-right: 1vw;
     line-height: 1.2;
   }
@@ -125,7 +125,7 @@
     font-size: 1.5vw;
     font-size: 1.5dvw;
     font-weight: 500;
-    color: var(--ss-titanium);
+    color: var(--palette-ink);
   }
 
   &__infobox-days {
@@ -133,7 +133,7 @@
     font-weight: 700;
     font-size: 2.2vw;
     font-size: 2.2dvw;
-    color: var(--ss-titanium);
+    color: var(--palette-ink);
     margin-right: 0.5vw;
   }
 
@@ -142,7 +142,7 @@
     font-weight: 500;
     font-size: 1.5vw;
     font-size: 1.5dvw;
-    color: var(--ss-titanium);
+    color: var(--palette-ink);
   }
 
   &__messages {
@@ -339,7 +339,7 @@
     font-weight: 300;
     font-size: 1.7vw;
     font-size: 1.7dvw;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -354,6 +354,15 @@
     justify-content: space-between;
     -webkit-align-items: baseline;
     align-items: baseline;
+
+    &--wide {
+      -webkit-align-items: stretch;
+      align-items: stretch;
+      -webkit-flex-direction: column;
+      flex-direction: column;
+      gap: 0.8vw;
+      gap: 0.8dvw;
+    }
   }
 
   &__departure {
@@ -365,6 +374,50 @@
     align-items: baseline;
   }
 
+  &__departures--wide &__departure {
+    -webkit-align-items: baseline;
+    align-items: baseline;
+    display: grid;
+    gap: 1vw;
+    gap: 1dvw;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    width: 100%;
+  }
+
+  &__mission {
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 1.8vw;
+    font-size: 1.8dvw;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+  }
+
+  &__imminent {
+    display: inline-flex;
+    gap: 0.25vw;
+    gap: 0.25dvw;
+
+    &--hidden {
+      visibility: hidden;
+    }
+  }
+
+  &__imminent-dot {
+    animation: imminent-dot 1s steps(1, end) infinite;
+    background-color: var(--accent);
+    border: 0.1vw solid var(--accent);
+    border-radius: 50%;
+    height: 0.55vw;
+    height: 0.55dvw;
+    width: 0.55vw;
+    width: 0.55dvw;
+
+    &--second {
+      animation-delay: -0.5s;
+    }
+  }
+
   &__time {
     font-family: var(--font-body);
     font-weight: 300;
@@ -374,6 +427,10 @@
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
     margin-right: 1vw;
+  }
+
+  &__departures--wide &__time {
+    margin-right: 0;
   }
 
   &__minutes {
@@ -397,5 +454,27 @@
     font-size: 1.2vw;
     font-size: 1.2dvw;
     color: var(--text-primary);
+  }
+}
+
+@keyframes imminent-dot {
+  0%,
+  49% {
+    background-color: var(--accent);
+  }
+
+  50%,
+  100% {
+    background-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transit-board__imminent-dot {
+    animation: none;
+
+    &--second {
+      background-color: transparent;
+    }
   }
 }

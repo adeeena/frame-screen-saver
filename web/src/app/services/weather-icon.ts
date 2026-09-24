@@ -22,5 +22,8 @@ const WEATHER_ICON_MAP: Readonly<Record<string, string>> = {
 /** Maps a met.no symbol_code (e.g. 'partlycloudy_day') to a feather icon name. */
 export function weatherIconName(symbolCode: string): string {
   const key = symbolCode.replace(/_(day|night|polartwilight)$/, '');
+  if (/(?:_night|_polartwilight)$/.test(symbolCode) && (key === 'clearsky' || key === 'fair')) {
+    return 'moon';
+  }
   return WEATHER_ICON_MAP[key] ?? 'cloud';
 }

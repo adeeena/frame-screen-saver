@@ -15,6 +15,7 @@ import { DebugOverlayComponent } from './components/debug-overlay/debug-overlay.
 import { ConfigPageComponent } from './components/config-page/config-page.component';
 import { MessagesPageComponent } from './components/messages-page/messages-page.component';
 import { FormatDateTimePipe } from './pipes/format-date-time.pipe';
+import { TranslatePipe } from './pipes/translate.pipe';
 import { FeatherIconDirective } from './directives/feather-icon.directive';
 
 @NgModule({
@@ -29,6 +30,7 @@ import { FeatherIconDirective } from './directives/feather-icon.directive';
     ConfigPageComponent,
     MessagesPageComponent,
     FormatDateTimePipe,
+    TranslatePipe,
     FeatherIconDirective,
   ],
   imports: [

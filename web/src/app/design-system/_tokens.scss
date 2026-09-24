@@ -2,37 +2,41 @@
 // Never reference $variables outside this file â€” use var(--token) everywhere.
 
 :root {
-  //  Silversea Brand Palette 
-  --ss-titanium:      #323234;
-  --ss-yellow:        #f0bc75;
-  --ss-yellow-dark:   #ff9d00;
-  --ss-blue:          #0089a7;
-  --ss-white:         #fcfcfd;
-  --ss-error:         #c3002f;
-  --ss-success:       #2bab6b;
-  --ss-neutral-05:    #f2f2f3;
-  --ss-neutral-10:    #e5e5e6;
-  --ss-neutral-20:    #d1d1d1;
-  --ss-neutral-35:    #a4a4a8;
-  --ss-neutral-50:    #7d7d82;
-  --ss-neutral-60:    #646468;
-  --ss-neutral-70:    #4b4b4e;
-
-  //  Transilien Lines 
-  --transilien-n:     #00A88F;
-  --transilien-n-fg:  #ffffff;
+  //  Base Palette
+  --palette-ink:           #323234;
+  --palette-accent:        #f0bc75;
+  --palette-accent-strong: #ff9d00;
+  --palette-info:          #0089a7;
+  --palette-white:         #fcfcfd;
+  --palette-danger:        #c3002f;
+  --palette-danger-soft:   #ff8f84;
+  --palette-success:       #2bab6b;
+  --palette-neutral-05:    #f2f2f3;
+  --palette-neutral-10:    #e5e5e6;
+  --palette-neutral-20:    #d1d1d1;
+  --palette-neutral-35:    #a4a4a8;
+  --palette-neutral-50:    #7d7d82;
+  --palette-neutral-60:    #646468;
+  --palette-neutral-70:    #4b4b4e;
 
   //  Screensaver Semantic Tokens 
   --frame-outer:      #101016;
   --frame-inner:      #ffffff;
+  --surface-app:      #0d0d12;
+  --surface-elevated: #1a1a24;
+  --text-on-accent:   #14120a;
   --overlay-dark:     rgba(0, 0, 0, 0.60);
   --overlay-columns:  rgba(10, 10, 14, 0.45);
 
-  --text-primary:     var(--ss-white);
-  --text-secondary:   var(--ss-neutral-20);
-  --text-muted:       var(--ss-neutral-50);
-  --accent:           var(--ss-yellow);
+  --text-primary:     var(--palette-white);
+  --text-secondary:   var(--palette-neutral-20);
+  --text-muted:       var(--palette-neutral-35);
+  --accent:           var(--palette-accent);
   --accent-dim:       rgba(240, 188, 117, 0.55);
+  --color-info:       var(--palette-info);
+  --color-danger:     var(--palette-danger);
+  --color-danger-soft: var(--palette-danger-soft);
+  --color-success:    var(--palette-success);
 
   //  Font Families 
   --font-display:  'DidotLTPro', 'Didot', 'Bodoni MT', Georgia, serif;

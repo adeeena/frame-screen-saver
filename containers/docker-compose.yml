@@ -17,6 +17,7 @@ services:
       # Transit API keys — set the one matching your provider in .env
       - PRIM_API_KEY=${PRIM_API_KEY:-}
       - NAVITIA_TOKEN=${NAVITIA_TOKEN:-}
+      - CALENDAR_ICS_URL=${CALENDAR_ICS_URL:-}
     volumes:
       - ../media:/media:ro
       - ../runtime-data:/data

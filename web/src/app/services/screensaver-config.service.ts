@@ -2,6 +2,7 @@ import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { Title } from '@angular/platform-browser';
 
 // ─── Config model ─────────────────────────────────────────────────────────────
 
@@ -44,9 +45,28 @@ export interface ColorSettings {
 }
 
 export interface MediaSettings {
-  source: string;
-  metadata: string;
+  packs: MediaPackSettings[];
 }
+
+export interface MediaPackSettings {
+  name: string;
+  metadataFile: string | null;
+  cacheExpiryTimeHours: number;
+}
+
+export interface ContentSettings {
+  productName: string;
+  documentTitle: string;
+  galleryTitle: string;
+  gallerySubtitle: string;
+}
+
+const contentDefaults: ContentSettings = {
+  productName: 'Ambient Display',
+  documentTitle: 'Ambient Display',
+  galleryTitle: '',
+  gallerySubtitle: '',
+};
 
 export interface DisplaySettings {
   isGrainEffectEnabled: boolean;
@@ -65,7 +85,6 @@ export interface LocationSettings {
 
 export interface WeatherSettings {
   provider: string;
-  apiKey: string | null;
   units: 'metric' | 'imperial';
 }
 
@@ -94,7 +113,6 @@ export interface TransitSettings {
 
 export interface CalendarSettings {
   isEnabled: boolean;
-  icsUrl: string;
   daysAhead: number;
   maxDisplayDays: number;
 }
@@ -103,13 +121,30 @@ export interface WorldClockCity {
   name: string;
   latitude: number;
   longitude: number;
+  timezone?: string;
+  role?: 'compact' | 'featured';
 }
 
 export interface WorldClockSettings {
   cities: WorldClockCity[];
 }
 
+export interface MessageSettings {
+  maxTextLength: number;
+  maxLifetimeDays: number;
+  retentionDays: number;
+  itemsPerPage: number;
+}
+
+const messageDefaults: MessageSettings = {
+  maxTextLength: 2048,
+  maxLifetimeDays: 7,
+  retentionDays: 30,
+  itemsPerPage: 3,
+};
+
 export interface AppSettings {
+  locale: string;
   location: LocationSettings;
   timezone: string;
   timeFormat: string;
@@ -117,13 +152,15 @@ export interface AppSettings {
   weather: WeatherSettings;
   transit: TransitSettings;
   calendar: CalendarSettings;
-  worldClock?: WorldClockSettings;
+  worldClock: WorldClockSettings;
+  messages: MessageSettings;
 }
 
 export interface ScreensaverConfig {
   animationSettings: AnimationSettings;
   displaySettings: DisplaySettings;
   appSettings: AppSettings;
+  contentSettings: ContentSettings;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -137,6 +174,7 @@ export class ScreensaverConfigService {
 
   constructor(
     private readonly http: HttpClient,
+    private readonly title: Title,
     @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -144,14 +182,31 @@ export class ScreensaverConfigService {
   }
 
   config(): ScreensaverConfig | null { return this._config$.value; }
+  content(): ContentSettings { return this._config$.value?.contentSettings ?? contentDefaults; }
+  messages(): MessageSettings { return this._config$.value?.appSettings.messages ?? messageDefaults; }
   saveStatus(): 'idle' | 'saving' | 'saved' | 'error' { return this._saveStatus$.value; }
 
   load(): void {
     this.http.get<ScreensaverConfig>('/api/config').subscribe({
-      next: (cfg) => this._config$.next({
-        ...cfg,
-        animationSettings: { ...animationDefaults, ...cfg.animationSettings },
-      }),
+      next: (cfg) => {
+        const normalized: ScreensaverConfig = {
+          ...cfg,
+          animationSettings: { ...animationDefaults, ...cfg.animationSettings },
+          contentSettings: { ...contentDefaults, ...cfg.contentSettings },
+          displaySettings: {
+            ...cfg.displaySettings,
+            media: { packs: cfg.displaySettings?.media?.packs ?? [] },
+          },
+          appSettings: {
+            ...cfg.appSettings,
+            locale: cfg.appSettings?.locale || 'en',
+            worldClock: { cities: cfg.appSettings?.worldClock?.cities ?? [] },
+            messages: { ...messageDefaults, ...cfg.appSettings?.messages },
+          },
+        };
+        this.title.setTitle(normalized.contentSettings.documentTitle);
+        this._config$.next(normalized);
+      },
       error: (err) => console.error('Failed to load screensaver configuration', err),
     });
   }

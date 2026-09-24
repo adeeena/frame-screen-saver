@@ -11,6 +11,8 @@ interface ClockResponse {
   readonly utcOffset?: string;
 }
 
+const MINUTE_MS = 60 * 1000;
+
 @Injectable({ providedIn: 'root' })
 export class ClockService implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
@@ -22,6 +24,7 @@ export class ClockService implements OnDestroy {
   private _hasSynced = false;
   private _utcOffset = '';
   private _nowMs = Date.now();
+  private minuteTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly http: HttpClient,
@@ -49,18 +52,10 @@ export class ClockService implements OnDestroy {
           this.serverTimeOffset = Date.now() - moment(response.time).valueOf();
           this._hasSynced = true;
           this.updateCurrentTime();
+          this.scheduleMinuteUpdate();
           if (response.utcOffset) this._utcOffset = response.utcOffset;
           this._error = null;
         }
-      });
-
-    // Capture one instant for every display so timezone clocks cannot cross a
-    // minute boundary before the cached local clock does.
-    timer(0, 1000)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        if (!this._hasSynced) return;
-        this.updateCurrentTime();
       });
   }
 
@@ -77,7 +72,19 @@ export class ClockService implements OnDestroy {
     this._time = moment(this._nowMs).format('YYYY-MM-DD HH:mm:ss');
   }
 
+  private scheduleMinuteUpdate(): void {
+    if (!this._hasSynced) return;
+    if (this.minuteTimeoutId !== null) clearTimeout(this.minuteTimeoutId);
+
+    const millisecondsUntilNextMinute = MINUTE_MS - (this._nowMs % MINUTE_MS);
+    this.minuteTimeoutId = setTimeout(() => {
+      this.updateCurrentTime();
+      this.scheduleMinuteUpdate();
+    }, millisecondsUntilNextMinute);
+  }
+
   ngOnDestroy(): void {
+    if (this.minuteTimeoutId !== null) clearTimeout(this.minuteTimeoutId);
     this.destroy$.next();
     this.destroy$.complete();
   }

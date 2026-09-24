@@ -8,7 +8,7 @@
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
-  background: #0d0d12;
+  background: var(--surface-app);
   color: var(--text-primary);
   font-family: var(--font-body);
 
@@ -140,9 +140,9 @@
     font: 500 0.9vw var(--font-body);
     cursor: pointer;
 
-    &--primary { background: var(--accent); border-color: var(--accent); color: #18130e; }
+    &--primary { background: var(--accent); border-color: var(--accent); color: var(--text-on-accent); }
     &--compact { padding: 0.5vw 0.8vw; font-size: 0.72vw; white-space: nowrap; }
-    &--danger:not(:disabled) { color: #ff8f84; border-color: rgba(255, 143, 132, 0.45); }
+    &--danger:not(:disabled) { color: var(--color-danger-soft); border-color: rgba(255, 143, 132, 0.45); }
     &:disabled { opacity: 0.4; cursor: default; }
   }
 
@@ -170,7 +170,7 @@
     color: var(--accent);
   }
 
-  &__error { margin-top: 1vw; color: #ff8f84; }
+  &__error { margin-top: 1vw; color: var(--color-danger-soft); }
   &__loading,
   &__empty { color: var(--text-muted); }
 
@@ -210,7 +210,89 @@
 
   &__message-actions { position: absolute; top: 1.4vw; right: 0; }
   &__icon-button { width: 2.5vw; height: 2.5vw; padding: 0.7vw; }
-  &__icon-button--danger:hover { color: #ff8f84; border-color: #ff8f84; }
+  &__icon-button--danger:hover { color: var(--color-danger-soft); border-color: var(--color-danger-soft); }
+
+  @media (min-width: 801px) and (max-width: 1400px) {
+    &__heading {
+      font-size: 1.75rem;
+    }
+
+    &__close {
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+      padding: 0.75rem;
+    }
+
+    &__content {
+      gap: 3rem;
+      padding: 2rem;
+    }
+
+    &__composer {
+      top: 6rem;
+    }
+
+    &__section-heading {
+      font-size: 1.35rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+    }
+
+    &__label {
+      font-size: 0.75rem;
+      margin: 1rem 0 0.5rem;
+    }
+
+    &__textarea,
+    &__input {
+      font-size: 1rem;
+      min-height: 2.75rem;
+      padding: 0.75rem;
+    }
+
+    &__textarea {
+      min-height: 9rem;
+    }
+
+    &__field-meta,
+    &__message-state,
+    &__message-expiry {
+      font-size: 0.75rem;
+    }
+
+    &__actions {
+      margin-top: 1.5rem;
+    }
+
+    &__button {
+      font-size: 0.875rem;
+      min-height: 2.75rem;
+      padding: 0.75rem 1rem;
+    }
+
+    &__button--compact {
+      font-size: 0.75rem;
+      padding: 0.65rem 0.85rem;
+    }
+
+    &__message {
+      padding: 1.25rem 4rem 1.25rem 1rem;
+    }
+
+    &__message-text {
+      font-size: 1rem;
+    }
+
+    &__message-actions {
+      top: 1.25rem;
+    }
+
+    &__icon-button {
+      height: 2.75rem;
+      padding: 0.75rem;
+      width: 2.75rem;
+    }
+  }
 
   @media (max-width: 800px) {
     &__heading { font-size: 1.5rem; }

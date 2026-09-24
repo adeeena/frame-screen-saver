@@ -1,8 +1,7 @@
 <!-- ① Outer frame (museum border) -->
 <div class="the-frame__outer" #outerFrame [class.the-frame--style-1]="frameStyle === 1"
   [class.the-frame--style-2]="frameStyle === 2" [class.the-frame--style-3]="frameStyle === 3"
-  [class.the-frame--style-4]="frameStyle === 4" [class.the-frame--style-5]="frameStyle === 5"
-  (mousemove)="onMouseMove()">
+  [class.the-frame--style-4]="frameStyle === 4" [class.the-frame--style-5]="frameStyle === 5">
 
   <!-- Pause progress bar — 3px tall, top of screen, full width -->
   <div class="the-frame__progress-bar" #progressBar [class.the-frame__progress-bar--visible]="isPaused">

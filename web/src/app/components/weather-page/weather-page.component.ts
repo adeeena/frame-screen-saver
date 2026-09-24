@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { WeatherService } from '../../services/weather.service';
 import { WeatherForecastService, HourlyForecast } from '../../services/weather-forecast.service';
-import { SolarService } from '../../services/solar.service';
+import { SolarEvent, SolarEventResponse, SolarService } from '../../services/solar.service';
 import { weatherIconName } from '../../services/weather-icon';
+import { ScreensaverConfigService } from '../../services/screensaver-config.service';
 
 /** Width of each meteogram slice, in hours — coarser steps read more easily than hourly ticks. */
 const SLICE_HOURS = 3;
@@ -26,10 +27,18 @@ interface NightBand {
   changeDetection: ChangeDetectionStrategy.Default,
 })
 export class WeatherPageComponent {
+  private hourlySource: readonly HourlyForecast[] | null = null;
+  private solarSource: SolarEventResponse | null = null;
+  private meteogramCache: readonly MeteogramSlice[] = [];
+  private nightBandsCache: readonly NightBand[] = [];
+  private temperaturePathCache = '';
+  private maximumPrecipitation = 0.1;
+
   constructor(
     readonly weatherService: WeatherService,
     readonly forecastService: WeatherForecastService,
     readonly solarService: SolarService,
+    readonly configService: ScreensaverConfigService,
   ) {}
 
   get currentIconName(): string {
@@ -47,7 +56,34 @@ export class WeatherPageComponent {
 
   /** Hourly forecast resampled into 3-hour slices for a more legible chart. */
   get meteogram(): readonly MeteogramSlice[] {
+    this.refreshDerivedWeather();
+    return this.meteogramCache;
+  }
+
+  get nightBands(): readonly NightBand[] {
+    this.refreshDerivedWeather();
+    return this.nightBandsCache;
+  }
+
+  /** Rain bar height as a percentage of the tallest bar in the visible window. Zero mm renders no bar at all. */
+  barHeight(mm: number): number {
+    this.refreshDerivedWeather();
+    return Math.round((mm / this.maximumPrecipitation) * 100);
+  }
+
+  /** Smooth SVG path (0–100 viewBox) tracing the temperature curve through each slice. */
+  get temperaturePath(): string {
+    this.refreshDerivedWeather();
+    return this.temperaturePathCache;
+  }
+
+  private refreshDerivedWeather(): void {
     const hourly = this.forecastService.hourly();
+    const solar = this.solarService.nextEvent();
+    if (hourly === this.hourlySource && solar === this.solarSource) return;
+
+    this.hourlySource = hourly;
+    this.solarSource = solar;
     const slices: MeteogramSlice[] = [];
     for (let i = 0; i < SLICE_COUNT; i++) {
       const start = i * SLICE_HOURS;
@@ -57,16 +93,22 @@ export class WeatherPageComponent {
       const precipitation = Math.round(block.reduce((sum, h) => sum + h.precipitation, 0) * 10) / 10;
       slices.push({ ...head, precipitation });
     }
-    return slices;
+    this.meteogramCache = slices;
+    this.maximumPrecipitation = Math.max(...slices.map((hour) => hour.precipitation), 0.1);
+    this.nightBandsCache = this.createNightBands(
+      hourly.slice(0, SLICE_COUNT * SLICE_HOURS),
+      solar?.events ?? [],
+    );
+    this.temperaturePathCache = this.createTemperaturePath(slices);
   }
 
-  get nightBands(): readonly NightBand[] {
-    const hours = this.forecastService.hourly().slice(0, SLICE_COUNT * SLICE_HOURS);
+  private createNightBands(hours: readonly HourlyForecast[], solarEvents: readonly SolarEvent[]): readonly NightBand[] {
     if (hours.length === 0) return [];
 
     const windowStart = Date.parse(hours[0].time);
-    const windowEnd = windowStart + SLICE_COUNT * SLICE_HOURS * 60 * 60 * 1000;
-    const daylight = this.solarService.events()
+    const windowEnd = Date.parse(hours[hours.length - 1].time);
+    if (windowEnd <= windowStart) return [];
+    const daylight = solarEvents
       .reduce<Array<{ start: number; end: number }>>((periods, event, index, events) => {
         if (event.type !== 'sunrise') return periods;
         const sunset = events.slice(index + 1).find((candidate) => candidate.type === 'sunset');
@@ -88,18 +130,11 @@ export class WeatherPageComponent {
     return bands;
   }
 
-  /** Rain bar height as a percentage of the tallest bar in the visible window. Zero mm renders no bar at all. */
-  barHeight(mm: number): number {
-    const max = Math.max(...this.meteogram.map((h) => h.precipitation), 0.1);
-    return Math.round((mm / max) * 100);
-  }
-
   /** Smooth SVG path (0–100 viewBox) tracing the temperature curve through each slice.
    *  Kept clear of the top of its box (PADDING_TOP) so it never collides with the
    *  per-slice temperature/icon labels drawn above it. */
-  get temperaturePath(): string {
+  private createTemperaturePath(points: readonly MeteogramSlice[]): string {
     const PADDING_TOP = 28;
-    const points = this.meteogram;
     if (points.length === 0) return '';
     const temps = points.map((h) => h.temperature);
     const min = Math.min(...temps);

@@ -1,6 +1,6 @@
 <div class="weather-page">
 
-    <div class="weather-page__title">Weather</div>
+    <div class="weather-page__title">{{ 'pages.weather.title' | translate }}</div>
 
     <div class="weather-page__body">
 
@@ -71,7 +71,8 @@
                     <span class="weather-page__hour-temp">{{ h.temperature }}°</span>
                     <span class="weather-page__hour-icon" [feather]="hourIconName(h)"></span>
                     <span class="weather-page__rain-value" *ngIf="h.precipitation > 0">{{ h.precipitation }}mm</span>
-                    <div class="weather-page__rain-track">
+                    <div class="weather-page__rain-track"
+                        [class.weather-page__rain-track--active]="h.precipitation > 0">
                         <div class="weather-page__rain-bar" *ngIf="h.precipitation > 0"
                             [style.height.%]="barHeight(h.precipitation)"></div>
                     </div>

@@ -17,7 +17,7 @@ import sharp from 'sharp';
 import fs from 'fs-extra';
 import WebSocket, { WebSocketServer } from 'ws';
 import { transit_realtime } from 'gtfs-realtime-bindings';
-import { serverConfig, TransitConfig } from './server.config';
+import { getConfigFilePath, getServerConfig, TransitConfig } from './server.config';
 
 // Resolve .env relative to this file (web/.env), not process.cwd() — the working
 // directory the server is launched from varies (repo root vs web/) and dotenv's
@@ -25,11 +25,9 @@ import { serverConfig, TransitConfig } from './server.config';
 const webRoot = path.resolve(__dirname, '../../..');
 dotenv.config({ path: path.join(webRoot, '.env') });
 
-// Node.js bundles its own CA store which may not include corporate/enterprise root CAs
-// that are present in the OS certificate store. Using a dedicated agent for all
-// outbound API calls avoids UNABLE_TO_GET_ISSUER_CERT_LOCALLY errors on such machines.
-const externalAgent = new https.Agent({ rejectUnauthorized: false });
-const externalAxios = axios.create({ httpsAgent: externalAgent });
+const externalAxios = process.env['ALLOW_INSECURE_TLS'] === 'true'
+  ? axios.create({ httpsAgent: new https.Agent({ rejectUnauthorized: false }) })
+  : axios.create();
 
 // ─── Media directory (resolved once at startup) ───────────────────────────────
 // Relative overrides are anchored to web/, matching the location of web/.env.
@@ -38,6 +36,7 @@ const mediaDir = process.env['MEDIA_DIR']
   : path.resolve(webRoot, '../media');
 
 const browserDistFolder = join(__dirname, '../browser');
+const configFilePath = getConfigFilePath();
 const indexHtml = existsSync(join(browserDistFolder, 'index.original.html'))
   ? 'index.original.html'
   : 'index';
@@ -133,6 +132,7 @@ interface Departure {
   readonly line: string;
   readonly lineColor?: string;
   readonly lineTextColor?: string;
+  readonly missionCode?: string;
   readonly destination: string;
   readonly scheduledDeparture: string;
   readonly expectedDeparture: string;
@@ -193,25 +193,31 @@ function getWeatherLabel(symbolCode: string): string {
   return SYMBOL_MAP[base] ?? symbolCode;
 }
 
+function metNoUserAgent(): string {
+  return process.env['MET_NO_USER_AGENT'] || 'ambient-display/1.0';
+}
+
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 async function clockHandler(_req: Request, res: Response): Promise<void> {
-  const now = momentTz.tz(serverConfig.timezone);
+  const { timezone } = getServerConfig();
+  const now = momentTz.tz(timezone);
   res.json({
     time: now.format('YYYY-MM-DD HH:mm:ss'),
-    timezone: serverConfig.timezone,
+    timezone,
     utcOffset: now.format('Z'),
   });
 }
 
 async function solarHandler(_req: Request, res: Response): Promise<void> {
   try {
-    const now = momentTz.tz(serverConfig.timezone);
+    const { timezone, location } = getServerConfig();
+    const now = momentTz.tz(timezone);
     if (solarCache.data && Date.now() < solarCache.expiresAt) {
       res.json(solarCache.data);
       return;
     }
-    const { latitude, longitude } = serverConfig.location;
+    const { latitude, longitude } = location;
     const offset = now.format('Z');
     const getSolarData = async (date: string): Promise<{ sunrise: { time: string }; sunset: { time: string } }> => {
       const url = new URL('https://api.met.no/weatherapi/sunrise/3.0/sun');
@@ -219,7 +225,7 @@ async function solarHandler(_req: Request, res: Response): Promise<void> {
       url.searchParams.set('lon', String(longitude));
       url.searchParams.set('date', date);
       url.searchParams.set('offset', offset);
-      const resp = await externalAxios.get(url.toString(), { headers: { 'User-Agent': 'frame-screen-saver/1.0' } });
+      const resp = await externalAxios.get(url.toString(), { headers: { 'User-Agent': metNoUserAgent() } });
       return resp.data.properties as { sunrise: { time: string }; sunset: { time: string } };
     };
     const todayData = await getSolarData(now.format('YYYY-MM-DD'));
@@ -270,7 +276,7 @@ async function weatherHandler(_req: Request, res: Response): Promise<void> {
       res.json(weatherCache.data);
       return;
     }
-    const { latitude, longitude } = serverConfig.location;
+    const { latitude, longitude } = getServerConfig().location;
     const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${latitude}&lon=${longitude}`;
     const resp = await externalAxios.get<{
       properties: {
@@ -281,7 +287,7 @@ async function weatherHandler(_req: Request, res: Response): Promise<void> {
           };
         }>;
       };
-    }>(url, { headers: { 'User-Agent': 'frame-screen-saver/1.0' } });
+    }>(url, { headers: { 'User-Agent': metNoUserAgent() } });
     const timeseries = resp.data.properties.timeseries[0];
     const instant = timeseries.data.instant.details;
     const symbolCode = timeseries.data.next_1_hours?.summary?.symbol_code ?? 'clearsky_day';
@@ -312,7 +318,8 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
       res.json(weatherForecastCache.data);
       return;
     }
-    const { latitude, longitude } = serverConfig.location;
+    const { timezone, location } = getServerConfig();
+    const { latitude, longitude } = location;
     const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${latitude}&lon=${longitude}`;
     const resp = await externalAxios.get<{
       properties: {
@@ -327,7 +334,7 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
           };
         }>;
       };
-    }>(url, { headers: { 'User-Agent': 'frame-screen-saver/1.0' } });
+    }>(url, { headers: { 'User-Agent': metNoUserAgent() } });
 
     // The compact endpoint only carries an hourly next_1_hours breakdown for the near
     // term (~2 days) before falling back to 6-hourly steps — filter those out.
@@ -337,7 +344,7 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
       .slice(0, HOURS_AHEAD)
       .map((entry) => ({
         time: entry.time,
-        hourLabel: momentTz.parseZone(entry.time).tz(serverConfig.timezone).format('HH:mm'),
+        hourLabel: momentTz.parseZone(entry.time).tz(timezone).format('HH:mm'),
         temperature: Math.round(entry.data.instant.details.air_temperature),
         precipitation: entry.data.next_1_hours?.details?.precipitation_amount ?? 0,
         cloudCoverage: Math.round(entry.data.instant.details.cloud_area_fraction ?? 0),
@@ -347,9 +354,9 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
           : null,
       }));
 
-    const today = momentTz.tz(serverConfig.timezone).format('YYYY-MM-DD');
+    const today = momentTz.tz(timezone).format('YYYY-MM-DD');
     const todayEntries = hourly.filter(
-      (h) => momentTz.parseZone(h.time).tz(serverConfig.timezone).format('YYYY-MM-DD') === today,
+      (h) => momentTz.parseZone(h.time).tz(timezone).format('YYYY-MM-DD') === today,
     );
     const source = todayEntries.length > 0 ? todayEntries : hourly;
     const temps = source.map((h) => h.temperature);
@@ -358,7 +365,7 @@ async function weatherForecastHandler(_req: Request, res: Response): Promise<voi
     const next12hPrecipitation = hourly.slice(0, 12).reduce((sum, h) => sum + h.precipitation, 0);
     const willRain = source.some((h) => h.precipitation >= 0.2 || /rain|sleet|snow|thunder/.test(h.symbolCode));
     const daylightEntries = source.filter((h) => {
-      const hour = momentTz.parseZone(h.time).tz(serverConfig.timezone).hour();
+      const hour = momentTz.parseZone(h.time).tz(timezone).hour();
       return hour >= 8 && hour <= 20;
     });
     const clearCount = daylightEntries.filter((h) => /^(clearsky|fair)/.test(h.symbolCode)).length;
@@ -399,7 +406,7 @@ async function fetchWorldCityWeather(city: WorldCityConfig): Promise<WorldCityWe
         };
       }>;
     };
-  }>(url, { headers: { 'User-Agent': 'frame-screen-saver/1.0' } });
+  }>(url, { headers: { 'User-Agent': metNoUserAgent() } });
   const timeseries = resp.data.properties.timeseries[0];
   return {
     name: city.name,
@@ -432,7 +439,7 @@ async function worldWeatherHandler(_req: Request, res: Response): Promise<void> 
 
 async function imageListHandler(_req: Request, res: Response): Promise<void> {
   try {
-    const baseUrl = serverConfig.images.baseUrl;
+    const baseUrl = mediaDir;
     if (!(await fs.pathExists(baseUrl))) { res.json([]); return; }
     const subdirs = await fs.readdir(baseUrl);
     const result: Array<{ type: string; id: string }> = [];
@@ -459,7 +466,7 @@ async function imageMetaHandler(req: Request, res: Response): Promise<void> {
   const { type, id } = req.query as Record<string, string>;
   try {
     if (!type || !id) { res.json({ location: '', title: '', subtitle: '' }); return; }
-    const metaPath = path.join(serverConfig.images.baseUrl, type, `${id}.json`);
+    const metaPath = path.join(mediaDir, type, `${id}.json`);
     if (await fs.pathExists(metaPath)) {
       const meta = await fs.readJson(metaPath);
       res.json(meta);
@@ -474,10 +481,11 @@ async function imageHandler(req: Request, res: Response): Promise<void> {
   if (!type || !id) { res.status(400).json({ message: "Missing 'type' or 'id' query parameters." }); return; }
   const useCache = !noCache || noCache === 'false';
   const cacheKey = `${new URLSearchParams(req.query as Record<string, string>).toString()}.jpg`;
-  const cachePath = path.join(serverConfig.images.cacheBaseUrl, cacheKey);
+  const imageCacheDir = path.join(mediaDir, 'cache');
+  const cachePath = path.join(imageCacheDir, cacheKey);
   try {
     if (useCache && (await fs.pathExists(cachePath))) { res.sendFile(cachePath); return; }
-    const sourceDir = path.join(serverConfig.images.baseUrl, type);
+    const sourceDir = path.join(mediaDir, type);
     if (!(await fs.pathExists(sourceDir))) { res.status(404).json({ message: 'Image source directory not found.' }); return; }
     const files = await fs.readdir(sourceDir) as string[];
     const filename = files.find((f: string) => f.startsWith(id + '.'));
@@ -490,7 +498,7 @@ async function imageHandler(req: Request, res: Response): Promise<void> {
     }
     const imageBuffer = await imageProcessor.jpeg({ quality: 90 }).toBuffer();
     if (useCache) {
-      try { await fs.ensureDir(serverConfig.images.cacheBaseUrl); await fs.writeFile(cachePath, imageBuffer); }
+      try { await fs.ensureDir(imageCacheDir); await fs.writeFile(cachePath, imageBuffer); }
       catch (cacheError) { console.error('Failed to write image cache:', cacheError); }
     }
     res.set('Content-Type', 'image/jpeg');
@@ -508,7 +516,8 @@ async function imageHandler(req: Request, res: Response): Promise<void> {
 /** Navitia (open-source, navitia.io) — covers 40+ countries, requires NAVITIA_TOKEN env var */
 async function fetchDeparturesNavitia(config: TransitConfig, now: momentTz.Moment): Promise<readonly Departure[]> {
   const token = process.env['NAVITIA_TOKEN'];
-  const region = config.navitiaRegion ?? 'fr-idf';
+  const region = config.navitiaRegion;
+  if (!region) throw new Error('navitiaRegion is required for navitia provider');
   if (!token) {
     console.error(`Navitia departures for stop ${config.stopId} skipped: NAVITIA_TOKEN is not set.`);
     return [];
@@ -528,8 +537,9 @@ async function fetchDeparturesNavitia(config: TransitConfig, now: momentTz.Momen
   }>(url, { auth: { username: token, password: '' } });
 
   const departures: Departure[] = resp.data.departures.map((d) => {
+    const { timezone } = getServerConfig();
     const parseNavitiaDate = (s: string) =>
-      momentTz.tz(s, 'YYYYMMDDTHHmmss', serverConfig.timezone);
+      momentTz.tz(s, 'YYYYMMDDTHHmmss', timezone);
     const expected = parseNavitiaDate(d.stop_date_time.departure_date_time);
     const scheduled = d.stop_date_time.base_departure_date_time
       ? parseNavitiaDate(d.stop_date_time.base_departure_date_time)
@@ -563,9 +573,10 @@ async function fetchDeparturesPrim(config: TransitConfig, now: momentTz.Moment):
   }
   const url = `https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=${encodeURIComponent(config.stopId)}`;
   const resp = await externalAxios.get(url, { headers: { apikey: apiKey } });
-  type Visit = { MonitoredVehicleJourney: { DestinationName?: Array<{ value: string }>; MonitoredCall: { AimedDepartureTime: string; ExpectedDepartureTime?: string; DepartureStatus?: string } } };
+  type Visit = { MonitoredVehicleJourney: { DestinationName?: Array<{ value: string }>; JourneyNote?: Array<{ value: string }>; MonitoredCall: { AimedDepartureTime: string; ExpectedDepartureTime?: string; DepartureStatus?: string } } };
   const visits: Visit[] = (resp.data as { Siri?: { ServiceDelivery?: { StopMonitoringDelivery?: Array<{ MonitoredStopVisit?: Visit[] }> } } })?.Siri?.ServiceDelivery?.StopMonitoringDelivery?.[0]?.MonitoredStopVisit ?? [];
   const { destinationFilter } = config;
+  const { timezone } = getServerConfig();
   return visits
     .map((visit) => {
       const journey = visit.MonitoredVehicleJourney;
@@ -573,15 +584,15 @@ async function fetchDeparturesPrim(config: TransitConfig, now: momentTz.Moment):
       // Parse and re-format through momentTz so the string always carries the
       // server timezone offset (e.g. +02:00).  PRIM may send bare local-time
       // strings without an offset, which would be misinterpreted by UTC clients.
-      const scheduledMoment = momentTz.tz(call.AimedDepartureTime, serverConfig.timezone);
+      const scheduledMoment = momentTz.tz(call.AimedDepartureTime, timezone);
       const expectedMoment = call.ExpectedDepartureTime
-        ? momentTz.tz(call.ExpectedDepartureTime, serverConfig.timezone)
+        ? momentTz.tz(call.ExpectedDepartureTime, timezone)
         : scheduledMoment.clone();
       const rawMinutes = Math.round(expectedMoment.diff(now, 'minutes'));
       const minutesUntilDeparture = Math.max(0, rawMinutes);
       const rawStatus = call.DepartureStatus;
       const status: 'onTime' | 'delayed' | 'unknown' = rawStatus === 'onTime' ? 'onTime' : rawStatus === 'delayed' ? 'delayed' : 'unknown';
-      return { line: config.lineLabel, destination: journey.DestinationName?.[0]?.value ?? config.direction, scheduledDeparture: scheduledMoment.format(), expectedDeparture: expectedMoment.format(), displayTime: expectedMoment.format('HH:mm'), minutesUntilDeparture, status };
+      return { line: config.lineLabel, missionCode: journey.JourneyNote?.[0]?.value, destination: journey.DestinationName?.[0]?.value ?? config.direction, scheduledDeparture: scheduledMoment.format(), expectedDeparture: expectedMoment.format(), displayTime: expectedMoment.format('HH:mm'), minutesUntilDeparture, status };
     })
     .filter((d) => !destinationFilter || d.destination.toLowerCase().includes(destinationFilter.toLowerCase()))
     .filter((_, i, arr) => {
@@ -613,14 +624,15 @@ async function fetchDeparturesBkk(config: TransitConfig, now: momentTz.Moment): 
     };
   }>(url);
   const { stopTimes, references } = resp.data.data.entry;
+  const { timezone } = getServerConfig();
   const departures: Departure[] = stopTimes
     .filter((st) => st.departureTime !== undefined)
     .map((st) => {
       const trip = references.trips[st.tripId];
       const route = trip ? references.routes[trip.routeId] : undefined;
-      const scheduled = momentTz.unix(st.departureTime!).tz(serverConfig.timezone);
+      const scheduled = momentTz.unix(st.departureTime!).tz(timezone);
       const expected = st.predictedDepartureTime
-        ? momentTz.unix(st.predictedDepartureTime).tz(serverConfig.timezone)
+        ? momentTz.unix(st.predictedDepartureTime).tz(timezone)
         : scheduled.clone();
       const minutesUntil = Math.max(0, Math.round(expected.diff(now, 'minutes')));
       const isDelayed = st.predictedDepartureTime !== undefined && st.predictedDepartureTime !== st.departureTime;
@@ -650,6 +662,7 @@ async function fetchDeparturesGtfsRt(config: TransitConfig, now: momentTz.Moment
     new Uint8Array(resp.data as ArrayBuffer),
   );
   const departures: Departure[] = [];
+  const { timezone } = getServerConfig();
   for (const entity of feed.entity) {
     const tu = entity.tripUpdate;
     if (!tu) continue;
@@ -659,7 +672,7 @@ async function fetchDeparturesGtfsRt(config: TransitConfig, now: momentTz.Moment
       if (scheduledTs === undefined || scheduledTs === null) continue;
       const scheduledSec = typeof scheduledTs === 'number' ? scheduledTs : (scheduledTs as { low: number }).low;
       const delayMs = ((stu.departure?.delay ?? 0) as number) * 1000;
-      const scheduled = momentTz.unix(scheduledSec).tz(serverConfig.timezone);
+      const scheduled = momentTz.unix(scheduledSec).tz(timezone);
       const expected = scheduled.clone().add(delayMs, 'ms');
       const minutesUntil = Math.max(0, Math.round(expected.diff(now, 'minutes')));
       departures.push({
@@ -680,7 +693,7 @@ async function fetchDeparturesGtfsRt(config: TransitConfig, now: momentTz.Moment
 }
 
 async function fetchDepartures(config: TransitConfig): Promise<readonly Departure[]> {
-  const now = momentTz.tz(serverConfig.timezone);
+  const now = momentTz.tz(getServerConfig().timezone);
   switch (config.provider) {
     case 'navitia': return fetchDeparturesNavitia(config, now);
     case 'bkk':     return fetchDeparturesBkk(config, now);
@@ -692,23 +705,25 @@ async function fetchDepartures(config: TransitConfig): Promise<readonly Departur
 
 async function calendarHandler(_req: Request, res: Response): Promise<void> {
   try {
+    const { calendar, timezone } = getServerConfig();
+    if (!calendar.isEnabled || !calendar.icsUrl) { res.json([]); return; }
     if (calendarCache.data && Date.now() < calendarCache.expiresAt) { res.json(calendarCache.data); return; }
-    const resp = await externalAxios.get<string>(serverConfig.calendar.icsUrl);
+    const resp = await externalAxios.get<string>(calendar.icsUrl);
     const icalModule = await import('node-ical');
     // CJS modules wrapped by dynamic import expose exports on .default
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parseICS: (data: string) => ReturnType<typeof import('node-ical')['parseICS']> = (icalModule as any).parseICS ?? (icalModule as any).default?.parseICS;
     const parsed = parseICS(resp.data);
-    const today = momentTz.tz(serverConfig.timezone).startOf('day');
-    const maxDate = today.clone().add(serverConfig.calendar.daysAhead, 'days').endOf('day');
+    const today = momentTz.tz(timezone).startOf('day');
+    const maxDate = today.clone().add(calendar.daysAhead, 'days').endOf('day');
     const allEvents: Array<CalendarEventEntry & { date: string }> = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const addEvent = (vEvent: any, startDate: Date, endDate: Date): void => {
-      const start = momentTz.tz(startDate, serverConfig.timezone);
+      const start = momentTz.tz(startDate, timezone);
       if (!start.isBetween(today, maxDate, undefined, '[]')) return;
       const isAllDay = vEvent.datetype === 'date';
-      const end = momentTz.tz(endDate, serverConfig.timezone);
+      const end = momentTz.tz(endDate, timezone);
       allEvents.push({
         date: start.format('YYYY-MM-DD'),
         title: (vEvent.summary as string | undefined) ?? 'Untitled',
@@ -761,7 +776,7 @@ async function calendarHandler(_req: Request, res: Response): Promise<void> {
     const days: CalendarDay[] = Array.from(groupedMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, events]) => {
-        const dayMoment = momentTz.tz(date, 'YYYY-MM-DD', serverConfig.timezone);
+        const dayMoment = momentTz.tz(date, 'YYYY-MM-DD', timezone);
         const diffDays = dayMoment.diff(today, 'days');
         const dayLabel = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : dayMoment.format('dddd');
         return { date, dayLabel, events };
@@ -790,20 +805,45 @@ interface MediaPack {
   readonly cacheTtlMs: number;
 }
 
-const PACKS: MediaPack[] = [
-  {
-    name: 'travel',
-    contentDir: path.join(mediaDir, 'travel', 'content'),
-    metadataFile: path.join(mediaDir, 'travel', 'metadata.csv'),
-    cacheTtlMs: 24 * 60 * 60 * 1000, // 24 h
-  },
-  {
-    name: 'mccurry',
-    contentDir: path.join(mediaDir, 'mccurry', 'content'),
-    metadataFile: null,
-    cacheTtlMs: 24 * 60 * 60 * 1000, // 24 h
-  },
-];
+interface MediaPackConfig {
+  readonly name: string;
+  readonly metadataFile?: string | null;
+  readonly cacheExpiryTimeHours?: number;
+}
+
+async function readMediaPacks(): Promise<readonly MediaPack[]> {
+  const config = await fs.readJson(configFilePath).catch(() => ({})) as {
+    displaySettings?: { media?: { packs?: readonly MediaPackConfig[] } };
+  };
+  const configured = config.displaySettings?.media?.packs ?? [];
+  const names = configured.length > 0
+    ? configured
+    : await discoverMediaPackConfigs();
+
+  return names
+    .filter((pack) => pack.name === path.basename(pack.name))
+    .map((pack) => ({
+      name: pack.name,
+      contentDir: path.join(mediaDir, pack.name, 'content'),
+      metadataFile: pack.metadataFile === null
+        ? null
+        : path.join(mediaDir, pack.name, 'metadata.csv'),
+      cacheTtlMs: positiveHoursToMilliseconds(pack.cacheExpiryTimeHours, 24),
+    }));
+}
+
+async function discoverMediaPackConfigs(): Promise<readonly MediaPackConfig[]> {
+  if (!(await fs.pathExists(mediaDir))) return [];
+  const entries = await fs.readdir(mediaDir, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory() && entry.name !== 'cache')
+    .map((entry) => ({ name: entry.name }));
+}
+
+function positiveHoursToMilliseconds(value: number | undefined, fallback: number): number {
+  const hours = Number.isFinite(value) && value! > 0 ? value! : fallback;
+  return hours * 60 * 60 * 1000;
+}
 
 // ─── Cache pruning ────────────────────────────────────────────────────────────
 
@@ -811,11 +851,13 @@ async function pruneCache(): Promise<void> {
   const cacheDir = path.join(mediaDir, 'cache');
   if (!(await fs.pathExists(cacheDir))) return;
 
-  const packs = PACKS;
+  const packs = await readMediaPacks();
   // Build a map of pack-name-prefix → ttlMs for fast lookup
   const ttlByPack = new Map<string, number>(packs.map((p) => [p.name, p.cacheTtlMs]));
   // Files whose pack cannot be identified get the strictest TTL of all packs
-  const fallbackTtl = Math.min(...packs.map((p) => p.cacheTtlMs));
+  const fallbackTtl = packs.length > 0
+    ? Math.min(...packs.map((p) => p.cacheTtlMs))
+    : positiveHoursToMilliseconds(undefined, 24);
 
   let pruned = 0;
   const now = Date.now();
@@ -919,9 +961,12 @@ export interface GalleryResponse {
 
 async function galleryHandler(_req: Request, res: Response): Promise<void> {
   try {
-    const appCfg = await fs.readJson(configFilePath).catch(() => ({} as Record<string, unknown>)) as { animationSettings?: { gallerySize?: number } };
+    const appCfg = await fs.readJson(configFilePath).catch(() => ({} as Record<string, unknown>)) as {
+      animationSettings?: { gallerySize?: number };
+      contentSettings?: { galleryTitle?: string; gallerySubtitle?: string };
+    };
     const galleryMax = appCfg.animationSettings?.gallerySize ?? GALLERY_MAX;
-    const packs = PACKS;
+    const packs = await readMediaPacks();
 
     // Collect all candidate images across all packs
     interface Candidate {
@@ -964,15 +1009,15 @@ async function galleryHandler(_req: Request, res: Response): Promise<void> {
     }
 
     const response: GalleryResponse = {
-      title: 'Marbles',
-      text: 'Focusing',
+      title: appCfg.contentSettings?.galleryTitle ?? '',
+      text: appCfg.contentSettings?.gallerySubtitle ?? '',
       images,
       imageMeta,
     };
     res.json(response);
   } catch (error) {
     console.error('Gallery handler error:', error);
-    const fallback: GalleryResponse = { title: 'Marbles', text: 'Focusing', images: [], imageMeta: [] };
+    const fallback: GalleryResponse = { title: '', text: '', images: [], imageMeta: [] };
     res.json(fallback);
   }
 }
@@ -1018,7 +1063,7 @@ async function resizeHandler(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const packs = PACKS;
+  const packs = await readMediaPacks();
   const pack = packs.find((p) => p.name === packName);
   if (!pack) {
     res.status(400).json({ message: 'Unknown media pack.' });
@@ -1073,13 +1118,32 @@ app.use('/api', (_req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-const configFilePath = path.join(browserDistFolder, 'screensaver.config.json');
 const messagesFilePath = process.env['MESSAGES_FILE']
   ? path.resolve(process.env['MESSAGES_FILE'])
   : path.join(mediaDir, 'messages.json');
-const messageRetentionMs = 30 * 24 * 60 * 60 * 1000;
-const maxMessageLifetimeMs = 7 * 24 * 60 * 60 * 1000;
 let messageSocketServer: WebSocketServer | null = null;
+
+interface MessagePolicy {
+  readonly maxTextLength: number;
+  readonly maxLifetimeDays: number;
+  readonly retentionDays: number;
+}
+
+function readMessagePolicy(): MessagePolicy {
+  const config = fs.readJsonSync(configFilePath, { throws: false }) as {
+    appSettings?: { messages?: Partial<MessagePolicy> };
+  } | null;
+  const messages = config?.appSettings?.messages;
+  return {
+    maxTextLength: positiveInteger(messages?.maxTextLength, 2048),
+    maxLifetimeDays: positiveInteger(messages?.maxLifetimeDays, 7),
+    retentionDays: positiveInteger(messages?.retentionDays, 30),
+  };
+}
+
+function positiveInteger(value: number | undefined, fallback: number): number {
+  return Number.isInteger(value) && value! > 0 ? value! : fallback;
+}
 
 interface TransitRouteConfig extends TransitConfig {
   readonly id: string;
@@ -1092,56 +1156,38 @@ interface RuntimeTransitSettings {
   readonly entries: readonly TransitRouteConfig[];
 }
 
-interface LegacyTransitSettings extends Partial<TransitConfig> {
-  readonly isEnabled?: boolean;
-  readonly entries?: readonly Partial<TransitRouteConfig>[];
-  readonly secondary?: Partial<TransitConfig>;
-  readonly rerE?: {
-    readonly openingDate?: string;
-    readonly toMagenta?: Partial<TransitConfig>;
-    readonly toSaintLazare?: Partial<TransitConfig>;
-  };
-}
-
-function defaultTransitEntries(): readonly TransitRouteConfig[] {
-  const openingDate = serverConfig.rerE.openingDate;
-  return [
-    { id: 'maule-n', ...serverConfig.transit },
-    { id: 'epone-j', ...serverConfig.transitSecondary, availableUntil: openingDate },
-    { id: 'epone-e-magenta', ...serverConfig.rerE.toMagenta, availableFrom: openingDate },
-    { id: 'epone-e-saint-lazare', ...serverConfig.rerE.toSaintLazare, availableFrom: openingDate },
-  ];
-}
-
 async function readTransitSettings(): Promise<RuntimeTransitSettings> {
   const config = await fs.readJson(configFilePath).catch(() => ({})) as {
-    appSettings?: { transit?: LegacyTransitSettings };
+    appSettings?: { transit?: Partial<RuntimeTransitSettings> };
   };
-  const persisted = config.appSettings?.transit ?? {};
-  const defaults = defaultTransitEntries();
-  const sourceEntries = Array.isArray(persisted.entries) && persisted.entries.length > 0
-    ? persisted.entries
-    : [persisted, persisted.secondary, persisted.rerE?.toMagenta, persisted.rerE?.toSaintLazare];
+  const persisted = config.appSettings?.transit;
+  const sourceEntries = persisted && Array.isArray(persisted.entries) ? persisted.entries : [];
   const seenIds = new Set<string>();
   const entries = sourceEntries
-    .filter((entry): entry is Partial<TransitRouteConfig> => Boolean(entry))
+    .filter((entry): entry is TransitRouteConfig => Boolean(
+      entry
+      && entry.id
+      && entry.provider
+      && entry.stopId
+      && entry.lineLabel,
+    ))
     .map((entry, index) => {
-      const fallback = defaults[index] ?? defaults[0];
       const preferredId = entry.id?.trim() || `transit-${index + 1}`;
       const id = seenIds.has(preferredId) ? `${preferredId}-${index + 1}` : preferredId;
       seenIds.add(id);
-      return { ...fallback, ...entry, id } as TransitRouteConfig;
+      return { ...entry, id };
     });
   return {
-    isEnabled: persisted.isEnabled !== false,
+    isEnabled: persisted?.isEnabled === true,
     entries,
   };
 }
 
 function isTransitRouteAvailable(route: TransitRouteConfig): boolean {
-  const today = momentTz.tz(serverConfig.timezone).startOf('day');
-  if (route.availableFrom && today.isBefore(momentTz.tz(route.availableFrom, serverConfig.timezone))) return false;
-  if (route.availableUntil && !today.isBefore(momentTz.tz(route.availableUntil, serverConfig.timezone))) return false;
+  const { timezone } = getServerConfig();
+  const today = momentTz.tz(timezone).startOf('day');
+  if (route.availableFrom && today.isBefore(momentTz.tz(route.availableFrom, timezone))) return false;
+  if (route.availableUntil && !today.isBefore(momentTz.tz(route.availableUntil, timezone))) return false;
   return true;
 }
 
@@ -1153,7 +1199,8 @@ async function readMessages(): Promise<StoredMessage[]> {
   const messages = await fs.readJson(messagesFilePath).catch(() => [] as StoredMessage[]);
   if (!Array.isArray(messages)) return [];
 
-  const purgeBefore = Date.now() - messageRetentionMs;
+  const retentionMs = readMessagePolicy().retentionDays * 24 * 60 * 60 * 1000;
+  const purgeBefore = Date.now() - retentionMs;
   const retained = messages.filter((message): message is StoredMessage =>
     typeof message?.id === 'string'
     && typeof message?.text === 'string'
@@ -1198,7 +1245,9 @@ function parseMessageInput(body: unknown): { text: string; expiresAt: string } |
 
   const text = value.text.trim();
   const expiresAtMs = Date.parse(value.expiresAt);
-  if (!text || text.length > 2048 || !Number.isFinite(expiresAtMs)) return null;
+  const policy = readMessagePolicy();
+  if (!text || text.length > policy.maxTextLength || !Number.isFinite(expiresAtMs)) return null;
+  const maxMessageLifetimeMs = policy.maxLifetimeDays * 24 * 60 * 60 * 1000;
   if (expiresAtMs > Date.now() + maxMessageLifetimeMs) return null;
   return { text, expiresAt: new Date(expiresAtMs).toISOString() };
 }

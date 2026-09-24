@@ -44,14 +44,14 @@
     font-family: 'Courier New', monospace;
     font-size: 1.2vw;
     font-size: 1.2dvw;
-    color: #f0bc75;
+    color: var(--accent);
     font-weight: 700;
   }
 
   &__close {
     background: none;
     border: none;
-    color: #f0bc75;
+    color: var(--accent);
     font-size: 1.2vw;
     font-size: 1.2dvw;
     cursor: pointer;
@@ -84,7 +84,7 @@
     font-family: 'Courier New', monospace;
     font-size: 0.9vw;
     font-size: 0.9dvw;
-    color: #f0bc75;
+    color: var(--accent);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -96,7 +96,7 @@
     font-family: 'Courier New', monospace;
     font-size: 0.85vw;
     font-size: 0.85dvw;
-    color: #d1d1d1;
+    color: var(--text-secondary);
     margin: 0.2vw 0;
     margin: 0.2dvw 0;
     white-space: pre-wrap;
@@ -112,7 +112,7 @@
     font-family: 'Courier New', monospace;
     font-size: 0.85vw;
     font-size: 0.85dvw;
-    color: #646468;
+    color: var(--palette-neutral-60);
     text-align: center;
   }
 
@@ -135,7 +135,7 @@
     border-radius: 0.2vw;
     border-radius: 0.2dvw;
     background-color: rgba(240, 188, 117, 0.08);
-    color: #f0bc75;
+    color: var(--accent);
     font-family: 'Courier New', monospace;
     font-size: 0.8vw;
     font-size: 0.8dvw;

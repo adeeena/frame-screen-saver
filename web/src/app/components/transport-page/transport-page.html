@@ -3,7 +3,7 @@
     <div class="transport-page__columns">
 
         <div class="transport-page__column" [class.transport-page__column--full]="messagePages[0].length === 0">
-            <div class="transport-page__title">Transport</div>
+            <div class="transport-page__title">{{ 'pages.transport.title' | translate }}</div>
 
             <div class="transport-page__boards" [class.transport-page__boards--row]="messagePages[0].length === 0">
                 <div class="transit-board" *ngFor="let entry of transitEntries()">
@@ -16,19 +16,39 @@
                             <span class="transit-board__destination">{{ entry.direction }}</span>
                         </div>
                     </div>
-                    <div class="transit-board__departures">
+                    <div class="transit-board__departures"
+                        [class.transit-board__departures--wide]="messagePages[0].length === 0">
                         <div class="transit-board__departure" *ngFor="let departure of departures(entry)">
-                            <span class="transit-board__time">{{ departure.displayTime }}</span>
-                            <span class="transit-board__minutes">{{ minutesUntil(departure) }}<span
-                                    class="transit-board__unit"> min</span></span>
+                            <ng-container *ngIf="{ relativeMinutes: minutesUntil(departure) } as timing">
+                                <ng-container *ngIf="messagePages[0].length === 0; else compactDeparture">
+                                    <span class="transit-board__mission">{{ departure.missionCode || '' }}</span>
+                                    <span class="transit-board__imminent"
+                                        [class.transit-board__imminent--hidden]="timing.relativeMinutes >= 10"
+                                        aria-hidden="true">
+                                        <span class="transit-board__imminent-dot"></span>
+                                        <span
+                                            class="transit-board__imminent-dot transit-board__imminent-dot--second"></span>
+                                    </span>
+                                    <span class="transit-board__time">{{ departure.displayTime }}</span>
+                                    <span class="transit-board__minutes">{{ timing.relativeMinutes }}<span
+                                            class="transit-board__unit"> min</span></span>
+                                </ng-container>
+                                <ng-template #compactDeparture>
+                                    <span class="transit-board__time">{{ departure.displayTime }}</span>
+                                    <span class="transit-board__minutes">{{ timing.relativeMinutes }}<span
+                                            class="transit-board__unit"> min</span></span>
+                                </ng-template>
+                            </ng-container>
                         </div>
-                        <div class="transit-board__empty" *ngIf="departures(entry).length === 0">No upcoming departures
+                        <div class="transit-board__empty" *ngIf="departures(entry).length === 0">
+                            {{ 'empty.departures' | translate }}
                         </div>
                     </div>
                 </div>
 
-                <div class="transit-board__empty" *ngIf="transitEntries().length === 0 && !upcomingTransitOpening()">No
-                    transit entries</div>
+                <div class="transit-board__empty" *ngIf="transitEntries().length === 0 && !upcomingTransitOpening()">
+                    {{ 'empty.transitEntries' | translate }}
+                </div>
             </div>
         </div>
 
@@ -36,7 +56,7 @@
             <div class="transport-page__divider" role="separator"></div>
 
             <div class="transport-page__column">
-                <div class="transport-page__title">Messages</div>
+                <div class="transport-page__title">{{ 'pages.messages.title' | translate }}</div>
 
                 <div class="transport-page__messages">
                     <div class="message-timeline">

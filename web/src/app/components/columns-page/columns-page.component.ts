@@ -3,9 +3,18 @@ import { isPlatformBrowser } from '@angular/common';
 import moment from 'moment';
 import { ClockService } from '../../services/clock.service';
 import { CalendarService, CalendarDay, CalendarEvent } from '../../services/calendar.service';
-import { ScreensaverConfigService } from '../../services/screensaver-config.service';
-import { WeatherService } from '../../services/weather.service';
+import { ScreensaverConfigService, WorldClockCity } from '../../services/screensaver-config.service';
+import { WeatherService, WorldCityWeather } from '../../services/weather.service';
 import { weatherIconName } from '../../services/weather-icon';
+
+interface CityWeatherDisplay {
+  readonly name: string;
+  readonly iconName: string;
+  readonly temperature: number;
+  readonly timezone?: string;
+}
+
+const MINUTE_MS = 60 * 1000;
 
 @Component({
   selector: 'app-columns-page',
@@ -21,6 +30,21 @@ export class ColumnsPageComponent implements AfterViewChecked {
   private trimCount = 0;
   private _trimPending = false;
   private _lastCandidateKey = '';
+  private worldCityWeatherSource: readonly WorldCityWeather[] | null = null;
+  private worldClockCitiesSource: readonly WorldClockCity[] | null = null;
+  private compactCityWeather: readonly CityWeatherDisplay[] = [];
+  private featuredCityWeather: CityWeatherDisplay | null = null;
+  private readonly cityTimeFormatters = new Map<string, Intl.DateTimeFormat>();
+  private readonly timezoneOffsetFormatters = new Map<string, Intl.DateTimeFormat>();
+  private offsetCacheKey = '';
+  private offsetCache = '';
+  private calendarSource: readonly CalendarDay[] | null = null;
+  private calendarMinute = -1;
+  private calendarMaxDays = -1;
+  private candidateDaysCache: readonly CalendarDay[] = [];
+  private displayDaysSource: readonly CalendarDay[] | null = null;
+  private displayDaysTrimCount = -1;
+  private displayDaysCache: readonly CalendarDay[] = [];
 
   constructor(
     readonly clockService: ClockService,
@@ -30,53 +54,88 @@ export class ColumnsPageComponent implements AfterViewChecked {
     @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {}
 
-  private static readonly SAO_PAULO_TZ = 'America/Sao_Paulo';
-  private static readonly SAO_PAULO_CITY = 'São Paulo';
-  /** Cities shown compact (no time/offset) — same timezone as the frame's local timezone. */
-  static readonly COMPACT_CITY_NAMES: readonly string[] = ['Paris', 'Basel', 'Budapest', 'Nice'];
-
   get config() { return this.configService.config()?.appSettings ?? null; }
 
   /** Compact-only cities (name + icon + temp), in configured order. */
-  get compactCities(): readonly { name: string; iconName: string; temperature: number }[] {
-    return ColumnsPageComponent.COMPACT_CITY_NAMES
-      .map((name) => this.cityWeather(name))
-      .filter((c): c is { name: string; iconName: string; temperature: number } => c !== null);
+  get compactCities(): readonly CityWeatherDisplay[] {
+    this.refreshCityWeather();
+    return this.compactCityWeather;
   }
 
-  get saoPauloWeather(): { iconName: string; temperature: number } | null {
-    const city = this.cityWeather(ColumnsPageComponent.SAO_PAULO_CITY);
-    return city ? { iconName: city.iconName, temperature: city.temperature } : null;
+  get featuredCity(): CityWeatherDisplay | null {
+    this.refreshCityWeather();
+    return this.featuredCityWeather;
   }
 
-  private cityWeather(name: string): { name: string; iconName: string; temperature: number } | null {
-    const city = this.weatherService.worldCities().find((c) => c.name === name);
-    if (!city) return null;
-    return { name, iconName: weatherIconName(city.symbolCode), temperature: city.temperature };
+  private cityWeather(config: WorldClockCity, citiesByName: ReadonlyMap<string, WorldCityWeather>): CityWeatherDisplay | null {
+    const weather = citiesByName.get(config.name);
+    if (!weather) return null;
+    return {
+      name: config.name,
+      iconName: weatherIconName(weather.symbolCode),
+      temperature: weather.temperature,
+      timezone: config.timezone,
+    };
   }
 
-  get saoPauloTime(): string {
-    return new Intl.DateTimeFormat('en-GB', {
-      timeZone: ColumnsPageComponent.SAO_PAULO_TZ,
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(this.clockService.nowMs());
+  private refreshCityWeather(): void {
+    const source = this.weatherService.worldCities();
+    const cityConfigs = this.config?.worldClock.cities ?? [];
+    if (source === this.worldCityWeatherSource && cityConfigs === this.worldClockCitiesSource) return;
+
+    this.worldCityWeatherSource = source;
+    this.worldClockCitiesSource = cityConfigs;
+    const citiesByName = new Map(source.map((city) => [city.name, city]));
+    this.compactCityWeather = cityConfigs
+      .filter((city) => city.role === 'compact')
+      .map((city) => this.cityWeather(city, citiesByName))
+      .filter((city): city is CityWeatherDisplay => city !== null);
+    const featuredConfig = cityConfigs.find((city) => city.role === 'featured' && city.timezone);
+    this.featuredCityWeather = featuredConfig
+      ? this.cityWeather(featuredConfig, citiesByName)
+      : null;
   }
 
-  /** Offset of the frame's local timezone relative to São Paulo, e.g. "+5:00". */
-  get saoPauloOffsetLabel(): string {
+  get featuredCityTime(): string {
+    const city = this.featuredCity;
+    if (!city?.timezone) return '';
+    let formatter = this.cityTimeFormatters.get(city.timezone);
+    if (!formatter) {
+      formatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: city.timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      this.cityTimeFormatters.set(city.timezone, formatter);
+    }
+    return formatter.format(this.clockService.nowMs());
+  }
+
+  get featuredCityOffsetLabel(): string {
     const nowMs = this.clockService.nowMs();
-    const localTz = this.config?.timezone ?? 'Europe/Paris';
-    const diff = this.tzOffsetMinutes(localTz, nowMs) - this.tzOffsetMinutes(ColumnsPageComponent.SAO_PAULO_TZ, nowMs);
+    const city = this.featuredCity;
+    if (!city?.timezone) return '';
+    const localTz = this.config?.timezone ?? 'UTC';
+    const cacheKey = `${localTz}:${city.timezone}:${Math.floor(nowMs / MINUTE_MS)}`;
+    if (cacheKey === this.offsetCacheKey) return this.offsetCache;
+
+    const diff = this.tzOffsetMinutes(localTz, nowMs) - this.tzOffsetMinutes(city.timezone, nowMs);
     const sign = diff >= 0 ? '+' : '-';
     const abs = Math.abs(diff);
-    return `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, '0')}`;
+    this.offsetCacheKey = cacheKey;
+    this.offsetCache = `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, '0')}`;
+    return this.offsetCache;
   }
 
   /** Minutes east of UTC for the given IANA timezone at the given instant. */
   private tzOffsetMinutes(timeZone: string, atMs: number): number {
-    const parts = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'shortOffset' }).formatToParts(atMs);
+    let formatter = this.timezoneOffsetFormatters.get(timeZone);
+    if (!formatter) {
+      formatter = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'shortOffset' });
+      this.timezoneOffsetFormatters.set(timeZone, formatter);
+    }
+    const parts = formatter.formatToParts(atMs);
     const match = parts.find((p) => p.type === 'timeZoneName')?.value.match(/GMT([+-]\d+)(?::(\d+))?/);
     if (!match) return 0;
     const hours = parseInt(match[1], 10);
@@ -86,9 +145,19 @@ export class ColumnsPageComponent implements AfterViewChecked {
 
   get candidateDays(): readonly CalendarDay[] {
     const nowMs = this.clockService.nowMs();
+    const minute = Math.floor(nowMs / MINUTE_MS);
+    const source = this.calendarService.days();
+    const maxDays = this.config?.calendar?.maxDisplayDays ?? 2;
+    if (source === this.calendarSource && minute === this.calendarMinute && maxDays === this.calendarMaxDays) {
+      return this.candidateDaysCache;
+    }
+
     const todayStr = moment(nowMs).format('YYYY-MM-DD');
     const nowTime = moment(nowMs).format('HH:mm');
-    return this.calendarService.days()
+    this.calendarSource = source;
+    this.calendarMinute = minute;
+    this.calendarMaxDays = maxDays;
+    this.candidateDaysCache = source
       .map((day) => {
         if (day.date === todayStr) {
           const events = day.events.filter((e) => e.isAllDay || e.startTime >= nowTime);
@@ -97,11 +166,17 @@ export class ColumnsPageComponent implements AfterViewChecked {
         return day;
       })
       .filter((d) => d.events.length > 0)
-      .slice(0, this.config?.calendar?.maxDisplayDays ?? 2);
+      .slice(0, maxDays);
+    return this.candidateDaysCache;
   }
 
   get displayDays(): readonly CalendarDay[] {
-    let days = [...this.candidateDays] as CalendarDay[];
+    const candidateDays = this.candidateDays;
+    if (candidateDays === this.displayDaysSource && this.trimCount === this.displayDaysTrimCount) {
+      return this.displayDaysCache;
+    }
+
+    let days = [...candidateDays] as CalendarDay[];
     let remaining = this.trimCount;
     while (remaining > 0 && days.length > 0) {
       const last = days[days.length - 1];
@@ -115,7 +190,10 @@ export class ColumnsPageComponent implements AfterViewChecked {
       }
       remaining--;
     }
-    return days;
+    this.displayDaysSource = candidateDays;
+    this.displayDaysTrimCount = this.trimCount;
+    this.displayDaysCache = days;
+    return this.displayDaysCache;
   }
 
   ngAfterViewChecked(): void {

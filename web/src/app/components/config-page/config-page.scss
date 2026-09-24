@@ -7,7 +7,7 @@
   width: 100dvw;
   height: 100vh;
   height: 100dvh;
-  background-color: #0d0d12;
+  background-color: var(--surface-app);
   color: var(--text-primary);
   font-family: var(--font-body);
   overflow: hidden;
@@ -252,7 +252,7 @@
     border: 1px solid rgba(255, 143, 132, 0.35);
     border-radius: 0.3vw;
     background: transparent;
-    color: #ff8f84;
+    color: var(--color-danger-soft);
     cursor: pointer;
   }
 
@@ -315,7 +315,7 @@
     padding-right: 2.5dvw;
 
     option {
-      background-color: #1a1a24;
+      background-color: var(--surface-elevated);
       color: var(--text-primary);
     }
   }
@@ -434,8 +434,8 @@
     font-weight: 500;
 
     &--saving { color: var(--text-muted); }
-    &--saved  { color: var(--ss-success); }
-    &--error  { color: var(--ss-error); }
+    &--saved  { color: var(--color-success); }
+    &--error  { color: var(--color-danger); }
   }
 
   &__btn {
@@ -467,11 +467,11 @@
     &--primary {
       background-color: var(--accent);
       border-color: var(--accent);
-      color: #14120a;
+      color: var(--text-on-accent);
 
       &:hover {
-        background-color: var(--ss-yellow-dark);
-        border-color: var(--ss-yellow-dark);
+        background-color: var(--palette-accent-strong);
+        border-color: var(--palette-accent-strong);
       }
 
       &:disabled {
@@ -492,6 +492,35 @@
     font-size: 1.2vw;
     font-size: 1.2dvw;
     letter-spacing: 0.1em;
+  }
+
+  @media (min-width: 801px) and (max-width: 1400px) {
+    &__close,
+    &__remove-entry,
+    &__btn,
+    &__input,
+    &__nav-item {
+      min-height: 2.75rem;
+    }
+
+    &__close,
+    &__remove-entry {
+      min-width: 2.75rem;
+    }
+
+    &__nav-label,
+    &__label,
+    &__field-group-title,
+    &__hint,
+    &__status,
+    &__btn {
+      font-size: 0.75rem;
+    }
+
+    &__input {
+      font-size: 1rem;
+      padding: 0.7rem 0.85rem;
+    }
   }
 
   @media (max-width: 800px) {

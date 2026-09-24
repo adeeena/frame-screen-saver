@@ -1,0 +1,45 @@
+{
+  "defaultLocale": "en",
+  "translations": {
+    "en": {
+      "pages.configuration.title": "Configuration",
+      "pages.messages.title": "Messages",
+      "pages.weather.title": "Weather",
+      "pages.transport.title": "Transport",
+      "pages.agenda.title": "Upcoming events",
+      "empty.events": "No upcoming events",
+      "empty.departures": "No upcoming departures",
+      "empty.transitEntries": "No transit entries",
+      "empty.messages": "No messages",
+      "empty.worldClockCities": "No world-clock cities configured.",
+      "nav.general": "General",
+      "nav.animation": "Animation",
+      "nav.display": "Display",
+      "nav.locationTime": "Location & Time",
+      "nav.worldClock": "World Clock",
+      "nav.weather": "Weather",
+      "nav.transit": "Transit",
+      "nav.calendar": "Calendar"
+    },
+    "fr": {
+      "pages.configuration.title": "Configuration",
+      "pages.messages.title": "Messages",
+      "pages.weather.title": "Météo",
+      "pages.transport.title": "Transports",
+      "pages.agenda.title": "Événements à venir",
+      "empty.events": "Aucun événement à venir",
+      "empty.departures": "Aucun départ à venir",
+      "empty.transitEntries": "Aucune ligne de transport",
+      "empty.messages": "Aucun message",
+      "empty.worldClockCities": "Aucune ville configurée.",
+      "nav.general": "Général",
+      "nav.animation": "Animation",
+      "nav.display": "Affichage",
+      "nav.locationTime": "Lieu et heure",
+      "nav.worldClock": "Horloge mondiale",
+      "nav.weather": "Météo",
+      "nav.transit": "Transports",
+      "nav.calendar": "Calendrier"
+    }
+  }
+}

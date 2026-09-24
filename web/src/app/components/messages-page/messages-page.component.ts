@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { Message, MessageInput, MessageService } from '../../services/message.service';
+import { ScreensaverConfigService } from '../../services/screensaver-config.service';
 
 @Component({
   selector: 'app-messages-page',
@@ -28,7 +29,16 @@ export class MessagesPageComponent implements OnInit, OnDestroy {
   constructor(
     private readonly router: Router,
     private readonly messageService: MessageService,
+    readonly configService: ScreensaverConfigService,
   ) {}
+
+  get maxTextLength(): number {
+    return this.configService.messages().maxTextLength;
+  }
+
+  get maxLifetimeDays(): number {
+    return this.configService.messages().maxLifetimeDays;
+  }
 
   ngOnInit(): void {
     this.resetForm();
@@ -148,7 +158,7 @@ export class MessagesPageComponent implements OnInit, OnDestroy {
   isValid(): boolean {
     const expiresAtMs = new Date(this.expiresAt).valueOf();
     return this.text.trim().length > 0
-      && this.text.trim().length <= 2048
+      && this.text.trim().length <= this.maxTextLength
       && Number.isFinite(expiresAtMs)
       && expiresAtMs <= new Date(this.maxExpiresAt).valueOf();
   }
@@ -164,7 +174,7 @@ export class MessagesPageComponent implements OnInit, OnDestroy {
   }
 
   private refreshMaximum(): void {
-    this.maxExpiresAt = this.toLocalInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+    this.maxExpiresAt = this.toLocalInput(new Date(Date.now() + this.maxLifetimeDays * 24 * 60 * 60 * 1000));
   }
 
   private toLocalInput(date: Date): string {

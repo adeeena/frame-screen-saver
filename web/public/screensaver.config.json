@@ -1,4 +1,10 @@
 {
+  "contentSettings": {
+    "productName": "Ambient Display",
+    "documentTitle": "Ambient Display",
+    "galleryTitle": "",
+    "gallerySubtitle": ""
+  },
   "animationSettings": {
     "stillImageTimeoutMs": 5000,
     "coverPageTimeoutMs": 10000,
@@ -41,6 +47,7 @@
     }
   },
   "appSettings": {
+    "locale": "en",
     "location": {
       "city": "Paris",
       "region": "Europe",
@@ -52,7 +59,6 @@
     "dateFormat": "dddd, MMMM D",
     "weather": {
       "provider": "met.no",
-      "apiKey": null,
       "units": "metric"
     },
     "transit": {
@@ -67,7 +73,7 @@
           "lineColor": "00A88F",
           "lineTextColor": "ffffff",
           "direction": "Paris Montparnasse",
-          "maxDepartures": 2,
+          "maxDepartures": 3,
           "primLineRef": "STIF:Line::C01736:",
           "navitiaRegion": null,
           "gtfsRtUrl": null,
@@ -84,7 +90,7 @@
           "lineColor": "D5C900",
           "lineTextColor": "25303B",
           "direction": "Paris Saint-Lazare",
-          "maxDepartures": 2,
+          "maxDepartures": 3,
           "primLineRef": "STIF:Line::C01739:",
           "navitiaRegion": null,
           "gtfsRtUrl": null,
@@ -101,7 +107,7 @@
           "lineColor": "E2007A",
           "lineTextColor": "ffffff",
           "direction": "Magenta",
-          "maxDepartures": 2,
+          "maxDepartures": 3,
           "primLineRef": null,
           "navitiaRegion": null,
           "gtfsRtUrl": null,
@@ -118,7 +124,7 @@
           "lineColor": "E2007A",
           "lineTextColor": "ffffff",
           "direction": "Saint-Lazare",
-          "maxDepartures": 2,
+          "maxDepartures": 3,
           "primLineRef": null,
           "navitiaRegion": null,
           "gtfsRtUrl": null,
@@ -130,18 +136,23 @@
     },
     "calendar": {
       "isEnabled": true,
-      "icsUrl": "",
       "daysAhead": 7,
       "maxDisplayDays": 2
     },
     "worldClock": {
       "cities": [
-        { "name": "Paris", "latitude": 48.8566, "longitude": 2.3522 },
-        { "name": "Basel", "latitude": 47.5596, "longitude": 7.5886 },
-        { "name": "Budapest", "latitude": 47.4979, "longitude": 19.0402 },
-        { "name": "Nice", "latitude": 43.7102, "longitude": 7.2620 },
-        { "name": "São Paulo", "latitude": -23.5505, "longitude": -46.6333 }
+        { "name": "Paris", "latitude": 48.8566, "longitude": 2.3522, "role": "compact" },
+        { "name": "Basel", "latitude": 47.5596, "longitude": 7.5886, "role": "compact" },
+        { "name": "Budapest", "latitude": 47.4979, "longitude": 19.0402, "role": "compact" },
+        { "name": "Nice", "latitude": 43.7102, "longitude": 7.2620, "role": "compact" },
+        { "name": "São Paulo", "latitude": -23.5505, "longitude": -46.6333, "timezone": "America/Sao_Paulo", "role": "featured" }
       ]
+    },
+    "messages": {
+      "maxTextLength": 2048,
+      "maxLifetimeDays": 7,
+      "retentionDays": 30,
+      "itemsPerPage": 3
     }
   }
 }

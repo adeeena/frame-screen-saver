@@ -203,8 +203,8 @@
     background: linear-gradient(
       to right,
       rgba(4, 9, 20, 0) 0%,
-      rgba(4, 9, 20, 0.78) 10%,
-      rgba(4, 9, 20, 0.78) 90%,
+      rgba(4, 9, 20, 0.78) 2%,
+      rgba(4, 9, 20, 0.78) 98%,
       rgba(4, 9, 20, 0) 100%
     );
     pointer-events: none;
@@ -294,7 +294,7 @@
     font-weight: 500;
     font-size: 1.1vw;
     font-size: 1.1dvw;
-    color: var(--ss-blue);
+    color: var(--color-info);
     margin-bottom: 0.4vw;
     margin-bottom: 0.4dvw;
   }
@@ -302,21 +302,25 @@
   &__rain-track {
     -webkit-flex: 1;
     flex: 1;
-    width: 0.6vw;
-    width: 0.6dvw;
+    width: 1vw;
+    width: 1dvw;
     display: -webkit-flex;
     display: flex;
     -webkit-align-items: flex-end;
     align-items: flex-end;
-    background-color: rgba(255, 255, 255, 0.12);
+    background-color: transparent;
     border-radius: 0.3vw;
     border-radius: 0.3dvw;
     overflow: hidden;
+
+    &--active {
+      background-color: rgba(255, 255, 255, 0.12);
+    }
   }
 
   &__rain-bar {
     width: 100%;
-    background-color: var(--ss-blue);
+    background-color: var(--color-info);
   }
 
   &__hour-label {
@@ -360,7 +364,7 @@
       width: 100%;
       height: 100%;
       fill: none;
-      stroke: var(--ss-titanium);
+      stroke: var(--palette-ink);
       stroke-width: 1.5;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -372,6 +376,6 @@
     font-weight: 500;
     font-size: 1.5vw;
     font-size: 1.5dvw;
-    color: var(--ss-titanium);
+    color: var(--palette-ink);
   }
 }

@@ -7,11 +7,7 @@
     "moduleResolution": "node",
     "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "src/test.ts",
-    "src/**/*.spec.ts"
+  "files": [
+    "src/server.ts"
   ]
 }

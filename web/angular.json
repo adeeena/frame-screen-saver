@@ -47,8 +47,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumWarning": "1mb",
+                  "maximumError": "1.25mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -76,7 +76,8 @@
             "tsConfig": "tsconfig.server.json",
             "externalDependencies": [
               "node-ical",
-              "sharp"
+              "sharp",
+              "ws"
             ]
           },
           "configurations": {

@@ -1,6 +1,9 @@
 <main class="messages-page">
     <header class="messages-page__header">
-        <div class="messages-page__heading"><span>Frame</span> Messages</div>
+        <div class="messages-page__heading">
+            <span>{{ configService.content().productName }}</span>
+            {{ 'pages.messages.title' | translate }}
+        </div>
         <button class="messages-page__close" type="button" (click)="close()" aria-label="Close messages">
             <i [feather]="'x'"></i>
         </button>
@@ -13,14 +16,14 @@
             </div>
 
             <label class="messages-page__label" for="message-text">Message</label>
-            <textarea id="message-text" class="messages-page__textarea" maxlength="2048" rows="6" [(ngModel)]="text"
-                placeholder="Write a message for the frame"></textarea>
-            <div class="messages-page__field-meta">{{ text.length }} / 2048</div>
+            <textarea id="message-text" class="messages-page__textarea" [attr.maxlength]="maxTextLength" rows="6"
+                [(ngModel)]="text" placeholder="Write a display message"></textarea>
+            <div class="messages-page__field-meta">{{ text.length }} / {{ maxTextLength }}</div>
 
             <label class="messages-page__label" for="message-expiration">Expiration</label>
             <input id="message-expiration" class="messages-page__input" type="datetime-local" [max]="maxExpiresAt"
                 [(ngModel)]="expiresAt" />
-            <div class="messages-page__field-meta">Up to one week from now</div>
+            <div class="messages-page__field-meta">Up to {{ maxLifetimeDays }} days from now</div>
 
             <div class="messages-page__error" *ngIf="error">{{ error }}</div>
             <div class="messages-page__actions">
@@ -59,7 +62,9 @@
             </div>
             <div class="messages-page__notice" role="status" *ngIf="historyNotice">{{ historyNotice }}</div>
             <div class="messages-page__loading" *ngIf="loading">Loading...</div>
-            <div class="messages-page__empty" *ngIf="!loading && messages.length === 0">No messages</div>
+            <div class="messages-page__empty" *ngIf="!loading && messages.length === 0">
+                {{ 'empty.messages' | translate }}
+            </div>
 
             <article class="messages-page__message" *ngFor="let message of messages"
                 [class.messages-page__message--expired]="!isActive(message)">

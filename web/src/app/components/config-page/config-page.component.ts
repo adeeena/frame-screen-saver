@@ -9,17 +9,24 @@ import {
   DisplaySettings,
   ColorSettings,
   MediaSettings,
+  MediaPackSettings,
   LocationSettings,
   WeatherSettings,
   TransitSettings,
   TransitRouteSettings,
   CalendarSettings,
+  WorldClockCity,
+  WorldClockSettings,
+  ContentSettings,
+  MessageSettings,
 } from '../../services/screensaver-config.service';
 
 export type ConfigSection =
+  | 'general'
   | 'animation'
   | 'display'
   | 'location'
+  | 'worldClock'
   | 'weather'
   | 'transit'
   | 'calendar';
@@ -32,16 +39,18 @@ export type ConfigSection =
 })
 export class ConfigPageComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
-  readonly sections: { id: ConfigSection; label: string; icon: string }[] = [
-    { id: 'animation', label: 'Animation', icon: 'film' },
-    { id: 'display',   label: 'Display',   icon: 'monitor' },
-    { id: 'location',  label: 'Location & Time', icon: 'map-pin' },
-    { id: 'weather',   label: 'Weather',   icon: 'cloud' },
-    { id: 'transit',   label: 'Transit',   icon: 'repeat' },
-    { id: 'calendar',  label: 'Calendar',  icon: 'calendar' },
+  readonly sections: { id: ConfigSection; labelKey: string; icon: string }[] = [
+    { id: 'general', labelKey: 'nav.general', icon: 'settings' },
+    { id: 'animation', labelKey: 'nav.animation', icon: 'film' },
+    { id: 'display', labelKey: 'nav.display', icon: 'monitor' },
+    { id: 'location', labelKey: 'nav.locationTime', icon: 'map-pin' },
+    { id: 'worldClock', labelKey: 'nav.worldClock', icon: 'globe' },
+    { id: 'weather', labelKey: 'nav.weather', icon: 'cloud' },
+    { id: 'transit', labelKey: 'nav.transit', icon: 'repeat' },
+    { id: 'calendar', labelKey: 'nav.calendar', icon: 'calendar' },
   ];
 
-  activeSection: ConfigSection = 'animation';
+  activeSection: ConfigSection = 'general';
   draft: ScreensaverConfig | null = null;
 
   constructor(
@@ -90,6 +99,30 @@ export class ConfigPageComponent implements OnInit, OnDestroy {
     this.draft = { ...this.draft, animationSettings: { ...this.draft.animationSettings, ...changes } };
   }
 
+  patchContent(changes: Partial<ContentSettings>): void {
+    if (!this.draft) return;
+    this.draft = { ...this.draft, contentSettings: { ...this.draft.contentSettings, ...changes } };
+  }
+
+  patchLocale(event: Event): void {
+    if (!this.draft) return;
+    this.draft = {
+      ...this.draft,
+      appSettings: { ...this.draft.appSettings, locale: this.strVal(event) },
+    };
+  }
+
+  patchMessages(changes: Partial<MessageSettings>): void {
+    if (!this.draft) return;
+    this.draft = {
+      ...this.draft,
+      appSettings: {
+        ...this.draft.appSettings,
+        messages: { ...this.draft.appSettings.messages, ...changes },
+      },
+    };
+  }
+
   patchDisplay(changes: Partial<DisplaySettings>): void {
     if (!this.draft) return;
     this.draft = { ...this.draft, displaySettings: { ...this.draft.displaySettings, ...changes } };
@@ -111,6 +144,30 @@ export class ConfigPageComponent implements OnInit, OnDestroy {
     };
   }
 
+  addMediaPack(): void {
+    if (!this.draft) return;
+    const pack: MediaPackSettings = {
+      name: `pack-${this.draft.displaySettings.media.packs.length + 1}`,
+      metadataFile: null,
+      cacheExpiryTimeHours: 24,
+    };
+    this.patchMedia({ packs: [...this.draft.displaySettings.media.packs, pack] });
+  }
+
+  patchMediaPack(index: number, changes: Partial<MediaPackSettings>): void {
+    if (!this.draft) return;
+    const packs = this.draft.displaySettings.media.packs.map((pack, packIndex) =>
+      packIndex === index ? { ...pack, ...changes } : pack,
+    );
+    this.patchMedia({ packs });
+  }
+
+  removeMediaPack(index: number): void {
+    if (!this.draft) return;
+    const packs = this.draft.displaySettings.media.packs.filter((_, packIndex) => packIndex !== index);
+    this.patchMedia({ packs });
+  }
+
   patchLocation(changes: Partial<LocationSettings>): void {
     if (!this.draft) return;
     this.draft = {
@@ -122,6 +179,45 @@ export class ConfigPageComponent implements OnInit, OnDestroy {
   patchAppTime(changes: { timezone?: string; timeFormat?: string; dateFormat?: string }): void {
     if (!this.draft) return;
     this.draft = { ...this.draft, appSettings: { ...this.draft.appSettings, ...changes } };
+  }
+
+  patchWorldClock(changes: Partial<WorldClockSettings>): void {
+    if (!this.draft) return;
+    this.draft = {
+      ...this.draft,
+      appSettings: {
+        ...this.draft.appSettings,
+        worldClock: { ...this.draft.appSettings.worldClock, ...changes },
+      },
+    };
+  }
+
+  addWorldClockCity(): void {
+    if (!this.draft) return;
+    const city: WorldClockCity = {
+      name: '',
+      latitude: 0,
+      longitude: 0,
+      role: 'compact',
+    };
+    this.patchWorldClock({ cities: [...this.draft.appSettings.worldClock.cities, city] });
+  }
+
+  patchWorldClockCity(index: number, changes: Partial<WorldClockCity>): void {
+    if (!this.draft) return;
+    const cities = this.draft.appSettings.worldClock.cities.map((city, cityIndex) => {
+      if (changes.role === 'featured' && cityIndex !== index && city.role === 'featured') {
+        return { ...city, role: 'compact' as const, timezone: undefined };
+      }
+      return cityIndex === index ? { ...city, ...changes } : city;
+    });
+    this.patchWorldClock({ cities });
+  }
+
+  removeWorldClockCity(index: number): void {
+    if (!this.draft) return;
+    const cities = this.draft.appSettings.worldClock.cities.filter((_, cityIndex) => cityIndex !== index);
+    this.patchWorldClock({ cities });
   }
 
   patchWeather(changes: Partial<WeatherSettings>): void {
@@ -153,7 +249,7 @@ export class ConfigPageComponent implements OnInit, OnDestroy {
       lineColor: '666666',
       lineTextColor: 'ffffff',
       direction: '',
-      maxDepartures: 2,
+      maxDepartures: 3,
       primLineRef: null,
       navitiaRegion: null,
       gtfsRtUrl: null,
@@ -220,5 +316,9 @@ export class ConfigPageComponent implements OnInit, OnDestroy {
   patchWeatherUnits(event: Event): void {
     const v = (event.target as HTMLSelectElement).value as 'metric' | 'imperial';
     this.patchWeather({ units: v });
+  }
+
+  worldClockRoleVal(event: Event): 'compact' | 'featured' {
+    return (event.target as HTMLSelectElement).value === 'featured' ? 'featured' : 'compact';
   }
 }

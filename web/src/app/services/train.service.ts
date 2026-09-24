@@ -9,6 +9,7 @@ export interface Departure {
   readonly line: string;
   readonly lineColor?: string;
   readonly lineTextColor?: string;
+  readonly missionCode?: string;
   readonly destination: string;
   readonly scheduledDeparture: string;
   readonly expectedDeparture: string;

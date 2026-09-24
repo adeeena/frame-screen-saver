@@ -1,7 +1,7 @@
 <div class="debug-overlay" (click)="close.emit()">
   <div class="debug-overlay__panel" (click)="$event.stopPropagation()">
     <div class="debug-overlay__header">
-      <span>Debug — Frame Screen Saver</span>
+      <span>Debug — {{ configService.content().productName }}</span>
       <button class="debug-overlay__close" (click)="close.emit()">✕</button>
     </div>
     <div class="debug-overlay__grid">
@@ -24,8 +24,12 @@
       </div>
 
       <div class="debug-overlay__section">
-        <div class="debug-overlay__section-title">Transilien N — Maule</div>
-        <pre *ngFor="let dep of trainService.departures()">{{ dep.expectedDeparture }} — {{ dep.minutesUntilDeparture }}min — {{ dep.status }}</pre>
+        <div class="debug-overlay__section-title">Transit</div>
+        <ng-container *ngFor="let entry of configService.config()?.appSettings?.transit?.entries || []">
+          <pre>{{ entry.lineLabel }} — {{ entry.stopLabel }}</pre>
+          <pre
+            *ngFor="let dep of trainService.departures(entry.id)">{{ dep.expectedDeparture }} — {{ dep.minutesUntilDeparture }}min — {{ dep.status }}</pre>
+        </ng-container>
       </div>
 
       <div class="debug-overlay__section">
@@ -56,4 +60,3 @@
     </div>
   </div>
 </div>
-

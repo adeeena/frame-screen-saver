@@ -3,7 +3,8 @@
   <!-- ── Header ───────────────────────────────────────────────────────────── -->
   <header class="config-page__header">
     <div class="config-page__header-title">
-      <span class="config-page__header-title-accent">Frame</span> Configuration
+      <span class="config-page__header-title-accent">{{ configService.content().productName }}</span>
+      {{ 'pages.configuration.title' | translate }}
     </div>
     <button class="config-page__close" type="button" (click)="close()" title="Close (Esc)"
       aria-label="Close configuration">
@@ -20,12 +21,73 @@
         <button class="config-page__nav-item" *ngFor="let s of sections" type="button"
           [class.config-page__nav-item--active]="activeSection === s.id" (click)="activeSection = s.id">
           <i class="config-page__nav-icon" [feather]="s.icon" aria-hidden="true"></i>
-          <span class="config-page__nav-label">{{ s.label }}</span>
+          <span class="config-page__nav-label">{{ s.labelKey | translate }}</span>
         </button>
       </nav>
 
       <!-- ── Section content ────────────────────────────────────────────── -->
       <div class="config-page__content">
+
+        <!-- GENERAL -->
+        <div class="config-page__section" *ngIf="activeSection === 'general'">
+          <div class="config-page__section-title">Product &amp; Copy</div>
+          <div class="config-page__fields">
+            <div class="config-page__field-group-title">Identity</div>
+            <div class="config-page__field">
+              <label class="config-page__label">Product name</label>
+              <input class="config-page__input" type="text" [value]="d.contentSettings.productName"
+                (change)="patchContent({ productName: strVal($event) })" />
+            </div>
+            <div class="config-page__field">
+              <label class="config-page__label">Browser title</label>
+              <input class="config-page__input" type="text" [value]="d.contentSettings.documentTitle"
+                (change)="patchContent({ documentTitle: strVal($event) })" />
+            </div>
+
+            <div class="config-page__field">
+              <label class="config-page__label">Language</label>
+              <select class="config-page__input config-page__select" [value]="d.appSettings.locale"
+                (change)="patchLocale($event)">
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+              </select>
+            </div>
+
+            <div class="config-page__field-group-title">Gallery fallback copy</div>
+            <div class="config-page__field">
+              <label class="config-page__label">Title</label>
+              <input class="config-page__input" type="text" [value]="d.contentSettings.galleryTitle"
+                (change)="patchContent({ galleryTitle: strVal($event) })" />
+            </div>
+            <div class="config-page__field">
+              <label class="config-page__label">Subtitle</label>
+              <input class="config-page__input" type="text" [value]="d.contentSettings.gallerySubtitle"
+                (change)="patchContent({ gallerySubtitle: strVal($event) })" />
+            </div>
+
+            <div class="config-page__field-group-title">Message policy</div>
+            <div class="config-page__field">
+              <label class="config-page__label">Maximum text length</label>
+              <input class="config-page__input" type="number" min="1" [value]="d.appSettings.messages.maxTextLength"
+                (change)="patchMessages({ maxTextLength: numVal($event) })" />
+            </div>
+            <div class="config-page__field">
+              <label class="config-page__label">Maximum lifetime (days)</label>
+              <input class="config-page__input" type="number" min="1" [value]="d.appSettings.messages.maxLifetimeDays"
+                (change)="patchMessages({ maxLifetimeDays: numVal($event) })" />
+            </div>
+            <div class="config-page__field">
+              <label class="config-page__label">History retention (days)</label>
+              <input class="config-page__input" type="number" min="1" [value]="d.appSettings.messages.retentionDays"
+                (change)="patchMessages({ retentionDays: numVal($event) })" />
+            </div>
+            <div class="config-page__field">
+              <label class="config-page__label">Messages per page</label>
+              <input class="config-page__input" type="number" min="1" [value]="d.appSettings.messages.itemsPerPage"
+                (change)="patchMessages({ itemsPerPage: numVal($event) })" />
+            </div>
+          </div>
+        </div>
 
         <!-- ANIMATION -->
         <div class="config-page__section" *ngIf="activeSection === 'animation'">
@@ -158,19 +220,28 @@
 
             <div class="config-page__field-group-title">Media</div>
 
-            <div class="config-page__field">
-              <label class="config-page__label">Media source path</label>
-              <input class="config-page__input" type="text" [value]="d.displaySettings.media.source"
-                (change)="patchMedia({ source: strVal($event) })" />
-              <span class="config-page__hint">Container path to the photo library root.</span>
+            <div class="config-page__route" *ngFor="let pack of d.displaySettings.media.packs; let packIndex = index">
+              <div class="config-page__field">
+                <label class="config-page__label">Pack name</label>
+                <input class="config-page__input" type="text" [value]="pack.name"
+                  (change)="patchMediaPack(packIndex, { name: strVal($event) })" />
+              </div>
+              <div class="config-page__field">
+                <label class="config-page__label">Metadata file</label>
+                <input class="config-page__input" type="text" [value]="pack.metadataFile || ''"
+                  (change)="patchMediaPack(packIndex, { metadataFile: nullableStr($event) })" />
+              </div>
+              <div class="config-page__field">
+                <label class="config-page__label">Cache lifetime (hours)</label>
+                <input class="config-page__input" type="number" min="1" [value]="pack.cacheExpiryTimeHours"
+                  (change)="patchMediaPack(packIndex, { cacheExpiryTimeHours: numVal($event) })" />
+              </div>
+              <button class="config-page__button config-page__button--danger" type="button"
+                (click)="removeMediaPack(packIndex)">Remove pack</button>
             </div>
 
-            <div class="config-page__field">
-              <label class="config-page__label">Metadata file</label>
-              <input class="config-page__input" type="text" [value]="d.displaySettings.media.metadata"
-                (change)="patchMedia({ metadata: strVal($event) })" />
-              <span class="config-page__hint">Path to metadata.csv (id, title, text) used for image captions.</span>
-            </div>
+            <button class="config-page__button" type="button" (click)="addMediaPack()">Add media pack</button>
+            <span class="config-page__hint">Pack folders are resolved beneath the server media directory.</span>
 
             <div class="config-page__field-group-title">Fonts</div>
 
@@ -226,7 +297,7 @@
 
             <div class="config-page__field">
               <label class="config-page__label">Timezone</label>
-              <input class="config-page__input" type="text" placeholder="Europe/Paris" [value]="d.appSettings.timezone"
+              <input class="config-page__input" type="text" placeholder="UTC" [value]="d.appSettings.timezone"
                 (change)="patchAppTime({ timezone: strVal($event) })" />
               <span class="config-page__hint">IANA timezone name, e.g. America/New_York</span>
             </div>
@@ -248,6 +319,67 @@
           </div>
         </div>
 
+        <!-- WORLD CLOCK -->
+        <div class="config-page__section" *ngIf="activeSection === 'worldClock'">
+          <div class="config-page__section-title config-page__section-title--actions">
+            <span>World Clock</span>
+            <button class="config-page__btn config-page__btn--primary" type="button" (click)="addWorldClockCity()">
+              Add city
+            </button>
+          </div>
+          <div class="config-page__fields">
+            <div class="config-page__empty-entries" *ngIf="d.appSettings.worldClock.cities.length === 0">
+              {{ 'empty.worldClockCities' | translate }}
+            </div>
+
+            <ng-container *ngFor="let city of d.appSettings.worldClock.cities; let cityIndex = index">
+              <div class="config-page__transit-entry-heading">
+                <span>{{ city.name || 'New city' }} · {{ city.role === 'featured' ? 'Time and weather' : 'Weather only'
+                  }}</span>
+                <button class="config-page__remove-entry" type="button" (click)="removeWorldClockCity(cityIndex)"
+                  title="Remove city" [attr.aria-label]="'Remove world-clock city ' + (cityIndex + 1)">
+                  <i [feather]="'trash-2'" aria-hidden="true"></i>
+                </button>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">City name</label>
+                <input class="config-page__input" type="text" [value]="city.name"
+                  (change)="patchWorldClockCity(cityIndex, { name: strVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Display mode</label>
+                <select class="config-page__input config-page__select" [value]="city.role || 'compact'"
+                  (change)="patchWorldClockCity(cityIndex, { role: worldClockRoleVal($event) })">
+                  <option value="compact">Weather only</option>
+                  <option value="featured">Time, timezone offset, and weather</option>
+                </select>
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Latitude</label>
+                <input class="config-page__input" type="number" step="0.0001" [value]="city.latitude"
+                  (change)="patchWorldClockCity(cityIndex, { latitude: numVal($event) })" />
+              </div>
+
+              <div class="config-page__field">
+                <label class="config-page__label">Longitude</label>
+                <input class="config-page__input" type="number" step="0.0001" [value]="city.longitude"
+                  (change)="patchWorldClockCity(cityIndex, { longitude: numVal($event) })" />
+              </div>
+
+              <div class="config-page__field" *ngIf="city.role === 'featured'">
+                <label class="config-page__label">Timezone</label>
+                <input class="config-page__input" type="text" placeholder="America/New_York"
+                  [value]="city.timezone || ''"
+                  (change)="patchWorldClockCity(cityIndex, { timezone: strVal($event) })" />
+                <span class="config-page__hint">IANA timezone used for the city clock and local offset.</span>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
         <!-- WEATHER -->
         <div class="config-page__section" *ngIf="activeSection === 'weather'">
           <div class="config-page__section-title">Weather</div>
@@ -259,13 +391,6 @@
                 (change)="patchWeather({ provider: strVal($event) })">
                 <option value="met.no">met.no (no key required)</option>
               </select>
-            </div>
-
-            <div class="config-page__field">
-              <label class="config-page__label">API key</label>
-              <input class="config-page__input" type="text" [value]="d.appSettings.weather.apiKey || ''"
-                (change)="patchWeather({ apiKey: nullableStr($event) })" />
-              <span class="config-page__hint">Leave empty if the provider doesn't require a key.</span>
             </div>
 
             <div class="config-page__field">
@@ -300,7 +425,7 @@
             </div>
 
             <div class="config-page__empty-entries" *ngIf="d.appSettings.transit.entries.length === 0">
-              No transit entries. Add one to show departures on the frame.
+              No transit entries. Add one to show departures on the display.
             </div>
 
             <ng-container *ngFor="let entry of d.appSettings.transit.entries; let entryIndex = index">
@@ -428,11 +553,8 @@
             </div>
 
             <div class="config-page__field">
-              <label class="config-page__label">iCal URL</label>
-              <input class="config-page__input" type="url" [value]="d.appSettings.calendar.icsUrl"
-                (change)="patchCalendar({ icsUrl: strVal($event) })" />
-              <span class="config-page__hint">Publicly accessible .ics feed URL (iCloud, Google Calendar share link,
-                etc.).</span>
+              <label class="config-page__label">Calendar feed</label>
+              <span class="config-page__hint">Configure the server-only CALENDAR_ICS_URL environment variable.</span>
             </div>
 
             <div class="config-page__field">
