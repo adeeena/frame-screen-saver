@@ -33,7 +33,7 @@ export class ColumnsPageComponent implements AfterViewChecked {
   private static readonly SAO_PAULO_TZ = 'America/Sao_Paulo';
   private static readonly SAO_PAULO_CITY = 'São Paulo';
   /** Cities shown compact (no time/offset) — same timezone as the frame's local timezone. */
-  static readonly COMPACT_CITY_NAMES: readonly string[] = ['Basel', 'Budapest', 'Nice'];
+  static readonly COMPACT_CITY_NAMES: readonly string[] = ['Paris', 'Basel', 'Budapest', 'Nice'];
 
   get config() { return this.configService.config()?.appSettings ?? null; }
 

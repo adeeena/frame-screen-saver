@@ -27,17 +27,6 @@
                     </div>
                 </div>
 
-                <div class="transport-page__infobox" *ngIf="upcomingTransitOpening() as opening"
-                    [attr.aria-label]="opening.lineLabel + ' to ' + opening.stopLabel + ' is in ' + opening.days + ' days'">
-                    <span class="transport-page__infobox-label" aria-hidden="true">{{ opening.lineLabel }} to {{
-                        opening.stopLabel }}</span>
-                    <span class="transport-page__infobox-countdown" aria-hidden="true">
-                        <span class="transport-page__infobox-prefix">in</span>
-                        <span class="transport-page__infobox-days">{{ opening.days }}</span>
-                        <span class="transport-page__infobox-unit">days</span>
-                    </span>
-                </div>
-
                 <div class="transit-board__empty" *ngIf="transitEntries().length === 0 && !upcomingTransitOpening()">No
                     transit entries</div>
             </div>
@@ -74,6 +63,17 @@
             </div>
         </ng-container>
 
+    </div>
+
+    <div class="transport-page__infobox" *ngIf="upcomingTransitOpening() as opening"
+        [attr.aria-label]="opening.lineLabel + ' to ' + opening.stopLabel + ' is in ' + opening.days + ' days'">
+        <span class="transport-page__infobox-label" aria-hidden="true">{{ opening.lineLabel }} to {{
+            opening.stopLabel }}</span>
+        <span class="transport-page__infobox-countdown" aria-hidden="true">
+            <span class="transport-page__infobox-prefix">in</span>
+            <span class="transport-page__infobox-days">{{ opening.days }}</span>
+            <span class="transport-page__infobox-unit">days</span>
+        </span>
     </div>
 
 </div>
