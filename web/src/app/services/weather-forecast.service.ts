@@ -11,6 +11,7 @@ export interface HourlyForecast {
   readonly precipitation: number;
   readonly cloudCoverage: number;
   readonly symbolCode: string;
+  readonly uvIndex: number | null;
 }
 
 interface WeatherForecastData {
@@ -19,6 +20,8 @@ interface WeatherForecastData {
   readonly todayMax: number;
   readonly todayCloudMin: number;
   readonly todayCloudMax: number;
+  readonly todayUvMin: number | null;
+  readonly todayUvMax: number | null;
   readonly next12hPrecipitation: number;
   readonly willRain: boolean;
   readonly willBeSunny: boolean;
@@ -33,6 +36,8 @@ export class WeatherForecastService implements OnDestroy {
   private _todayMax = 0;
   private _todayCloudMin = 0;
   private _todayCloudMax = 0;
+  private _todayUvMin: number | null = null;
+  private _todayUvMax: number | null = null;
   private _next12hPrecipitation = 0;
   private _willRain = false;
   private _willBeSunny = false;
@@ -65,6 +70,8 @@ export class WeatherForecastService implements OnDestroy {
           this._todayMax = data.todayMax;
           this._todayCloudMin = data.todayCloudMin;
           this._todayCloudMax = data.todayCloudMax;
+          this._todayUvMin = data.todayUvMin;
+          this._todayUvMax = data.todayUvMax;
           this._next12hPrecipitation = data.next12hPrecipitation;
           this._willRain = data.willRain;
           this._willBeSunny = data.willBeSunny;
@@ -78,6 +85,8 @@ export class WeatherForecastService implements OnDestroy {
   todayMax(): number { return this._todayMax; }
   todayCloudMin(): number { return this._todayCloudMin; }
   todayCloudMax(): number { return this._todayCloudMax; }
+  todayUvMin(): number | null { return this._todayUvMin; }
+  todayUvMax(): number | null { return this._todayUvMax; }
   next12hPrecipitation(): number { return this._next12hPrecipitation; }
   willRain(): boolean { return this._willRain; }
   willBeSunny(): boolean { return this._willBeSunny; }

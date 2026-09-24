@@ -14,7 +14,6 @@
             </div>
 
             <div class="weather-page__stats">
-                <div class="weather-page__details-title">Details</div>
                 <div class="weather-page__stat">
                     <span class="weather-page__stat-icon" feather="chevron-down"></span>
                     <span class="weather-page__stat-value">{{ forecastService.todayMin() }}°</span>
@@ -35,10 +34,12 @@
                     <span class="weather-page__stat-value">{{ forecastService.next12hPrecipitation() }} mm<span
                             class="weather-page__stat-suffix"> / 12h</span></span>
                 </div>
-                <div class="weather-page__stat" *ngIf="weatherService.uvIndex() !== null">
+                <div class="weather-page__stat"
+                    *ngIf="forecastService.todayUvMin() !== null && forecastService.todayUvMax() !== null">
                     <span class="weather-page__stat-icon" feather="sun"></span>
                     <span class="weather-page__stat-label">UV index</span>
-                    <span class="weather-page__stat-value">{{ weatherService.uvIndex() }}</span>
+                    <span class="weather-page__stat-value">{{ forecastService.todayUvMin() }}–{{
+                        forecastService.todayUvMax() }}</span>
                 </div>
                 <div class="weather-page__stat" *ngIf="solarService.nextEvent() as event">
                     <span class="weather-page__stat-icon" [feather]="event.type"></span>
