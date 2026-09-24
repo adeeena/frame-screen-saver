@@ -63,14 +63,14 @@ export class ColumnsPageComponent implements AfterViewChecked {
 
   get offPeakStatus(): OffPeakStatus {
     const timezone = this.config?.timezone ?? 'UTC';
-    const parts = new Intl.DateTimeFormat('en-GB', {
+    const localTime = new Intl.DateTimeFormat('en-GB', {
       timeZone: timezone,
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
-    }).formatToParts(this.clockService.nowMs());
-    const currentMinutes = Number(parts.find((part) => part.type === 'hour')?.value ?? 0) * 60
-      + Number(parts.find((part) => part.type === 'minute')?.value ?? 0);
+    }).format(this.clockService.nowMs());
+    const [hours, minutes] = localTime.split(':').map(Number);
+    const currentMinutes = hours * 60 + minutes;
     const inMorningOffPeak = currentMinutes >= 30 && currentMinutes < 390;
     const inAfternoonOffPeak = currentMinutes >= 870 && currentMinutes < 990;
     const targetMinutes = inMorningOffPeak
@@ -165,11 +165,11 @@ export class ColumnsPageComponent implements AfterViewChecked {
   private tzOffsetMinutes(timeZone: string, atMs: number): number {
     let formatter = this.timezoneOffsetFormatters.get(timeZone);
     if (!formatter) {
-      formatter = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'shortOffset' });
+      formatter = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'short' });
       this.timezoneOffsetFormatters.set(timeZone, formatter);
     }
-    const parts = formatter.formatToParts(atMs);
-    const match = parts.find((p) => p.type === 'timeZoneName')?.value.match(/GMT([+-]\d+)(?::(\d+))?/);
+    const zoneLabel = formatter.format(atMs).match(/(?:GMT|UTC)([+-]\d{1,2})(?::?(\d{2}))?/i)?.[0] ?? '';
+    const match = zoneLabel.match(/(?:GMT|UTC)([+-]\d{1,2})(?::?(\d{2}))?/i);
     if (!match) return 0;
     const hours = parseInt(match[1], 10);
     const minutes = match[2] ? parseInt(match[2], 10) : 0;
