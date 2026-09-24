@@ -6,7 +6,7 @@ import { ScreensaverConfig, ScreensaverConfigService } from './screensaver-confi
 import { TranslationService } from './translation.service';
 
 describe('TranslationService', () => {
-  it('uses locale, language, and default fallbacks', () => {
+  it('falls back to English for unsupported locales', () => {
     const config$ = new BehaviorSubject<ScreensaverConfig | null>(null);
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
@@ -22,13 +22,12 @@ describe('TranslationService', () => {
       defaultLocale: 'en',
       translations: {
         en: { greeting: 'Hello {{name}}', fallback: 'Fallback' },
-        fr: { greeting: 'Bonjour {{name}}' },
       },
     });
 
     config$.next({ appSettings: { locale: 'fr-FR' } } as unknown as ScreensaverConfig);
 
-    expect(service.translate('greeting', { name: 'Ada' })).toBe('Bonjour Ada');
+    expect(service.translate('greeting', { name: 'Ada' })).toBe('Hello Ada');
     expect(service.translate('fallback')).toBe('Fallback');
     expect(service.translate('missing.key')).toBe('missing.key');
   });

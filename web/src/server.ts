@@ -18,6 +18,7 @@ import fs from 'fs-extra';
 import WebSocket, { WebSocketServer } from 'ws';
 import { transit_realtime } from 'gtfs-realtime-bindings';
 import { getConfigFilePath, getServerConfig, TransitConfig } from './server.config';
+import { calendarDayKey, excludedCalendarDays } from './calendar-recurrence';
 
 // Resolve .env relative to this file (web/.env), not process.cwd() — the working
 // directory the server is launched from varies (repo root vs web/) and dotenv's
@@ -750,10 +751,10 @@ async function calendarHandler(_req: Request, res: Response): Promise<void> {
       const durationMs = endDate.getTime() - startDate.getTime();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const overridesByDay: Record<string, any> = vEvent.recurrences ?? {};
-      const exdateDays = new Set(Object.keys(vEvent.exdate ?? {}));
+      const exdateDays = excludedCalendarDays(vEvent.exdate ?? {}, timezone);
       const occurrences: Date[] = vEvent.rrule.between(today.toDate(), maxDate.toDate(), true);
       for (const occStart of occurrences) {
-        const dayKey = occStart.toISOString().slice(0, 10);
+        const dayKey = calendarDayKey(occStart, timezone);
         if (exdateDays.has(dayKey)) continue;
         const override = overridesByDay[dayKey];
         if (override) {

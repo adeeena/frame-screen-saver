@@ -108,7 +108,7 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     position: absolute;
     top: 0;
     left: 0;
-    height: 3px;
+    height: var(--accent-rule-thickness);
     width: 100%;
     background-color: var(--accent);
     z-index: 100;
@@ -261,7 +261,7 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     z-index: 10;
     pointer-events: none;
     background-image: $grain-url;
-    opacity: 0.55;
+    opacity: var(--grain-opacity);
   }
 
   &__image {
@@ -291,6 +291,7 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     @include ds.absolute-fill;
     z-index: 4;
     background-color: var(--overlay-dark);
+    opacity: var(--overlay-opacity);
   }
 
   &__page {

@@ -204,7 +204,7 @@ export class ScreensaverConfigService {
             messages: { ...messageDefaults, ...cfg.appSettings?.messages },
           },
         };
-        this.title.setTitle(normalized.contentSettings.documentTitle);
+        this.applyUiSettings(normalized);
         this._config$.next(normalized);
       },
       error: (err) => console.error('Failed to load screensaver configuration', err),
@@ -215,6 +215,7 @@ export class ScreensaverConfigService {
     this._saveStatus$.next('saving');
     this.http.post<{ success: boolean }>('/api/config', cfg).subscribe({
       next: () => {
+        this.applyUiSettings(cfg);
         this._config$.next(cfg);
         this._saveStatus$.next('saved');
         setTimeout(() => this._saveStatus$.next('idle'), 2000);
@@ -226,4 +227,28 @@ export class ScreensaverConfigService {
       },
     });
   }
+
+  private applyUiSettings(config: ScreensaverConfig): void {
+    const { colors, fontSettings, isGrainEffectEnabled, opacity } = config.displaySettings;
+    const rootStyle = document.documentElement.style;
+
+    rootStyle.setProperty('--accent', colors.accent);
+    rootStyle.setProperty('--accent-dim', colorWithAlpha(colors.accent, 0.55));
+    rootStyle.setProperty('--text-primary', colors.secondary);
+    rootStyle.setProperty('--font-clock', fontSettings.clock);
+    rootStyle.setProperty('--font-display', fontSettings.headers);
+    rootStyle.setProperty('--font-body', fontSettings.default);
+    rootStyle.setProperty('--grain-opacity', isGrainEffectEnabled ? '0.55' : '0');
+    rootStyle.setProperty('--overlay-opacity', String(Math.min(1, Math.max(0, opacity))));
+    this.title.setTitle(config.contentSettings.documentTitle);
+  }
+}
+
+function colorWithAlpha(color: string, alpha: number): string {
+  const match = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(color.trim());
+  if (!match) return color;
+  const red = parseInt(match[1], 16);
+  const green = parseInt(match[2], 16);
+  const blue = parseInt(match[3], 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }

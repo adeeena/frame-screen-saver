@@ -55,7 +55,7 @@
   }
 
   &__title {
-    font-family: var(--font-display);
+    font-family: var(--font-brand);
     font-weight: 400;
     font-size: 3vw;
     font-size: 3dvw;
@@ -395,6 +395,7 @@
 
   &__imminent {
     display: inline-flex;
+    align-items: center;
     gap: 0.25vw;
     gap: 0.25dvw;
 
@@ -404,14 +405,14 @@
   }
 
   &__imminent-dot {
-    animation: imminent-dot 1s steps(1, end) infinite;
+    animation: imminent-dot 1s ease-in-out infinite;
     background-color: var(--accent);
     border: 0.1vw solid var(--accent);
     border-radius: 50%;
-    height: 0.55vw;
-    height: 0.55dvw;
-    width: 0.55vw;
-    width: 0.55dvw;
+    height: 0.9vw;
+    height: 0.9dvw;
+    width: 0.9vw;
+    width: 0.9dvw;
 
     &--second {
       animation-delay: -0.5s;
@@ -458,14 +459,19 @@
 }
 
 @keyframes imminent-dot {
-  0%,
-  49% {
+  0% {
     background-color: var(--accent);
+    opacity: 1;
   }
 
-  50%,
-  100% {
+  50% {
     background-color: transparent;
+    opacity: 0.35;
+  }
+
+  100% {
+    background-color: var(--accent);
+    opacity: 1;
   }
 }
 

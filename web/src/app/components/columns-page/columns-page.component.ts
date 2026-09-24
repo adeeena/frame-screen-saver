@@ -14,6 +14,11 @@ interface CityWeatherDisplay {
   readonly timezone?: string;
 }
 
+interface OffPeakStatus {
+  readonly labelKey: string;
+  readonly countdown: string;
+}
+
 const MINUTE_MS = 60 * 1000;
 
 @Component({
@@ -55,6 +60,34 @@ export class ColumnsPageComponent implements AfterViewChecked {
   ) {}
 
   get config() { return this.configService.config()?.appSettings ?? null; }
+
+  get offPeakStatus(): OffPeakStatus {
+    const timezone = this.config?.timezone ?? 'UTC';
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(this.clockService.nowMs());
+    const currentMinutes = Number(parts.find((part) => part.type === 'hour')?.value ?? 0) * 60
+      + Number(parts.find((part) => part.type === 'minute')?.value ?? 0);
+    const inMorningOffPeak = currentMinutes >= 30 && currentMinutes < 390;
+    const inAfternoonOffPeak = currentMinutes >= 870 && currentMinutes < 990;
+    const targetMinutes = inMorningOffPeak
+      ? 390
+      : inAfternoonOffPeak
+        ? 990
+        : currentMinutes < 30
+          ? 30
+          : currentMinutes < 870
+            ? 870
+            : 30 + 24 * 60;
+
+    return {
+      labelKey: inMorningOffPeak || inAfternoonOffPeak ? 'eco.endsIn' : 'eco.nextStart',
+      countdown: formatDuration(targetMinutes - currentMinutes),
+    };
+  }
 
   /** Compact-only cities (name + icon + temp), in configured order. */
   get compactCities(): readonly CityWeatherDisplay[] {
@@ -232,4 +265,12 @@ export class ColumnsPageComponent implements AfterViewChecked {
     if (evt.endTime && evt.endTime !== evt.startTime) return evt.startTime + ' – ' + evt.endTime;
     return evt.startTime;
   }
+}
+
+function formatDuration(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes}min`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}min`;
 }

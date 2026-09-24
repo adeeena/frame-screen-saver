@@ -27,18 +27,23 @@
   --text-on-accent:   #14120a;
   --overlay-dark:     rgba(0, 0, 0, 0.60);
   --overlay-columns:  rgba(10, 10, 14, 0.45);
+  --overlay-opacity:  1;
+  --grain-opacity:    0.55;
 
   --text-primary:     var(--palette-white);
   --text-secondary:   var(--palette-neutral-20);
   --text-muted:       var(--palette-neutral-35);
   --accent:           var(--palette-accent);
   --accent-dim:       rgba(240, 188, 117, 0.55);
+  --accent-rule-thickness: 3px;
   --color-info:       var(--palette-info);
   --color-danger:     var(--palette-danger);
   --color-danger-soft: var(--palette-danger-soft);
   --color-success:    var(--palette-success);
 
   //  Font Families 
+  --font-clock:    'DidotLTPro', 'Didot', 'Bodoni MT', Georgia, serif;
+  --font-brand:    'DidotLTPro', 'Didot', 'Bodoni MT', Georgia, serif;
   --font-display:  'DidotLTPro', 'Didot', 'Bodoni MT', Georgia, serif;
   --font-body:     'AvenirNextLTPro', 'Avenir Next', 'Futura', Helvetica, sans-serif;
 

@@ -43,7 +43,7 @@
   }
 
   &__clock-time {
-    font-family: var(--font-display);
+    font-family: var(--font-clock);
     font-weight: 400;
     font-size: 6vw;
     font-size: 6dvw;
@@ -65,7 +65,7 @@
   }
 
   &__divider {
-    height: 0.15rem;
+    height: var(--accent-rule-thickness);
     background-color: var(--accent);
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
@@ -297,7 +297,7 @@
   }
 
   &__agenda-header {
-    font-family: var(--font-display);
+    font-family: var(--font-brand);
     font-weight: 400;
     font-style: normal;
     font-size: 3vw;
@@ -318,6 +318,61 @@
   &__widget-slot {
     -webkit-flex: 1;
     flex: 1;
+  }
+
+  &__eco-panel {
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 0.7vw;
+    gap: 0.7dvw;
+    background-color: #4f9168;
+    border-radius: 0.3vw;
+    border-radius: 0.3dvw;
+    padding: 1.2vw 1.5vw;
+    padding: 1.2dvw 1.5dvw;
+    color: #ffffff;
+  }
+
+  &__eco-icon {
+    display: inline-flex;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+    width: 1.6vw;
+    width: 1.6dvw;
+    height: 1.6vw;
+    height: 1.6dvw;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  }
+
+  &__eco-label,
+  &__eco-countdown {
+    font-family: var(--font-body);
+    font-size: 1.35vw;
+    font-size: 1.35dvw;
+    line-height: 1.2;
+  }
+
+  &__eco-label {
+    font-weight: 500;
+  }
+
+  &__eco-countdown {
+    margin-left: auto;
+    font-weight: 700;
+    white-space: nowrap;
   }
 
   &__no-events {

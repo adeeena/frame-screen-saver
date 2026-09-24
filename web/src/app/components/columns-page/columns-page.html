@@ -35,6 +35,13 @@
     <!-- Future widget slot -->
     <div class="columns-page__widget-slot" aria-label="Widget slot"></div>
 
+    <div class="columns-page__eco-panel"
+      [attr.aria-label]="offPeakStatus.labelKey | translate:{ countdown: offPeakStatus.countdown }">
+      <span class="columns-page__eco-icon" feather="leaf" aria-hidden="true"></span>
+      <span class="columns-page__eco-label">{{ offPeakStatus.labelKey | translate }}</span>
+      <span class="columns-page__eco-countdown">{{ offPeakStatus.countdown }}</span>
+    </div>
+
   </div>
 
   <!-- RIGHT PANEL -->
