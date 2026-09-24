@@ -43,6 +43,10 @@
     padding-left: 2dvw;
   }
 
+  &__column--full {
+    padding-right: 0;
+  }
+
   &__divider {
     width: 0.15rem;
     -webkit-flex-shrink: 0;
@@ -71,6 +75,13 @@
     align-items: stretch;
     gap: 2vw;
     gap: 2dvw;
+  }
+
+  &__boards--row {
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    gap: 3vw;
+    gap: 3dvw;
   }
 
   &__infobox {
@@ -138,21 +149,6 @@
     display: -webkit-flex;
     display: flex;
     min-height: 0;
-  }
-
-  &__messages-empty {
-    width: 100%;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-align-items: center;
-    align-items: center;
-    -webkit-justify-content: center;
-    justify-content: center;
-    font-family: var(--font-body);
-    font-weight: 300;
-    font-size: 1.4vw;
-    font-size: 1.4dvw;
-    color: var(--text-muted);
   }
 }
 
@@ -398,6 +394,6 @@
     font-weight: 300;
     font-size: 1.2vw;
     font-size: 1.2dvw;
-    color: var(--text-muted);
+    color: var(--text-primary);
   }
 }

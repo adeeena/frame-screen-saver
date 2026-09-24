@@ -2,10 +2,10 @@
 
     <div class="transport-page__columns">
 
-        <div class="transport-page__column">
+        <div class="transport-page__column" [class.transport-page__column--full]="messagePages[0].length === 0">
             <div class="transport-page__title">Transport</div>
 
-            <div class="transport-page__boards">
+            <div class="transport-page__boards" [class.transport-page__boards--row]="messagePages[0].length === 0">
                 <div class="transit-board" *ngFor="let entry of transitEntries()">
                     <div class="transit-board__header">
                         <div class="transit-board__badge" [style.backgroundColor]="'#' + entry.lineColor"
@@ -43,36 +43,36 @@
             </div>
         </div>
 
-        <div class="transport-page__divider" role="separator"></div>
+        <ng-container *ngIf="messagePages[0].length > 0">
+            <div class="transport-page__divider" role="separator"></div>
 
-        <div class="transport-page__column">
-            <div class="transport-page__title">Messages</div>
+            <div class="transport-page__column">
+                <div class="transport-page__title">Messages</div>
 
-            <div class="transport-page__messages">
-                <div class="transport-page__messages-empty" *ngIf="messagePages[0].length === 0">No messages</div>
-
-                <div class="message-timeline" *ngIf="messagePages[0].length > 0">
-                    <div class="message-timeline__page">
-                        <div class="message-timeline__row"
-                            *ngFor="let message of messagePages[currentMessagePage]; let last = last">
-                            <div class="message-timeline__spine" [class.message-timeline__spine--last]="last">
-                                <span class="message-timeline__dot"></span>
-                            </div>
-                            <div class="message-timeline__body">
-                                <div class="message-timeline__text">{{ message.text }}</div>
-                                <div class="message-timeline__expiry">{{ expiryCountdown(message) }}</div>
+                <div class="transport-page__messages">
+                    <div class="message-timeline">
+                        <div class="message-timeline__page">
+                            <div class="message-timeline__row"
+                                *ngFor="let message of messagePages[currentMessagePage]; let last = last">
+                                <div class="message-timeline__spine" [class.message-timeline__spine--last]="last">
+                                    <span class="message-timeline__dot"></span>
+                                </div>
+                                <div class="message-timeline__body">
+                                    <div class="message-timeline__text">{{ message.text }}</div>
+                                    <div class="message-timeline__expiry">{{ expiryCountdown(message) }}</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="message-timeline__pagination" *ngIf="messagePages.length > 1" aria-hidden="true">
-                        <span class="message-timeline__page-dot"
-                            *ngFor="let page of messagePages; let pageIndex = index"
-                            [class.message-timeline__page-dot--active]="pageIndex === currentMessagePage"></span>
+                        <div class="message-timeline__pagination" *ngIf="messagePages.length > 1" aria-hidden="true">
+                            <span class="message-timeline__page-dot"
+                                *ngFor="let page of messagePages; let pageIndex = index"
+                                [class.message-timeline__page-dot--active]="pageIndex === currentMessagePage"></span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </ng-container>
 
     </div>
 
