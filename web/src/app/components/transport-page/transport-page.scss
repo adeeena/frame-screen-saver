@@ -29,8 +29,6 @@
     display: flex;
     -webkit-flex-direction: column;
     flex-direction: column;
-    gap: 2.5vw;
-    gap: 2.5dvw;
   }
 
   &__column:first-child {
@@ -73,15 +71,17 @@
     flex-direction: column;
     -webkit-align-items: stretch;
     align-items: stretch;
-    gap: 2vw;
-    gap: 2dvw;
+    margin-top: 2.5vw;
   }
 
   &__boards--row {
     -webkit-flex-direction: row;
     flex-direction: row;
-    gap: 3vw;
-    gap: 3dvw;
+
+    .transit-board + .transit-board {
+      margin-top: 0;
+      margin-left: 3vw;
+    }
   }
 
   &__infobox {
@@ -283,6 +283,10 @@
   flex: 1;
   min-width: 0;
 
+  & + & {
+    margin-top: 2vw;
+  }
+
   &__header {
     display: -webkit-flex;
     display: flex;
@@ -360,8 +364,6 @@
       align-items: stretch;
       -webkit-flex-direction: column;
       flex-direction: column;
-      gap: 0.8vw;
-      gap: 0.8dvw;
     }
   }
 
@@ -378,8 +380,6 @@
     -webkit-align-items: baseline;
     align-items: baseline;
     display: grid;
-    gap: 1vw;
-    gap: 1dvw;
     grid-template-columns: minmax(0, 1fr) auto auto auto;
     width: 100%;
   }
@@ -387,10 +387,11 @@
   &__mission {
     color: var(--text-secondary);
     font-family: var(--font-body);
-    font-size: 1.8vw;
-    font-size: 1.8dvw;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
     font-weight: 500;
-    letter-spacing: 0.08em;
+    letter-spacing: normal;
+    line-height: 1;
   }
 
   &__imminent {
@@ -422,24 +423,34 @@
   &__time {
     font-family: var(--font-body);
     font-weight: 300;
-    font-size: 1.8vw;
-    font-size: 1.8dvw;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
     color: var(--text-primary);
+    letter-spacing: normal;
+    line-height: 1;
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
     margin-right: 1vw;
   }
 
   &__departures--wide &__time {
+    margin-left: 1vw;
     margin-right: 0;
   }
 
   &__minutes {
     font-family: var(--font-body);
     font-weight: 700;
-    font-size: 1.8vw;
-    font-size: 1.8dvw;
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
     color: var(--accent);
+    letter-spacing: normal;
+    line-height: 1;
+  }
+
+  &__departures--wide &__imminent,
+  &__departures--wide &__minutes {
+    margin-left: 1vw;
   }
 
   &__unit {
@@ -456,6 +467,10 @@
     font-size: 1.2dvw;
     color: var(--text-primary);
   }
+}
+
+.transit-board__departures--wide .transit-board__departure + .transit-board__departure {
+  margin-top: 0.8vw;
 }
 
 @keyframes imminent-dot {

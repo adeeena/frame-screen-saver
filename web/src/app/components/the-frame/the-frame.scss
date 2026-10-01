@@ -24,8 +24,8 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
     --f-bg-to:       #282834;
     --f-mat-color:   #ffffff;
     @supports (width: 1dvw) {
-      --f-outer-pad:   3dvw;
-      --f-inner-brd:   3.5dvw;
+      --f-outer-pad:   3vw;
+      --f-inner-brd:   3.5vw;
     }
 
     //  Style 1 â€” Gilded Baroque 
@@ -37,8 +37,8 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
       --f-bg-to:       #14120a;
       --f-mat-color:   #f5efdf;
       @supports (width: 1dvw) {
-        --f-outer-pad:   3.5dvw;
-        --f-inner-brd:   2.5dvw;
+        --f-outer-pad:   3.5vw;
+        --f-inner-brd:   2.5vw;
       }
     }
 
@@ -51,8 +51,8 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
       --f-bg-to:       #2e1208;
       --f-mat-color:   #f8f0e5;
       @supports (width: 1dvw) {
-        --f-outer-pad:   4dvw;
-        --f-inner-brd:   3dvw;
+        --f-outer-pad:   4vw;
+        --f-inner-brd:   3vw;
       }
     }
 
@@ -65,8 +65,8 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
       --f-bg-to:       #e8e4d8;
       --f-mat-color:   #ffffff;
       @supports (width: 1dvw) {
-        --f-outer-pad:   4dvw;
-        --f-inner-brd:   4.5dvw;
+        --f-outer-pad:   4vw;
+        --f-inner-brd:   4.5vw;
       }
     }
 
@@ -79,8 +79,8 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
       --f-bg-to:       #0d0c04;
       --f-mat-color:   #f2ead8;
       @supports (width: 1dvw) {
-        --f-outer-pad:   2.5dvw;
-        --f-inner-brd:   3dvw;
+        --f-outer-pad:   2.5vw;
+        --f-inner-brd:   3vw;
       }
     }
 
@@ -93,8 +93,8 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
       --f-bg-to:       #1a1206;
       --f-mat-color:   #f7ecd2;
       @supports (width: 1dvw) {
-        --f-outer-pad:   4.5dvw;
-        --f-inner-brd:   3.5dvw;
+        --f-outer-pad:   4.5vw;
+        --f-inner-brd:   3.5vw;
       }
     }
 
@@ -323,7 +323,10 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
   // z-index 12: above grain (10) and mat-texture (11), below nothing.
   &__dim {
     position: absolute;
-    inset: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: 12;
     pointer-events: none;
     background: #000;
@@ -380,7 +383,10 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
   // z-index 11 > grain (10), masked to border area so artwork is unaffected.
   &__mat-texture {
     position: absolute;
-    inset: var(--f-outer-pad);
+    top: var(--f-outer-pad);
+    right: var(--f-outer-pad);
+    bottom: var(--f-outer-pad);
+    left: var(--f-outer-pad);
     border: var(--f-inner-brd) solid transparent;
     box-sizing: border-box;
     pointer-events: none;
@@ -400,6 +406,6 @@ $grain-url: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4X
       linear-gradient(#fff, #fff) content-box;
     mask-composite: exclude;
     // Transition with frame style changes
-    transition: inset 0.8s ease, border-width 0.8s ease;
+    transition: top 0.8s ease, right 0.8s ease, bottom 0.8s ease, left 0.8s ease, border-width 0.8s ease;
   }
 }

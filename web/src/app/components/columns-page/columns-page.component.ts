@@ -157,7 +157,7 @@ export class ColumnsPageComponent implements AfterViewChecked {
     const sign = diff >= 0 ? '+' : '-';
     const abs = Math.abs(diff);
     this.offsetCacheKey = cacheKey;
-    this.offsetCache = `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, '0')}`;
+    this.offsetCache = `${sign}${Math.floor(abs / 60)}:${twoDigits(abs % 60)}`;
     return this.offsetCache;
   }
 
@@ -273,4 +273,8 @@ function formatDuration(totalMinutes: number): string {
   if (hours === 0) return `${minutes}min`;
   if (minutes === 0) return `${hours}h`;
   return `${hours}h ${minutes}min`;
+}
+
+function twoDigits(value: number): string {
+  return value < 10 ? `0${value}` : String(value);
 }

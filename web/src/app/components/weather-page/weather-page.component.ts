@@ -65,10 +65,10 @@ export class WeatherPageComponent {
     return this.nightBandsCache;
   }
 
-  /** Rain bar height as a percentage of the tallest bar in the visible window. Zero mm renders no bar at all. */
+  /** Rain bar height relative to at most 10 mm, capped at half the graph height. */
   barHeight(mm: number): number {
     this.refreshDerivedWeather();
-    return Math.round((mm / this.maximumPrecipitation) * 100);
+    return Math.min(50, Math.round((mm / Math.min(10, this.maximumPrecipitation)) * 50));
   }
 
   /** Smooth SVG path (0–100 viewBox) tracing the temperature curve through each slice. */
