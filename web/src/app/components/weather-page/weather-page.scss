@@ -196,7 +196,7 @@
     z-index: 0;
     top: 5.5vw;
     top: 5.5vw;
-    bottom: 40%;
+    bottom: 0;
     min-width: 1px;
     overflow: hidden;
     background: linear-gradient(
@@ -215,8 +215,7 @@
     top: 5.5vw;
     left: 0;
     width: 100%;
-    height: calc(60% - 5.5vw);
-    height: calc(60% - 5.5vw);
+    height: calc(100% - 5.5vw);
     overflow: visible;
     z-index: 2;
     pointer-events: none;

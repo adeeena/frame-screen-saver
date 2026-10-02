@@ -81,6 +81,10 @@
     grid-gap: 3vw;
   }
 
+  &__boards:not(&__boards--row) > .transit-board + .transit-board {
+    margin-top: 2vw;
+  }
+
   &__messages {
     -webkit-flex: 1;
     flex: 1;

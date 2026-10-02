@@ -13,8 +13,10 @@
   display: flex;
   -webkit-justify-content: center;
   justify-content: center;
-  gap: 0.7vw;
-  gap: 0.7vw;
+}
+
+.pagination-dots__dot + .pagination-dots__dot {
+  margin-left: 0.7vw;
 }
 
 .pagination-dots__dot {
