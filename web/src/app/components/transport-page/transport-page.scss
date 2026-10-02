@@ -292,8 +292,8 @@
     -webkit-align-items: baseline;
     align-items: baseline;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 3vw 5.5vw 7vw;
-    column-gap: 0.8vw;
+    grid-template-columns: minmax(0, 1fr) 3vw 5.5vw 9vw;
+    column-gap: 1.2vw;
     width: 100%;
   }
 
@@ -339,6 +339,7 @@
     font-size: 1.6vw;
     font-size: 1.6vw;
     color: var(--text-primary);
+    text-align: right;
     letter-spacing: normal;
     line-height: 1;
     -webkit-flex-shrink: 0;
@@ -358,6 +359,7 @@
     font-size: 1.6vw;
     font-size: 1.6vw;
     color: var(--accent);
+    text-align: right;
     letter-spacing: normal;
     line-height: 1;
     white-space: nowrap;
@@ -391,9 +393,9 @@
 
 .transit-board__departures:not(.transit-board__departures--wide) .transit-board__departure {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) 7vw;
+  grid-template-columns: max-content minmax(0, 1fr) 9vw;
   align-items: baseline;
-  column-gap: 1vw;
+  column-gap: 1.5vw;
   line-height: 1;
   width: 100%;
 }
