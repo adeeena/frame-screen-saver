@@ -293,7 +293,8 @@
     -webkit-align-items: baseline;
     align-items: baseline;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    grid-template-columns: minmax(0, 1fr) max-content max-content max-content;
+    column-gap: 0.5vw;
     width: 100%;
   }
 
@@ -347,8 +348,9 @@
   }
 
   &__departures--wide &__time {
-    margin-left: 1vw;
+    margin-left: 0;
     margin-right: 0;
+    white-space: nowrap;
   }
 
   &__minutes {
@@ -363,7 +365,8 @@
 
   &__departures--wide &__imminent,
   &__departures--wide &__minutes {
-    margin-left: 1vw;
+    margin-left: 0;
+    white-space: nowrap;
   }
 
   &__unit {

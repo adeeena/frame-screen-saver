@@ -130,11 +130,11 @@ export class WeatherPageComponent {
     return bands;
   }
 
-  /** Smooth SVG path (0–100 viewBox) tracing the temperature curve through each slice.
-   *  Kept clear of the top of its box (PADDING_TOP) so it never collides with the
-   *  per-slice temperature/icon labels drawn above it. */
+  /** Smooth SVG path tracing the temperature curve, with space for labels above
+   *  and a stroke inset below the clipped chart boundary. */
   private createTemperaturePath(points: readonly MeteogramSlice[]): string {
     const PADDING_TOP = 28;
+    const PADDING_BOTTOM = 8;
     if (points.length === 0) return '';
     const temps = points.map((h) => h.temperature);
     const min = Math.min(...temps);
@@ -142,7 +142,7 @@ export class WeatherPageComponent {
     const step = 100 / Math.max(1, points.length - 1);
     const coords: Array<readonly [number, number]> = points.map((h, i) => [
       i * step,
-      100 - ((h.temperature - min) / range) * (100 - PADDING_TOP),
+      100 - PADDING_BOTTOM - ((h.temperature - min) / range) * (100 - PADDING_TOP - PADDING_BOTTOM),
     ]);
     return this.smoothPath(coords);
   }
