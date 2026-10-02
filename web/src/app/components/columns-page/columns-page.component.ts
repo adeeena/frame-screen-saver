@@ -270,7 +270,7 @@ export class ColumnsPageComponent implements AfterViewChecked, OnDestroy {
       .sort((left, right) => left.date.valueOf() - right.date.valueOf())[0];
     if (!next) return null;
     return {
-      title: `${next.entry.lineLabel} to ${next.entry.stopLabel}`,
+      title: `${next.entry.lineLabel} to ${next.entry.direction}`,
       date: next.date.format('YYYY-MM-DD'),
     };
   }

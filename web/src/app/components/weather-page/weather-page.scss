@@ -194,10 +194,8 @@
   &__night-band {
     position: absolute;
     z-index: 0;
-    top: 4.2vw;
-    top: 4.2dvw;
-    bottom: 1.9vw;
-    bottom: 1.9dvw;
+    top: 0;
+    height: 60%;
     min-width: 1px;
     overflow: hidden;
     background: linear-gradient(
@@ -328,12 +326,12 @@
     flex-shrink: 0;
     font-family: var(--font-body);
     font-weight: 300;
-    font-size: 1.3vw;
-    font-size: 1.3dvw;
+    font-size: 1.2vw;
+    font-size: 1.2dvw;
     line-height: 1;
     color: var(--text-muted);
-    width: 3.2em;
-    min-width: 3.2em;
+    width: 4em;
+    min-width: 4em;
     text-align: center;
     white-space: nowrap;
   }
