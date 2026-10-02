@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import moment from 'moment';
 import { ClockService } from '../../services/clock.service';
 import { CalendarService, CalendarDay, CalendarEvent } from '../../services/calendar.service';
-import { ScreensaverConfigService, TransitRouteSettings, WorldClockCity } from '../../services/screensaver-config.service';
+import { ScreensaverConfigService, WorldClockCity } from '../../services/screensaver-config.service';
 import { WeatherService, WorldCityWeather } from '../../services/weather.service';
 import { weatherIconName } from '../../services/weather-icon';
 
@@ -255,24 +255,7 @@ export class ColumnsPageComponent implements AfterViewChecked, OnDestroy {
         if (isCountdownEvent(event)) events.push({ title: event.title.slice(1).trim(), date: day.date });
       }
     }
-    const opening = this.nextTransitOpening();
-    if (opening) events.push(opening);
     return events.sort((left, right) => left.date.localeCompare(right.date));
-  }
-
-  private nextTransitOpening(): CountdownEvent | null {
-    const entries = this.config?.transit?.entries ?? [];
-    const today = moment(this.clockService.nowMs()).startOf('day');
-    const next = entries
-      .filter((entry): entry is TransitRouteSettings & { availableFrom: string } => entry.availableFrom !== null)
-      .map((entry) => ({ entry, date: moment(entry.availableFrom, 'YYYY-MM-DD', true) }))
-      .filter(({ date }) => date.isValid() && date.isAfter(today))
-      .sort((left, right) => left.date.valueOf() - right.date.valueOf())[0];
-    if (!next) return null;
-    return {
-      title: `${next.entry.lineLabel} to ${next.entry.direction}`,
-      date: next.date.format('YYYY-MM-DD'),
-    };
   }
 
   countdownLabel(event: CountdownEvent): string {

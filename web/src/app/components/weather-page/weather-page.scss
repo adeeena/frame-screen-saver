@@ -194,8 +194,9 @@
   &__night-band {
     position: absolute;
     z-index: 0;
-    top: 0;
-    height: 60%;
+    top: 5.5vw;
+    top: 5.5dvw;
+    bottom: 40%;
     min-width: 1px;
     overflow: hidden;
     background: linear-gradient(
@@ -210,10 +211,12 @@
 
   &__temp-chart {
     position: absolute;
-    top: 0;
+    top: 5.5vw;
+    top: 5.5dvw;
     left: 0;
     width: 100%;
-    height: 60%;
+    height: calc(60% - 5.5vw);
+    height: calc(60% - 5.5dvw);
     overflow: visible;
     z-index: 2;
     pointer-events: none;
