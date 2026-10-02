@@ -51,6 +51,9 @@
                     {{ 'empty.transitEntries' | translate }}
                 </div>
             </div>
+
+            <app-pagination-dots *ngIf="pageCount() > 1"
+                [count]="pageCount()" [activeIndex]="currentMessagePage"></app-pagination-dots>
         </div>
 
         <ng-container *ngIf="messagePages[0].length > 0">
@@ -74,8 +77,6 @@
                             </div>
                         </div>
 
-                        <app-pagination-dots *ngIf="pageCount() > 1"
-                            [count]="pageCount()" [activeIndex]="currentMessagePage"></app-pagination-dots>
                     </div>
                 </div>
             </div>

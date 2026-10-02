@@ -52,6 +52,17 @@ const seconds = (milliseconds: number | undefined, fallback: number): number =>
 const frameChangeCycles = (cycles: number | undefined): number =>
   Number.isFinite(cycles) && cycles! > 0 ? Math.floor(cycles!) : 10;
 
+function forcedPageNumber(): 1 | 2 | 3 | 4 | 5 {
+  if (typeof window === 'undefined') return 1;
+  switch (new URLSearchParams(window.location.search).get('force-page')) {
+    case 'cover': return 2;
+    case 'columns': return 3;
+    case 'transport': return 4;
+    case 'weather': return 5;
+    default: return 1;
+  }
+}
+
 interface FrameElements {
   readonly imageA: HTMLDivElement;
   readonly imageB: HTMLDivElement;
@@ -85,7 +96,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
 
   isPaused = false;
   showDebug = false;
-  currentPage: 1 | 2 | 3 | 4 | 5 = 1;
+  currentPage: 1 | 2 | 3 | 4 | 5 = forcedPageNumber();
   frameStyle: 0 | 1 | 2 | 3 | 4 | 5 = (Math.floor(Math.random() * 6)) as 0 | 1 | 2 | 3 | 4 | 5;
 
   private mainTimeline!: gsap.core.Timeline;
@@ -102,6 +113,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   private imgH = 0;
 
   private kenBurnsTween: gsap.core.Tween | null = null;
+  private forcePage: 2 | 3 | 4 | 5 | null = null;
 
   sidebarLayout = false;
 
@@ -143,6 +155,8 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    this.forcePage = this.readForcedPage();
+
     const loadedConfig = this.configService.config();
     if (loadedConfig) this.applyAnimationSettings(loadedConfig.animationSettings);
 
@@ -150,8 +164,9 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       this.initElements();
       // Hide the whole frame (chrome + image) until the first image is ready, so
       // neither the pre-config frame style nor an empty image layer is ever visible.
-      gsap.set(this.outerFrame.nativeElement, { opacity: 0 });
-      this.buildTimeline();
+      gsap.set(this.outerFrame.nativeElement, { opacity: this.forcePage ? 1 : 0 });
+      if (this.forcePage) this.showForcedPage(this.forcePage);
+      else this.buildTimeline();
       this.setupPointerActivity();
     });
     this.setupKeyboard();
@@ -163,7 +178,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe((cfg) => {
-        if (cfg !== loadedConfig) {
+        if (cfg !== loadedConfig && !this.forcePage) {
           this.applyAnimationSettings(cfg!.animationSettings);
           this.ngZone.runOutsideAngular(() => {
             this.mainTimeline.kill();
@@ -185,6 +200,30 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe(() => this.initImages());
+  }
+
+  private readForcedPage(): 2 | 3 | 4 | 5 | null {
+    const value = new URLSearchParams(window.location.search).get('force-page');
+    switch (value) {
+      case 'cover': return 2;
+      case 'columns': return 3;
+      case 'transport': return 4;
+      case 'weather': return 5;
+      default: return null;
+    }
+  }
+
+  private showForcedPage(page: 2 | 3 | 4 | 5): void {
+    const pages: Record<2 | 3 | 4 | 5, HTMLElement> = {
+      2: this.els.cover,
+      3: this.els.columns,
+      4: this.els.transport,
+      5: this.els.weather,
+    };
+    this.currentPage = page;
+    gsap.set(this.els.overlay, { opacity: 1 });
+    Object.values(pages).forEach((element) => gsap.set(element, { opacity: 0, x: 0 }));
+    gsap.set(pages[page], { opacity: 1, x: 0 });
   }
 
   private applyAnimationSettings(settings: ScreensaverConfig['animationSettings']): void {
@@ -300,6 +339,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   }
 
   onMessageCycleComplete(): void {
+    if (this.forcePage) return;
     if (this.currentPage === 4 && !this.isPaused) this.mainTimeline.resume();
   }
 
