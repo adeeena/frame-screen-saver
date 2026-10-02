@@ -717,17 +717,21 @@ async function calendarHandler(_req: Request, res: Response): Promise<void> {
     const parsed = parseICS(resp.data);
     const today = momentTz.tz(timezone).startOf('day');
     const maxDate = today.clone().add(calendar.daysAhead, 'days').endOf('day');
+    const countdownMaxDate = today.clone().add(365, 'days').endOf('day');
     const allEvents: Array<CalendarEventEntry & { date: string }> = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const addEvent = (vEvent: any, startDate: Date, endDate: Date): void => {
       const start = momentTz.tz(startDate, timezone);
-      if (!start.isBetween(today, maxDate, undefined, '[]')) return;
+      const title = (vEvent.summary as string | undefined) ?? 'Untitled';
+      const isCountdown = title.trim().startsWith('*');
+      const eventMaxDate = isCountdown ? countdownMaxDate : maxDate;
+      if (!start.isBetween(today, eventMaxDate, undefined, '[]')) return;
       const isAllDay = vEvent.datetype === 'date';
       const end = momentTz.tz(endDate, timezone);
       allEvents.push({
         date: start.format('YYYY-MM-DD'),
-        title: (vEvent.summary as string | undefined) ?? 'Untitled',
+        title,
         startTime: isAllDay ? '' : start.format('HH:mm'),
         endTime: isAllDay ? '' : end.format('HH:mm'),
         location: (vEvent.location as string | undefined) ?? '',
@@ -752,7 +756,9 @@ async function calendarHandler(_req: Request, res: Response): Promise<void> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const overridesByDay: Record<string, any> = vEvent.recurrences ?? {};
       const exdateDays = excludedCalendarDays(vEvent.exdate ?? {}, timezone);
-      const occurrences: Date[] = vEvent.rrule.between(today.toDate(), maxDate.toDate(), true);
+      const title = (vEvent.summary as string | undefined) ?? 'Untitled';
+      const occurrenceMaxDate = title.trim().startsWith('*') ? countdownMaxDate : maxDate;
+      const occurrences: Date[] = vEvent.rrule.between(today.toDate(), occurrenceMaxDate.toDate(), true);
       for (const occStart of occurrences) {
         const dayKey = calendarDayKey(occStart, timezone);
         if (exdateDays.has(dayKey)) continue;
@@ -1446,6 +1452,11 @@ app.use(
  * Handle all other requests by rendering the Angular application.
  */
 app.get('*', (req: Request, res: Response) => {
+  if (process.env['DISABLE_SSR'] === 'true') {
+    const browserIndex = indexHtml === 'index' ? 'index.html' : indexHtml;
+    res.sendFile(join(browserDistFolder, browserIndex));
+    return;
+  }
   res.render(indexHtml, {
     req,
     providers: [{ provide: APP_BASE_HREF, useValue: req.baseUrl }],

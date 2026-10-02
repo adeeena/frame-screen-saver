@@ -318,7 +318,40 @@
   &__calendar {
     -webkit-flex: 1;
     flex: 1;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
     overflow: hidden;
+  }
+
+  &__calendar-views {
+    -webkit-flex: 1;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+
+  &__calendar-view {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(1.2vw);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+
+  &__calendar-view--countdown {
+    transform: translateX(-1.2vw);
+  }
+
+  &__calendar-view--active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
   }
 
   &__widget-slot {
@@ -384,6 +417,44 @@
     font-size: 1.2dvw;
     color: var(--text-muted);
   }
+
+  &__countdown-list {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    gap: 1.2vw;
+    gap: 1.2dvw;
+  }
+
+  &__countdown-event {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: baseline;
+    align-items: baseline;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding-bottom: 0.8vw;
+    padding-bottom: 0.8dvw;
+  }
+
+  &__countdown-title {
+    font-family: var(--font-body);
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    font-weight: 300;
+    color: var(--text-primary);
+  }
+
+  &__countdown-value {
+    margin-left: auto;
+    color: var(--accent);
+    font-family: var(--font-body);
+    font-size: 1.6vw;
+    font-size: 1.6dvw;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
 }
 
 //  Calendar timeline 

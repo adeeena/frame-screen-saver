@@ -50,7 +50,9 @@
     <div class="columns-page__agenda-header">{{ 'pages.agenda.title' | translate }}</div>
 
     <div class="columns-page__calendar" #calendarRef>
-      <ng-container *ngFor="let day of displayDays; let isFirstDay = first">
+      <div class="columns-page__calendar-views">
+        <div class="columns-page__calendar-view" [class.columns-page__calendar-view--active]="calendarPage === 0">
+        <ng-container *ngFor="let day of displayDays; let isFirstDay = first">
         <div class="cal-timeline__day-header">
           <span class="cal-timeline__accent">{{ dayLabelParts(day).accent }}</span><!--
           --><span class="cal-timeline__normal">{{ dayLabelParts(day).normal }}</span>
@@ -63,13 +65,29 @@
           </div>
           <div class="cal-timeline__event-body">
             <span class="cal-timeline__time">{{ eventTime(evt) }}</span>
-            <span class="cal-timeline__title">{{ evt.title }}</span>
+            <span class="cal-timeline__title">{{ eventTitle(evt) }}</span>
           </div>
         </div>
-      </ng-container>
-      <div class="columns-page__no-events" *ngIf="displayDays.length === 0">
-        {{ 'empty.events' | translate }}
+        </ng-container>
+        <div class="columns-page__no-events" *ngIf="displayDays.length === 0">
+          {{ 'empty.events' | translate }}
+        </div>
+        </div>
+        <div class="columns-page__calendar-view columns-page__calendar-view--countdown"
+          [class.columns-page__calendar-view--active]="calendarPage === 1">
+        <div class="columns-page__countdown-list">
+          <div class="columns-page__countdown-event" *ngFor="let event of countdownEvents">
+            <span class="columns-page__countdown-title">{{ event.title }}</span>
+            <span class="columns-page__countdown-value">{{ countdownLabel(event) }}</span>
+          </div>
+          <div class="columns-page__no-events" *ngIf="countdownEvents.length === 0">
+            {{ 'empty.events' | translate }}
+          </div>
+        </div>
+        </div>
       </div>
+      <app-pagination-dots *ngIf="countdownEvents.length > 0" [count]="2"
+        [activeIndex]="calendarPage"></app-pagination-dots>
     </div>
 
   </div>

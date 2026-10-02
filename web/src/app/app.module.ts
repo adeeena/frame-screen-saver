@@ -17,6 +17,7 @@ import { MessagesPageComponent } from './components/messages-page/messages-page.
 import { FormatDateTimePipe } from './pipes/format-date-time.pipe';
 import { TranslatePipe } from './pipes/translate.pipe';
 import { FeatherIconDirective } from './directives/feather-icon.directive';
+import { PaginationDotsComponent } from './components/pagination-dots/pagination-dots.component';
 
 @NgModule({
   declarations: [
@@ -32,6 +33,7 @@ import { FeatherIconDirective } from './directives/feather-icon.directive';
     FormatDateTimePipe,
     TranslatePipe,
     FeatherIconDirective,
+    PaginationDotsComponent,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'frame-screen-saver' }),

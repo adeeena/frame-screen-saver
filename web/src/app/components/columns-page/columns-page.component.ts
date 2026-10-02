@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, Input, ViewChild, ElementRef, AfterViewChecked, Inject, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, ViewChild, ElementRef, AfterViewChecked, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import moment from 'moment';
 import { ClockService } from '../../services/clock.service';
 import { CalendarService, CalendarDay, CalendarEvent } from '../../services/calendar.service';
-import { ScreensaverConfigService, WorldClockCity } from '../../services/screensaver-config.service';
+import { ScreensaverConfigService, TransitRouteSettings, WorldClockCity } from '../../services/screensaver-config.service';
 import { WeatherService, WorldCityWeather } from '../../services/weather.service';
 import { weatherIconName } from '../../services/weather-icon';
 
@@ -19,6 +19,11 @@ interface OffPeakStatus {
   readonly countdown: string;
 }
 
+interface CountdownEvent {
+  readonly title: string;
+  readonly date: string;
+}
+
 const MINUTE_MS = 60 * 1000;
 
 @Component({
@@ -27,7 +32,7 @@ const MINUTE_MS = 60 * 1000;
   styleUrls: ['./columns-page.scss'],
   changeDetection: ChangeDetectionStrategy.Default,
 })
-export class ColumnsPageComponent implements AfterViewChecked {
+export class ColumnsPageComponent implements AfterViewChecked, OnDestroy {
   @Input() sidebarLayout = false;
 
   @ViewChild('calendarRef') private calendarRef?: ElementRef<HTMLElement>;
@@ -50,6 +55,9 @@ export class ColumnsPageComponent implements AfterViewChecked {
   private displayDaysSource: readonly CalendarDay[] | null = null;
   private displayDaysTrimCount = -1;
   private displayDaysCache: readonly CalendarDay[] = [];
+  private calendarPageTimerId: ReturnType<typeof setInterval> | null = null;
+  private calendarPageTimerStarted = false;
+  calendarPage = 0;
 
   constructor(
     readonly clockService: ClockService,
@@ -214,6 +222,13 @@ export class ColumnsPageComponent implements AfterViewChecked {
     while (remaining > 0 && days.length > 0) {
       const last = days[days.length - 1];
       const isOnlyDay = days.length === 1;
+      const regularIndex = last.events.map((event) => !isCountdownEvent(event)).lastIndexOf(true);
+      if (regularIndex >= 0 && regularIndex !== last.events.length - 1) {
+        const events = [...last.events.slice(0, regularIndex), ...last.events.slice(regularIndex + 1)];
+        days = [...days.slice(0, -1), { ...last, events }];
+        remaining--;
+        continue;
+      }
       if (!isOnlyDay && last.events.length <= 1) {
         days = days.slice(0, -1);
       } else if (last.events.length > 1) {
@@ -229,8 +244,57 @@ export class ColumnsPageComponent implements AfterViewChecked {
     return this.displayDaysCache;
   }
 
+  get countdownEvents(): readonly CountdownEvent[] {
+    const today = moment(this.clockService.nowMs()).startOf('day');
+    const limit = today.clone().add(365, 'days').endOf('day');
+    const events: CountdownEvent[] = [];
+    for (const day of this.calendarService.days()) {
+      const date = moment(day.date, 'YYYY-MM-DD', true).startOf('day');
+      if (!date.isValid() || date.isBefore(today) || date.isAfter(limit)) continue;
+      for (const event of day.events) {
+        if (isCountdownEvent(event)) events.push({ title: event.title.slice(1).trim(), date: day.date });
+      }
+    }
+    const opening = this.nextTransitOpening();
+    if (opening) events.push(opening);
+    return events.sort((left, right) => left.date.localeCompare(right.date));
+  }
+
+  private nextTransitOpening(): CountdownEvent | null {
+    const entries = this.config?.transit?.entries ?? [];
+    const today = moment(this.clockService.nowMs()).startOf('day');
+    const next = entries
+      .filter((entry): entry is TransitRouteSettings & { availableFrom: string } => entry.availableFrom !== null)
+      .map((entry) => ({ entry, date: moment(entry.availableFrom, 'YYYY-MM-DD', true) }))
+      .filter(({ date }) => date.isValid() && date.isAfter(today))
+      .sort((left, right) => left.date.valueOf() - right.date.valueOf())[0];
+    if (!next) return null;
+    return {
+      title: `${next.entry.lineLabel} to ${next.entry.stopLabel}`,
+      date: next.date.format('YYYY-MM-DD'),
+    };
+  }
+
+  countdownLabel(event: CountdownEvent): string {
+    const target = moment(event.date, 'YYYY-MM-DD', true).startOf('day');
+    const totalMinutes = Math.max(0, Math.ceil((target.valueOf() - this.clockService.nowMs()) / MINUTE_MS));
+    return totalMinutes < 3 * 24 * 60
+      ? `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}min`
+      : `${Math.ceil(totalMinutes / (24 * 60))} days`;
+  }
+
+  eventTitle(event: CalendarEvent): string {
+    return isCountdownEvent(event) ? event.title.slice(1).trim() : event.title;
+  }
+
   ngAfterViewChecked(): void {
     if (!isPlatformBrowser(this.platformId)) return;
+    if (!this.calendarPageTimerStarted && this.countdownEvents.length > 0) {
+      this.calendarPageTimerStarted = true;
+      this.calendarPageTimerId = setInterval(() => {
+        this.calendarPage = this.calendarPage === 0 ? 1 : 0;
+      }, 7000);
+    }
 
     // Reset trim count when the underlying data changes
     const key = this.candidateDays.map((d) => d.date + ':' + d.events.length).join('|');
@@ -253,6 +317,10 @@ export class ColumnsPageComponent implements AfterViewChecked {
     }
   }
 
+  ngOnDestroy(): void {
+    if (this.calendarPageTimerId !== null) clearInterval(this.calendarPageTimerId);
+  }
+
   dayLabelParts(day: CalendarDay): { accent: string; normal: string } {
     const dateStr = moment(day.date, 'YYYY-MM-DD').format('dddd, MMMM D');
     if (day.dayLabel === 'Today') return { accent: 'Today', normal: '' };
@@ -265,6 +333,10 @@ export class ColumnsPageComponent implements AfterViewChecked {
     if (evt.endTime && evt.endTime !== evt.startTime) return evt.startTime + ' – ' + evt.endTime;
     return evt.startTime;
   }
+}
+
+function isCountdownEvent(event: CalendarEvent): boolean {
+  return event.title.trim().startsWith('*');
 }
 
 function formatDuration(totalMinutes: number): string {

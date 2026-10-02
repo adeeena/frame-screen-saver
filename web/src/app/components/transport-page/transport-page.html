@@ -6,7 +6,7 @@
             <div class="transport-page__title">{{ 'pages.transport.title' | translate }}</div>
 
             <div class="transport-page__boards" [class.transport-page__boards--row]="messagePages[0].length === 0">
-                <div class="transit-board" *ngFor="let entry of transitEntries()">
+                <div class="transit-board" *ngFor="let entry of transportEntriesPage()">
                     <div class="transit-board__header">
                         <div class="transit-board__badge" [style.backgroundColor]="'#' + entry.lineColor"
                             [style.color]="'#' + entry.lineTextColor">{{ entry.lineLabel }}</div>
@@ -34,6 +34,7 @@
                                             class="transit-board__unit"> min</span></span>
                                 </ng-container>
                                 <ng-template #compactDeparture>
+                                    <span class="transit-board__mission">{{ departure.missionCode || '' }}</span>
                                     <span class="transit-board__time">{{ departure.displayTime }}</span>
                                     <span class="transit-board__minutes">{{ timing.relativeMinutes }}<span
                                             class="transit-board__unit"> min</span></span>
@@ -62,7 +63,7 @@
                     <div class="message-timeline">
                         <div class="message-timeline__page">
                             <div class="message-timeline__row"
-                                *ngFor="let message of messagePages[currentMessagePage]; let last = last">
+                                *ngFor="let message of messagePages[currentMessagePageIndex()]; let last = last">
                                 <div class="message-timeline__spine" [class.message-timeline__spine--last]="last">
                                     <span class="message-timeline__dot"></span>
                                 </div>
@@ -73,27 +74,13 @@
                             </div>
                         </div>
 
-                        <div class="message-timeline__pagination" *ngIf="messagePages.length > 1" aria-hidden="true">
-                            <span class="message-timeline__page-dot"
-                                *ngFor="let page of messagePages; let pageIndex = index"
-                                [class.message-timeline__page-dot--active]="pageIndex === currentMessagePage"></span>
-                        </div>
+                        <app-pagination-dots *ngIf="pageCount() > 1"
+                            [count]="pageCount()" [activeIndex]="currentMessagePage"></app-pagination-dots>
                     </div>
                 </div>
             </div>
         </ng-container>
 
-    </div>
-
-    <div class="transport-page__infobox" *ngIf="upcomingTransitOpening() as opening"
-        [attr.aria-label]="opening.lineLabel + ' to ' + opening.stopLabel + ' is in ' + opening.days + ' days'">
-        <span class="transport-page__infobox-label" aria-hidden="true">{{ opening.lineLabel }} to {{
-            opening.stopLabel }}</span>
-        <span class="transport-page__infobox-countdown" aria-hidden="true">
-            <span class="transport-page__infobox-prefix">in</span>
-            <span class="transport-page__infobox-days">{{ opening.days }}</span>
-            <span class="transport-page__infobox-unit">days</span>
-        </span>
     </div>
 
 </div>

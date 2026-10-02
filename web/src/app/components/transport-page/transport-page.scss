@@ -63,86 +63,14 @@
   }
 
   &__boards {
-    -webkit-flex: 1;
-    flex: 1;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    -webkit-align-items: stretch;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-gap: 2vw;
     margin-top: 2.5vw;
   }
 
   &__boards--row {
-    -webkit-flex-direction: row;
-    flex-direction: row;
-
-    .transit-board + .transit-board {
-      margin-top: 0;
-      margin-left: 3vw;
-    }
-  }
-
-  &__infobox {
-    -webkit-flex-shrink: 0;
-    flex-shrink: 0;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-align-items: center;
-    align-items: center;
-    background-color: var(--accent);
-    border-radius: 0.3vw;
-    border-radius: 0.3dvw;
-    padding: 1.2vw 1.5vw;
-    padding: 1.2dvw 1.5dvw;
-    margin-top: 2.5vw;
-    margin-top: 2.5dvw;
-  }
-
-  &__infobox-label {
-    font-family: var(--font-body);
-    font-weight: 500;
-    font-size: 1.5vw;
-    font-size: 1.5dvw;
-    color: var(--palette-ink);
-    margin-right: 1vw;
-    line-height: 1.2;
-  }
-
-  &__infobox-countdown {
-    margin-left: auto;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-align-items: baseline;
-    align-items: baseline;
-    white-space: nowrap;
-  }
-
-  &__infobox-prefix {
-    margin-right: 0.5vw;
-    font-family: var(--font-body);
-    font-size: 1.5vw;
-    font-size: 1.5dvw;
-    font-weight: 500;
-    color: var(--palette-ink);
-  }
-
-  &__infobox-days {
-    font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 2.2vw;
-    font-size: 2.2dvw;
-    color: var(--palette-ink);
-    margin-right: 0.5vw;
-  }
-
-  &__infobox-unit {
-    font-family: var(--font-body);
-    font-weight: 500;
-    font-size: 1.5vw;
-    font-size: 1.5dvw;
-    color: var(--palette-ink);
+    grid-gap: 3vw;
   }
 
   &__messages {
@@ -230,7 +158,6 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 5;
   }
 
   &__expiry {
@@ -243,33 +170,6 @@
     color: var(--text-muted);
   }
 
-  &__pagination {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-justify-content: center;
-    justify-content: center;
-    gap: 0.7vw;
-    gap: 0.7dvw;
-    padding-top: 1vw;
-    padding-top: 1dvw;
-  }
-
-  &__page-dot {
-    width: 0.55vw;
-    width: 0.55dvw;
-    height: 0.55vw;
-    height: 0.55dvw;
-    border: 0.1vw solid rgba(255, 255, 255, 0.7);
-    border-radius: 50%;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-
-    &--active {
-      background: var(--accent);
-      border-color: var(--accent);
-      -webkit-transform: scale(1.25);
-      transform: scale(1.25);
-    }
-  }
 }
 
 @keyframes message-page-in {
@@ -279,13 +179,7 @@
 
 //  Transit board (shared by all lines shown on this page) 
 .transit-board {
-  -webkit-flex: 1;
-  flex: 1;
   min-width: 0;
-
-  & + & {
-    margin-top: 2vw;
-  }
 
   &__header {
     display: -webkit-flex;
@@ -471,6 +365,12 @@
 
 .transit-board__departures--wide .transit-board__departure + .transit-board__departure {
   margin-top: 0.8vw;
+}
+
+.transit-board__departures:not(.transit-board__departures--wide) .transit-board__departure {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  width: 100%;
 }
 
 @keyframes imminent-dot {

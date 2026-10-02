@@ -322,12 +322,19 @@
   }
 
   &__hour-label {
+    display: block;
+    -webkit-flex: 0 0 3.2em;
+    flex: 0 0 3.2em;
+    flex-shrink: 0;
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.3vw;
     font-size: 1.3dvw;
     line-height: 1;
     color: var(--text-muted);
+    min-width: 3.2em;
+    text-align: center;
+    white-space: nowrap;
   }
 
 }

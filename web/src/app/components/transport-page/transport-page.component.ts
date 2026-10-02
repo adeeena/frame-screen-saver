@@ -24,6 +24,28 @@ export function formatExpiryCountdown(expiresAt: string, nowMs = Date.now()): st
   return `expires in ${parts.join(' ')}`;
 }
 
+const MESSAGE_PAGE_TEXT_LENGTH = 240;
+
+function splitMessage(message: Message): readonly Message[] {
+  if (message.text.length <= MESSAGE_PAGE_TEXT_LENGTH) return [message];
+
+  const chunks: Message[] = [];
+  let remaining = message.text.trim();
+  let chunkIndex = 0;
+  while (remaining.length > 0) {
+    let cut = Math.min(MESSAGE_PAGE_TEXT_LENGTH, remaining.length);
+    if (cut < remaining.length) {
+      const lastSpace = remaining.lastIndexOf(' ', cut);
+      if (lastSpace > MESSAGE_PAGE_TEXT_LENGTH * 0.6) cut = lastSpace;
+    }
+    const text = remaining.slice(0, cut).trim();
+    chunks.push({ ...message, id: `${message.id}-${chunkIndex}`, text });
+    remaining = remaining.slice(cut).trim();
+    chunkIndex++;
+  }
+  return chunks;
+}
+
 export interface TransitOpening {
   readonly lineLabel: string;
   readonly stopLabel: string;
@@ -73,6 +95,7 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
 
   messagePages: readonly (readonly Message[])[] = [[]];
   currentMessagePage = 0;
+  currentTransportPage = 0;
 
   constructor(
     readonly trainService: TrainService,
@@ -121,6 +144,7 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe((messages) => {
         this.messagePages = this.paginate(messages);
         this.currentMessagePage = 0;
+        this.currentTransportPage = 0;
         if (this.active) this.startMessageCycle();
       });
   }
@@ -129,6 +153,7 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
     if (!changes.active) return;
     if (this.active) {
       this.currentMessagePage = 0;
+      this.currentTransportPage = 0;
       this.startMessageCycle();
     } else {
       this.clearPageTimeout();
@@ -155,6 +180,26 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
     return departures;
   }
 
+  transportEntriesPage(): readonly TransitRouteSettings[] {
+    const entries = this.transitEntries();
+    if (this.messagePages[0].length === 0) return entries;
+    const start = this.currentTransportPage * 2;
+    return entries.slice(start, start + 2);
+  }
+
+  transportPageCount(): number {
+    if (this.messagePages[0].length === 0) return 1;
+    return Math.max(1, Math.ceil(this.transitEntries().length / 2));
+  }
+
+  pageCount(): number {
+    return Math.max(this.messagePages.length, this.transportPageCount());
+  }
+
+  currentMessagePageIndex(): number {
+    return this.currentMessagePage % this.messagePages.length;
+  }
+
   minutesUntil(dep: Departure): number {
     const now = Math.floor(Date.now() / 60000) * 60000;
     const depMin = Math.floor(moment(dep.expectedDeparture).valueOf() / 60000) * 60000;
@@ -174,9 +219,13 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
   private paginate(messages: readonly Message[]): readonly (readonly Message[])[] {
     if (messages.length === 0) return [[]];
     const messagesPerPage = this.configService.messages().itemsPerPage;
+    const fullMessages = messages.reduce<Message[]>(
+      (all, message) => all.concat(splitMessage(message)),
+      [],
+    );
     const pages: Message[][] = [];
-    for (let index = 0; index < messages.length; index += messagesPerPage) {
-      pages.push(messages.slice(index, index + messagesPerPage));
+    for (let index = 0; index < fullMessages.length; index += messagesPerPage) {
+      pages.push(fullMessages.slice(index, index + messagesPerPage));
     }
     return pages;
   }
@@ -186,15 +235,16 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
     const animation = this.configService.config()?.animationSettings;
     const messageDurationMs = positiveDuration(animation?.messagePageTimeoutMs, defaultMessagePageDurationMs);
     const minimumPageDurationMs = positiveDuration(animation?.transportPageTimeoutMs, defaultTransportPageDurationMs);
-    const isLastPage = this.currentMessagePage >= this.messagePages.length - 1;
+    const isLastPage = this.currentMessagePage >= this.pageCount() - 1;
     const elapsedBeforeCurrentPageMs = this.currentMessagePage * messageDurationMs;
     const delayMs = isLastPage
       ? Math.max(messageDurationMs, minimumPageDurationMs - elapsedBeforeCurrentPageMs)
       : messageDurationMs;
 
     this.pageTimeoutId = setTimeout(() => {
-      if (this.currentMessagePage < this.messagePages.length - 1) {
+      if (this.currentMessagePage < this.pageCount() - 1) {
         this.currentMessagePage += 1;
+        this.currentTransportPage = this.currentMessagePage % this.transportPageCount();
         this.startMessageCycle();
       } else {
         this.messageCycleComplete.emit();
