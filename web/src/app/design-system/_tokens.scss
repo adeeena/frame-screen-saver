@@ -1,4 +1,4 @@
-﻿// All token values are defined as CSS custom properties.
+// All token values are defined as CSS custom properties.
 // Never reference $variables outside this file â€” use var(--token) everywhere.
 
 :root {
@@ -47,10 +47,10 @@
   --font-display:  'DidotLTPro', 'Didot', 'Bodoni MT', Georgia, serif;
   --font-body:     'AvenirNextLTPro', 'Avenir Next', 'Futura', Helvetica, sans-serif;
 
-  //  Spacing (relative to dvw for TV) 
-  // Custom properties need @supports for dvw: unlike regular CSS declarations,
+  //  Spacing (relative to vw for TV)
+  // Custom properties need @supports for vw: unlike regular CSS declarations,
   // browsers store custom property values as raw tokens without validation.
-  // The dvw value would overwrite vw and then fail at the var() use-site.
+  // The vw value would overwrite vw and then fail at the var() use-site.
   --space-xs:   0.5vw;
   --space-s:    1vw;
   --space-m:    2vw;
@@ -62,13 +62,13 @@
   --transition-medium: 0.35s ease;
 }
 
-@supports (width: 1dvw) {
+@supports (width: 1vw) {
   :root {
-    --space-xs:   0.5dvw;
-    --space-s:    1dvw;
-    --space-m:    2dvw;
-    --space-l:    3dvw;
-    --space-xl:   5dvw;
+    --space-xs:   0.5vw;
+    --space-s:    1vw;
+    --space-m:    2vw;
+    --space-l:    3vw;
+    --space-xl:   5vw;
   }
 }
 

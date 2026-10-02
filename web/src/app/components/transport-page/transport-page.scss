@@ -4,7 +4,7 @@
   width: 100%;
   height: 100%;
   padding: 4vw;
-  padding: 4dvw;
+  padding: 4vw;
   background-color: var(--overlay-columns);
   display: -webkit-flex;
   display: flex;
@@ -33,12 +33,12 @@
 
   &__column:first-child {
     padding-right: 2vw;
-    padding-right: 2dvw;
+    padding-right: 2vw;
   }
 
   &__column:last-child {
     padding-left: 2vw;
-    padding-left: 2dvw;
+    padding-left: 2vw;
   }
 
   &__column--full {
@@ -56,7 +56,7 @@
     font-family: var(--font-brand);
     font-weight: 400;
     font-size: 3vw;
-    font-size: 3dvw;
+    font-size: 3vw;
     color: var(--text-primary);
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
@@ -93,7 +93,7 @@
     display: block;
     flex-shrink: 0;
     padding-top: 1vw;
-    padding-top: 1dvw;
+    padding-top: 1vw;
   }
 }
 
@@ -117,7 +117,7 @@
     grid-template-columns: 1.4vw 1fr;
     grid-gap: 0.8vw;
     gap: 0.8vw;
-    gap: 0.8dvw;
+    gap: 0.8vw;
   }
 
   &__spine {
@@ -127,7 +127,7 @@
     -webkit-justify-content: center;
     justify-content: center;
     padding-top: 0.75vw;
-    padding-top: 0.75dvw;
+    padding-top: 0.75vw;
 
     &::before {
       content: '';
@@ -148,9 +148,9 @@
     position: relative;
     z-index: 1;
     width: 0.7vw;
-    width: 0.7dvw;
+    width: 0.7vw;
     height: 0.7vw;
-    height: 0.7dvw;
+    height: 0.7vw;
     border-radius: 50%;
     background: var(--text-primary);
   }
@@ -158,7 +158,7 @@
   &__body {
     min-width: 0;
     padding: 0.55vw 0 1.8vw;
-    padding: 0.55dvw 0 1.8dvw;
+    padding: 0.55vw 0 1.8vw;
   }
 
   &__text {
@@ -166,7 +166,7 @@
     overflow: hidden;
     font-family: var(--font-body);
     font-size: 1.45vw;
-    font-size: 1.45dvw;
+    font-size: 1.45vw;
     font-weight: 400;
     line-height: 1.25;
     color: var(--text-primary);
@@ -177,10 +177,10 @@
 
   &__expiry {
     margin-top: 0.45vw;
-    margin-top: 0.45dvw;
+    margin-top: 0.45vw;
     font-family: var(--font-body);
     font-size: 1.3vw;
-    font-size: 1.3dvw;
+    font-size: 1.3vw;
     font-weight: 300;
     color: var(--text-muted);
   }
@@ -202,7 +202,7 @@
     -webkit-align-items: center;
     align-items: center;
     margin-bottom: 1.5vw;
-    margin-bottom: 1.5dvw;
+    margin-bottom: 1.5vw;
   }
 
   &__badge {
@@ -210,18 +210,18 @@
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
     width: 2.8vw;
-    width: 2.8dvw;
+    width: 2.8vw;
     height: 2.8vw;
-    height: 2.8dvw;
+    height: 2.8vw;
     color: #fff;
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     line-height: 3vw;
-    line-height: 3dvw;
+    line-height: 3vw;
     border-radius: 0.3vw;
-    border-radius: 0.3dvw;
+    border-radius: 0.3vw;
     -webkit-font-smoothing: antialiased;
     text-align: center;
     margin-right: 1vw;
@@ -239,7 +239,7 @@
     font-family: var(--font-body);
     font-weight: 500;
     font-size: 1.3vw;
-    font-size: 1.3dvw;
+    font-size: 1.3vw;
     color: var(--text-muted);
   }
 
@@ -251,7 +251,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.7vw;
-    font-size: 1.7dvw;
+    font-size: 1.7vw;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -297,7 +297,7 @@
     color: var(--text-secondary);
     font-family: var(--font-body);
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     font-weight: 500;
     letter-spacing: normal;
     line-height: 1;
@@ -307,7 +307,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25vw;
-    gap: 0.25dvw;
+    gap: 0.25vw;
 
     &--hidden {
       visibility: hidden;
@@ -320,9 +320,9 @@
     border: 0.1vw solid var(--accent);
     border-radius: 50%;
     height: 0.9vw;
-    height: 0.9dvw;
+    height: 0.9vw;
     width: 0.9vw;
-    width: 0.9dvw;
+    width: 0.9vw;
 
     &--second {
       animation-delay: -0.5s;
@@ -333,7 +333,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     color: var(--text-primary);
     letter-spacing: normal;
     line-height: 1;
@@ -351,7 +351,7 @@
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     color: var(--accent);
     letter-spacing: normal;
     line-height: 1;
@@ -365,7 +365,7 @@
   &__unit {
     font-weight: 300;
     font-size: 1.2vw;
-    font-size: 1.2dvw;
+    font-size: 1.2vw;
     color: var(--accent);
   }
 
@@ -373,7 +373,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.2vw;
-    font-size: 1.2dvw;
+    font-size: 1.2vw;
     color: var(--text-primary);
   }
 }

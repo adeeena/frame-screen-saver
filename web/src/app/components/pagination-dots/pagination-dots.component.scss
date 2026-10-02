@@ -1,6 +1,6 @@
 .pagination-dots {
   padding-top: 1vw;
-  padding-top: 1dvw;
+  padding-top: 1vw;
 }
 
 :host {
@@ -14,14 +14,14 @@
   -webkit-justify-content: center;
   justify-content: center;
   gap: 0.7vw;
-  gap: 0.7dvw;
+  gap: 0.7vw;
 }
 
 .pagination-dots__dot {
   width: 0.9vw;
-  width: 0.9dvw;
+  width: 0.9vw;
   height: 0.9vw;
-  height: 0.9dvw;
+  height: 0.9vw;
   border: 0.1vw solid rgba(255, 255, 255, 0.7);
   border-radius: 50%;
   transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;

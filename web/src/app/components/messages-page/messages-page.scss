@@ -2,9 +2,9 @@
 
 .messages-page {
   height: 100vh;
-  height: 100dvh;
+  height: 100vh;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100vh;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
@@ -20,7 +20,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 1.5vw 3vw;
-    padding: 1.5dvw 3dvw;
+    padding: 1.5vw 3vw;
     background: rgba(13, 13, 18, 0.96);
     border-bottom: 1px solid rgba(240, 188, 117, 0.2);
   }
@@ -28,7 +28,7 @@
   &__heading {
     font-family: var(--font-display);
     font-size: 2vw;
-    font-size: 2dvw;
+    font-size: 2vw;
 
     span { color: var(--accent); }
   }
@@ -39,11 +39,11 @@
     align-items: center;
     justify-content: center;
     width: 3vw;
-    width: 3dvw;
+    width: 3vw;
     height: 3vw;
-    height: 3dvw;
+    height: 3vw;
     padding: 0.8vw;
-    padding: 0.8dvw;
+    padding: 0.8vw;
     border: 1px solid rgba(240, 188, 117, 0.3);
     border-radius: 0.3vw;
     background: transparent;
@@ -57,45 +57,45 @@
     display: grid;
     grid-template-columns: minmax(18rem, 0.8fr) minmax(24rem, 1.2fr);
     gap: 4vw;
-    gap: 4dvw;
+    gap: 4vw;
     padding: 3vw;
-    padding: 3dvw;
+    padding: 3vw;
   }
 
   &__composer {
     position: sticky;
     top: 8vw;
-    top: 8dvw;
+    top: 8vw;
     align-self: start;
   }
 
   &__section-heading {
     padding-bottom: 0.8vw;
-    padding-bottom: 0.8dvw;
+    padding-bottom: 0.8vw;
     margin-bottom: 1.8vw;
-    margin-bottom: 1.8dvw;
+    margin-bottom: 1.8vw;
     border-bottom: 1px solid rgba(240, 188, 117, 0.2);
     color: var(--accent);
     font-family: var(--font-display);
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
 
     &--history {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1vw;
-      gap: 1dvw;
+      gap: 1vw;
     }
   }
 
   &__label {
     display: block;
     margin: 1.2vw 0 0.5vw;
-    margin: 1.2dvw 0 0.5dvw;
+    margin: 1.2vw 0 0.5vw;
     color: var(--text-secondary);
     font-size: 0.9vw;
-    font-size: 0.9dvw;
+    font-size: 0.9vw;
     text-transform: uppercase;
   }
 
@@ -104,7 +104,7 @@
     box-sizing: border-box;
     width: 100%;
     padding: 0.9vw 1vw;
-    padding: 0.9dvw 1dvw;
+    padding: 0.9vw 1vw;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 0.3vw;
     background: rgba(255, 255, 255, 0.05);
@@ -118,21 +118,21 @@
 
   &__field-meta {
     margin-top: 0.35vw;
-    margin-top: 0.35dvw;
+    margin-top: 0.35vw;
     color: var(--text-muted);
     font-size: 0.75vw;
-    font-size: 0.75dvw;
+    font-size: 0.75vw;
     text-align: right;
   }
 
   &__actions,
-  &__message-actions { display: flex; gap: 0.8vw; gap: 0.8dvw; }
+  &__message-actions { display: flex; gap: 0.8vw; gap: 0.8vw; }
 
-  &__actions { margin-top: 1.8vw; margin-top: 1.8dvw; }
+  &__actions { margin-top: 1.8vw; margin-top: 1.8vw; }
 
   &__button {
     padding: 0.75vw 1.3vw;
-    padding: 0.75dvw 1.3dvw;
+    padding: 0.75vw 1.3vw;
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 0.3vw;
     background: transparent;
@@ -149,7 +149,7 @@
   &__history-actions {
     display: flex;
     gap: 0.6vw;
-    gap: 0.6dvw;
+    gap: 0.6vw;
   }
 
   &__clear-confirmation {
@@ -190,7 +190,7 @@
   &__message {
     position: relative;
     padding: 1.4vw 5vw 1.4vw 1.4vw;
-    padding: 1.4dvw 5dvw 1.4dvw 1.4dvw;
+    padding: 1.4vw 5vw 1.4vw 1.4vw;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
     &--expired { opacity: 0.55; }
@@ -200,7 +200,7 @@
     margin-bottom: 0.5vw;
     color: var(--accent);
     font-size: 0.72vw;
-    font-size: 0.72dvw;
+    font-size: 0.72vw;
     font-weight: 600;
     text-transform: uppercase;
   }

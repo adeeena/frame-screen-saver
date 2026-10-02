@@ -2,20 +2,20 @@
   width: 100%;
   height: 100%;
   padding: 4vw;
-  padding: 4dvw;
+  padding: 4vw;
   background-color: var(--overlay-columns);
   display: -webkit-flex;
   display: flex;
   -webkit-flex-direction: column;
   flex-direction: column;
   gap: 2vw;
-  gap: 2dvw;
+  gap: 2vw;
 
   &__title {
     font-family: var(--font-brand);
     font-weight: 400;
     font-size: 3vw;
-    font-size: 3dvw;
+    font-size: 3vw;
     color: var(--text-primary);
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
@@ -31,7 +31,7 @@
     -webkit-flex-direction: row;
     flex-direction: row;
     gap: 3vw;
-    gap: 3dvw;
+    gap: 3vw;
   }
 
   &__counters {
@@ -42,7 +42,7 @@
     -webkit-flex-direction: column;
     flex-direction: column;
     gap: 2vw;
-    gap: 2dvw;
+    gap: 2vw;
   }
 
   &__current {
@@ -59,11 +59,11 @@
     -webkit-align-items: center;
     align-items: center;
     width: 5vw;
-    width: 5dvw;
+    width: 5vw;
     height: 5vw;
-    height: 5dvw;
+    height: 5vw;
     margin-right: 1.2vw;
-    margin-right: 1.2dvw;
+    margin-right: 1.2vw;
 
     svg {
       width: 100%;
@@ -87,7 +87,7 @@
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 3vw;
-    font-size: 3dvw;
+    font-size: 3vw;
     line-height: 1;
     color: var(--accent);
   }
@@ -96,7 +96,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.5vw;
-    font-size: 1.5dvw;
+    font-size: 1.5vw;
     line-height: 1;
     color: var(--text-secondary);
   }
@@ -113,7 +113,7 @@
     justify-content: flex-start;
     border-top: var(--accent-rule-thickness) solid var(--accent);
     padding-top: 1.5vw;
-    padding-top: 1.5dvw;
+    padding-top: 1.5vw;
   }
 
   &__stat {
@@ -122,7 +122,7 @@
     -webkit-align-items: center;
     align-items: center;
     margin-bottom: 1.2vw;
-    margin-bottom: 1.2dvw;
+    margin-bottom: 1.2vw;
   }
 
   &__stat-icon {
@@ -130,15 +130,15 @@
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
     width: 2.4vw;
-    width: 2.4dvw;
+    width: 2.4vw;
     height: 2.4vw;
-    height: 2.4dvw;
+    height: 2.4vw;
     margin-right: 0.6vw;
-    margin-right: 0.6dvw;
+    margin-right: 0.6vw;
 
     &:not(:first-child) {
       margin-left: 0.8vw;
-      margin-left: 0.8dvw;
+      margin-left: 0.8vw;
     }
 
     svg {
@@ -156,25 +156,25 @@
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.8vw;
-    font-size: 1.8dvw;
+    font-size: 1.8vw;
     line-height: 1;
     color: var(--accent);
   }
 
   &__stat-label {
     margin-right: 0.7vw;
-    margin-right: 0.7dvw;
+    margin-right: 0.7vw;
     color: var(--text-secondary);
     font-family: var(--font-body);
     font-size: 1.25vw;
-    font-size: 1.25dvw;
+    font-size: 1.25vw;
     font-weight: 300;
   }
 
   &__stat-suffix {
     font-weight: 300;
     font-size: 1.2vw;
-    font-size: 1.2dvw;
+    font-size: 1.2vw;
     color: var(--text-muted);
   }
 
@@ -195,7 +195,7 @@
     position: absolute;
     z-index: 0;
     top: 5.5vw;
-    top: 5.5dvw;
+    top: 5.5vw;
     bottom: 40%;
     min-width: 1px;
     overflow: hidden;
@@ -212,11 +212,11 @@
   &__temp-chart {
     position: absolute;
     top: 5.5vw;
-    top: 5.5dvw;
+    top: 5.5vw;
     left: 0;
     width: 100%;
     height: calc(60% - 5.5vw);
-    height: calc(60% - 5.5dvw);
+    height: calc(60% - 5.5vw);
     overflow: visible;
     z-index: 2;
     pointer-events: none;
@@ -263,21 +263,21 @@
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.5vw;
-    font-size: 1.5dvw;
+    font-size: 1.5vw;
     line-height: 1;
     color: var(--text-primary);
     margin-top: 0.5vw;
-    margin-top: 0.5dvw;
+    margin-top: 0.5vw;
   }
 
   &__hour-icon {
     display: inline-flex;
     width: 1.6vw;
-    width: 1.6dvw;
+    width: 1.6vw;
     height: 1.6vw;
-    height: 1.6dvw;
+    height: 1.6vw;
     margin-top: 0.6vw;
-    margin-top: 0.6dvw;
+    margin-top: 0.6vw;
 
     svg {
       width: 100%;
@@ -294,17 +294,17 @@
     font-family: var(--font-body);
     font-weight: 500;
     font-size: 1.1vw;
-    font-size: 1.1dvw;
+    font-size: 1.1vw;
     color: var(--color-info);
     margin-top: 0.4vw;
-    margin-top: 0.4dvw;
+    margin-top: 0.4vw;
   }
 
   &__rain-track {
     -webkit-flex: 1;
     flex: 1;
     width: 1vw;
-    width: 1dvw;
+    width: 1vw;
     display: -webkit-flex;
     display: flex;
     -webkit-align-items: flex-end;
@@ -330,7 +330,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.2vw;
-    font-size: 1.2dvw;
+    font-size: 1.2vw;
     line-height: 1;
     color: var(--text-muted);
     width: 4em;

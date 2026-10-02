@@ -1,11 +1,11 @@
-﻿@use '../../design-system' as ds;
+@use '../../design-system' as ds;
 
 .cover-page {
   position: relative;
   width: 100%;
   height: 100%;
   padding: 4vw;
-  padding: 4dvw;
+  padding: 4vw;
   display: -webkit-flex;
   display: flex;
   -webkit-flex-direction: column;
@@ -18,14 +18,14 @@
     flex-shrink: 0;
     text-align: center;
     margin-top: 3vw;
-    margin-top: 3dvw;
+    margin-top: 3vw;
   }
 
   &__clock {
     font-family: var(--font-clock);
     font-weight: 400;
     font-size: 10vw;
-    font-size: 10dvw;
+    font-size: 10vw;
     line-height: 0.9;
     letter-spacing: -0.02em;
     color: var(--text-primary);
@@ -35,12 +35,12 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.8vw;
-    font-size: 1.8dvw;
+    font-size: 1.8vw;
     letter-spacing: normal;
     text-transform: none;
     color: var(--text-primary);
     margin-top: 0.1vw;
-    margin-top: 0.1dvw;
+    margin-top: 0.1vw;
   }
 
   &__info-cluster {
@@ -51,7 +51,7 @@
     -webkit-justify-content: center;
     justify-content: center;
     gap: 3vw;
-    gap: 3dvw;
+    gap: 3vw;
   }
 
   &__weather {
@@ -60,7 +60,7 @@
     -webkit-align-items: center;
     align-items: center;
     gap: 0.8vw;
-    gap: 0.8dvw;
+    gap: 0.8vw;
   }
 
   &__weather-icon,
@@ -69,9 +69,9 @@
     -webkit-align-items: center;
     align-items: center;
     width: 2.5vw;
-    width: 2.5dvw;
+    width: 2.5vw;
     height: 2.5vw;
-    height: 2.5dvw;
+    height: 2.5vw;
 
     svg {
       width: 100%;
@@ -88,7 +88,7 @@
     font-family: var(--font-body);
     font-weight: 500;
     font-size: 2vw;
-    font-size: 2dvw;
+    font-size: 2vw;
     color: var(--accent);
   }
 
@@ -96,7 +96,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.4vw;
-    font-size: 1.4dvw;
+    font-size: 1.4vw;
     color: var(--text-secondary);
   }
 
@@ -106,14 +106,14 @@
     -webkit-align-items: center;
     align-items: center;
     gap: 0.5vw;
-    gap: 0.5dvw;
+    gap: 0.5vw;
   }
 
   &__solar-time {
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.4vw;
-    font-size: 1.4dvw;
+    font-size: 1.4vw;
     color: var(--text-secondary);
   }
 
@@ -127,7 +127,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.1vw;
-    font-size: 1.1dvw;
+    font-size: 1.1vw;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -138,19 +138,19 @@
     font-weight: 400;
     font-style: normal;
     font-size: 2.4vw;
-    font-size: 2.4dvw;
+    font-size: 2.4vw;
     color: var(--accent);
     margin-top: 0.4vw;
-    margin-top: 0.4dvw;
+    margin-top: 0.4vw;
   }
 
   &__photo-subtitle {
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.8vw;
-    font-size: 1.8dvw;
+    font-size: 1.8vw;
     color: var(--text-primary);
     margin-top: 0.3vw;
-    margin-top: 0.3dvw;
+    margin-top: 0.3vw;
   }
 }

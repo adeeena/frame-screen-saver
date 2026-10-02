@@ -1,4 +1,4 @@
-﻿@use 'app/design-system' as ds;
+@use 'app/design-system' as ds;
 
 *,
 *::before,
@@ -9,11 +9,11 @@
 html,
 body {
   height: 100vh;
-  height: 100dvh;
+  height: 100vh;
   margin: 0;
   padding: 0;
   width: 100vw;
-  width: 100dvw;
+  width: 100vw;
   background-color: #0a0a0c;
   overflow: hidden;
 }

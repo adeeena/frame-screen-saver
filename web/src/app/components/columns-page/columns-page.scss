@@ -1,4 +1,4 @@
-﻿@use '../../design-system' as ds;
+@use '../../design-system' as ds;
 
 .columns-page {
   display: -webkit-flex;
@@ -7,17 +7,17 @@
   height: 100%;
   background-color: var(--overlay-columns);
   gap: 3vw;
-  gap: 3dvw;
+  gap: 3vw;
 
   &__panel {
     height: 100%;
     padding: 4vw 3vw;
-    padding: 4dvw 3dvw;
+    padding: 4vw 3vw;
     overflow: hidden;
 
     &--left {
       width: calc(45% - 1.5vw);
-      width: calc(45% - 1.5dvw);
+      width: calc(45% - 1.5vw);
       border-right: none;
       display: -webkit-flex;
       display: flex;
@@ -28,7 +28,7 @@
 
     &--right {
       width: calc(55% - 1.5vw);
-      width: calc(55% - 1.5dvw);
+      width: calc(55% - 1.5vw);
       display: -webkit-flex;
       display: flex;
       -webkit-flex-direction: column;
@@ -40,14 +40,14 @@
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
     margin-bottom: 1vw;
-    margin-bottom: 1dvw;
+    margin-bottom: 1vw;
   }
 
   &__clock-time {
     font-family: var(--font-clock);
     font-weight: 400;
     font-size: 6vw;
-    font-size: 6dvw;
+    font-size: 6vw;
     line-height: 1;
     color: var(--text-primary);
     letter-spacing: -0.01em;
@@ -57,12 +57,12 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     letter-spacing: normal;
     text-transform: none;
     color: var(--text-primary);
     margin-top: 0.1vw;
-    margin-top: 0.1dvw;
+    margin-top: 0.1vw;
   }
 
   &__divider {
@@ -95,18 +95,18 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     line-height: 1;
     color: var(--text-primary);
     margin-right: 0.8vw;
-    margin-right: 0.8dvw;
+    margin-right: 0.8vw;
   }
 
   &__city-clock-time {
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     line-height: 1;
     color: var(--accent);
     margin-left: auto;
@@ -116,7 +116,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.4vw;
-    font-size: 1.4dvw;
+    font-size: 1.4vw;
     line-height: 1;
     color: var(--accent);
   }
@@ -126,11 +126,11 @@
     -webkit-align-items: center;
     align-items: center;
     width: 1.4vw;
-    width: 1.4dvw;
+    width: 1.4vw;
     height: 1.4vw;
-    height: 1.4dvw;
+    height: 1.4vw;
     margin-left: 1vw;
-    margin-left: 1dvw;
+    margin-left: 1vw;
     margin-bottom: 0.2rem;
 
     svg {
@@ -148,7 +148,7 @@
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     line-height: 1;
     color: var(--accent);
     margin-left: 0.4vw;
@@ -162,7 +162,7 @@
 
     & + & {
       margin-top: 1vw;
-      margin-top: 1dvw;
+      margin-top: 1vw;
     }
   }
 
@@ -170,7 +170,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     line-height: 1;
     color: var(--text-primary);
   }
@@ -180,9 +180,9 @@
     -webkit-align-items: center;
     align-items: center;
     width: 1.4vw;
-    width: 1.4dvw;
+    width: 1.4vw;
     height: 1.4vw;
-    height: 1.4dvw;
+    height: 1.4vw;
     margin-left: auto;
     margin-right: 0.6vw;
     // Feather glyphs sit slightly high in their viewBox — nudge down to meet the text baseline.
@@ -204,7 +204,7 @@
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     line-height: 1;
     color: var(--accent);
   }
@@ -214,9 +214,9 @@
     -webkit-align-items: center;
     align-items: center;
     width: 1.9vw;
-    width: 1.9dvw;
+    width: 1.9vw;
     height: 1.9vw;
-    height: 1.9dvw;
+    height: 1.9vw;
     margin-right: 0.8vw;
 
     svg {
@@ -235,9 +235,9 @@
     -webkit-align-items: center;
     align-items: center;
     width: 1.9vw;
-    width: 1.9dvw;
+    width: 1.9vw;
     height: 1.9vw;
-    height: 1.9dvw;
+    height: 1.9vw;
     margin-right: 0.5vw;
 
     svg {
@@ -255,7 +255,7 @@
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     line-height: 1;
     color: var(--accent);
     margin-right: 0.8vw;
@@ -265,7 +265,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     line-height: 1;
     color: var(--text-secondary);
     margin-right: 0.8vw;
@@ -292,7 +292,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     line-height: 1;
     color: var(--text-secondary);
   }
@@ -307,10 +307,10 @@
     font-weight: 400;
     font-style: normal;
     font-size: 3vw;
-    font-size: 3dvw;
+    font-size: 3vw;
     color: var(--text-primary);
     margin-bottom: 0.8vw;
-    margin-bottom: 0.8dvw;
+    margin-bottom: 0.8vw;
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
   }
@@ -367,14 +367,14 @@
     -webkit-align-items: center;
     align-items: center;
     gap: 0.7vw;
-    gap: 0.7dvw;
+    gap: 0.7vw;
     background-color: #4f9168;
     border-radius: 0.3vw;
-    border-radius: 0.3dvw;
+    border-radius: 0.3vw;
     margin-top: 1vw;
-    margin-top: 1dvw;
+    margin-top: 1vw;
     padding: 1.2vw 1.5vw;
-    padding: 1.2dvw 1.5dvw;
+    padding: 1.2vw 1.5vw;
     color: #ffffff;
   }
 
@@ -383,9 +383,9 @@
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
     width: 1.6vw;
-    width: 1.6dvw;
+    width: 1.6vw;
     height: 1.6vw;
-    height: 1.6dvw;
+    height: 1.6vw;
     min-width: 1.25rem;
     min-height: 1.25rem;
     background: url('~lucide-static/icons/leaf.svg') center / contain no-repeat;
@@ -396,7 +396,7 @@
   &__eco-countdown {
     font-family: var(--font-body);
     font-size: 1.35vw;
-    font-size: 1.35dvw;
+    font-size: 1.35vw;
     line-height: 1.2;
   }
 
@@ -414,7 +414,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.2vw;
-    font-size: 1.2dvw;
+    font-size: 1.2vw;
     color: var(--text-muted);
   }
 
@@ -424,7 +424,7 @@
     -webkit-flex-direction: column;
     flex-direction: column;
     gap: 1.2vw;
-    gap: 1.2dvw;
+    gap: 1.2vw;
   }
 
   &__countdown-event {
@@ -434,13 +434,13 @@
     align-items: baseline;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     padding-bottom: 0.8vw;
-    padding-bottom: 0.8dvw;
+    padding-bottom: 0.8vw;
   }
 
   &__countdown-title {
     font-family: var(--font-body);
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     font-weight: 300;
     color: var(--text-primary);
   }
@@ -450,7 +450,7 @@
     color: var(--accent);
     font-family: var(--font-body);
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     font-weight: 700;
     white-space: nowrap;
   }
@@ -459,8 +459,8 @@
 
 //  Calendar timeline 
 .cal-timeline {
-  // vw not dvw: SCSS vars compile directly into grid-template-columns and
-  // width/height — Chrome 66 rejects the whole declaration if dvw appears there.
+  // vw not vw: SCSS vars compile directly into grid-template-columns and
+  // width/height — Chrome 66 rejects the whole declaration if vw appears there.
   $spine-w: 1.4vw;
   $dot-size: 0.7vw;
   $dot-day-size: 0.9vw;
@@ -468,10 +468,10 @@
 
   &__day-header {
     padding: 1.2vw 0 0.3vw;
-    padding: 1.2dvw 0 0.3dvw;
+    padding: 1.2vw 0 0.3vw;
     font-family: var(--font-body);
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     font-weight: 500;
     white-space: nowrap;
 
@@ -485,11 +485,11 @@
     grid-template-columns: $spine-w 1fr;
     grid-gap: 0.8vw; // Chrome 66: gap on grid was only supported as grid-gap
     gap: 0.8vw;
-    gap: 0.8dvw;
+    gap: 0.8vw;
 
     &--last {
       margin-bottom: 0.2vw;
-      margin-bottom: 0.2dvw;
+      margin-bottom: 0.2vw;
     }
   }
 
@@ -504,7 +504,7 @@
     -webkit-align-self: stretch;
     align-self: stretch;
     padding-top: 0.8vw;
-    padding-top: 0.8dvw;
+    padding-top: 0.8vw;
     --line-top: 0px;
     --line-bottom: 0px;
 
@@ -556,9 +556,9 @@
     -webkit-align-self: flex-start;
     align-self: flex-start;
     gap: 0.1vw;
-    gap: 0.1dvw;
+    gap: 0.1vw;
     padding: 0.6vw 0;
-    padding: 0.6dvw 0;
+    padding: 0.6vw 0;
     min-width: 0;
   }
 
@@ -566,7 +566,7 @@
     font-family: var(--font-body);
     font-weight: 300;
     font-size: 1.2vw;
-    font-size: 1.2dvw;
+    font-size: 1.2vw;
     color: var(--text-primary);
     -webkit-flex-shrink: 0;
     flex-shrink: 0;
@@ -577,7 +577,7 @@
     font-family: var(--font-body);
     font-weight: 400;
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -593,7 +593,7 @@
   -webkit-flex-direction: column;
   flex-direction: column;
   width: 22vw;
-  width: 22dvw;
+  width: 22vw;
   margin-left: auto;
   gap: 0;
 
@@ -601,7 +601,7 @@
     width: 100% !important;
     height: auto;
     padding: 2vw 1.8vw;
-    padding: 2dvw 1.8dvw;
+    padding: 2vw 1.8vw;
     background: rgba(8, 8, 14, 0.78);
     -webkit-backdrop-filter: blur(14px) saturate(1.2);
     backdrop-filter: blur(14px) saturate(1.2);
@@ -611,7 +611,7 @@
     border-right: none;
     border-bottom: 1px solid rgba(240, 188, 117, 0.15);
     gap: 1.4vw;
-    gap: 1.4dvw;
+    gap: 1.4vw;
   }
 
   .columns-page__panel--right {
@@ -623,38 +623,38 @@
   //  Condensed typography 
   .columns-page__clock-time {
     font-size: 4.2vw;
-    font-size: 4.2dvw;
+    font-size: 4.2vw;
     letter-spacing: -0.02em;
   }
   .columns-page__clock-date {
     font-size: 1.05vw;
-    font-size: 1.05dvw;
+    font-size: 1.05vw;
   }
   .columns-page__temperature {
     font-size: 1.4vw;
-    font-size: 1.4dvw;
+    font-size: 1.4vw;
   }
   .columns-page__weather-label,
   .columns-page__weather-uv-label {
     font-size: 1.1vw;
-    font-size: 1.1dvw;
+    font-size: 1.1vw;
   }
   .columns-page__agenda-header {
     font-size: 1.8vw;
-    font-size: 1.8dvw;
+    font-size: 1.8vw;
   }
   .columns-page__agenda-no-events {
     font-size: 1vw;
-    font-size: 1dvw;
+    font-size: 1vw;
   }
 
   //  Calendar timeline 
   .cal-timeline__item-title {
     font-size: 1.6vw;
-    font-size: 1.6dvw;
+    font-size: 1.6vw;
   }
   .cal-timeline__item-time {
     font-size: 1vw;
-    font-size: 1dvw;
+    font-size: 1vw;
   }
 }
