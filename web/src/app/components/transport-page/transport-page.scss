@@ -72,7 +72,6 @@
     -webkit-align-items: stretch;
     align-items: stretch;
     gap: 2vw;
-    margin-top: 2.5vw;
   }
 
   &__boards--row {
@@ -293,8 +292,8 @@
     -webkit-align-items: baseline;
     align-items: baseline;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 3vw 5.5vw 6vw;
-    column-gap: 0.5vw;
+    grid-template-columns: minmax(0, 1fr) 3vw 5.5vw 7vw;
+    column-gap: 0.8vw;
     width: 100%;
   }
 
@@ -361,6 +360,7 @@
     color: var(--accent);
     letter-spacing: normal;
     line-height: 1;
+    white-space: nowrap;
   }
 
   &__departures--wide &__imminent,
@@ -391,9 +391,9 @@
 
 .transit-board__departures:not(.transit-board__departures--wide) .transit-board__departure {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) 6vw;
+  grid-template-columns: max-content minmax(0, 1fr) 7vw;
   align-items: baseline;
-  column-gap: 0.6vw;
+  column-gap: 1vw;
   line-height: 1;
   width: 100%;
 }
