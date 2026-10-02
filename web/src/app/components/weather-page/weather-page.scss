@@ -8,18 +8,6 @@
   display: flex;
   -webkit-flex-direction: column;
   flex-direction: column;
-  gap: 2vw;
-  gap: 2vw;
-
-  &__title {
-    font-family: var(--font-brand);
-    font-weight: 400;
-    font-size: 3vw;
-    font-size: 3vw;
-    color: var(--text-primary);
-    -webkit-flex-shrink: 0;
-    flex-shrink: 0;
-  }
 
   //  Body: left counters column + right chart column 
   &__body {
@@ -43,6 +31,17 @@
     flex-direction: column;
     gap: 2vw;
     gap: 2vw;
+  }
+
+  &__forecast {
+    -webkit-flex: 0 0 66%;
+    flex: 0 0 66%;
+    min-width: 0;
+    min-height: 0;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
   }
 
   &__current {
@@ -125,6 +124,22 @@
     margin-bottom: 1.2vw;
   }
 
+  &__moon-divider {
+    height: var(--accent-rule-thickness);
+    width: calc(100% - 2vw);
+    flex-shrink: 0;
+    margin: 0.2vw 0 0.9vw;
+    background-color: var(--accent);
+  }
+
+  &__moon-phase {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
   &__stat-icon {
     display: inline-flex;
     -webkit-flex-shrink: 0;
@@ -171,6 +186,15 @@
     font-weight: 300;
   }
 
+  &__moon-label {
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 1.5vw;
+    font-weight: 300;
+    line-height: 1;
+    text-transform: capitalize;
+  }
+
   &__stat-suffix {
     font-weight: 300;
     font-size: 1.2vw;
@@ -181,14 +205,88 @@
   //  Meteogram 
   &__meteogram {
     position: relative;
-    -webkit-flex: 0 0 66%;
-    flex: 0 0 66%;
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+    width: 100%;
     min-height: 0;
     display: -webkit-flex;
     display: flex;
     -webkit-flex-direction: column;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  &__vigilance-list {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+    margin-top: 0.6vw;
+  }
+
+  &__vigilance {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    min-height: 3.5vw;
+    padding: 0.65vw 1.2vw;
+    border-left: 0.45vw solid transparent;
+    border-radius: 0.3vw;
+    font-family: var(--font-body);
+    line-height: 1.1;
+
+    &--yellow {
+      background-color: rgba(235, 190, 35, 0.24);
+      border-left-color: #e5b823;
+      color: #f2d46d;
+    }
+
+    &--orange {
+      background-color: rgba(232, 113, 36, 0.23);
+      border-left-color: #e87124;
+      color: #f4a064;
+    }
+
+    &--red {
+      background-color: rgba(202, 55, 55, 0.24);
+      border-left-color: #ca3737;
+      color: #f08484;
+    }
+  }
+
+  &__vigilance-icon {
+    display: inline-flex;
+    -webkit-flex: 0 0 1.8vw;
+    flex: 0 0 1.8vw;
+    width: 1.8vw;
+    height: 1.8vw;
+    margin-right: 0.8vw;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  }
+
+  &__vigilance-severity {
+    margin-right: 0.8vw;
+    font-size: 1.2vw;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  &__vigilance-reason {
+    color: var(--text-primary);
+    font-size: 1.4vw;
+    font-weight: 400;
   }
 
   &__night-band {
@@ -199,13 +297,9 @@
     bottom: 0;
     min-width: 1px;
     overflow: hidden;
-    background: linear-gradient(
-      to right,
-      rgba(4, 9, 20, 0) 0%,
-      rgba(4, 9, 20, 0.78) 2%,
-      rgba(4, 9, 20, 0.78) 98%,
-      rgba(4, 9, 20, 0) 100%
-    );
+    background:
+      linear-gradient(to bottom, rgba(4, 9, 20, 0.2) 0%, rgba(4, 9, 20, 0.08) 72%, rgba(4, 9, 20, 0) 100%),
+      linear-gradient(to right, rgba(4, 9, 20, 0) 0%, rgba(4, 9, 20, 0.18) 8%, rgba(4, 9, 20, 0.18) 92%, rgba(4, 9, 20, 0) 100%);
     pointer-events: none;
   }
 

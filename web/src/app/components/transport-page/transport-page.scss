@@ -293,7 +293,7 @@
     -webkit-align-items: baseline;
     align-items: baseline;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content max-content max-content;
+    grid-template-columns: minmax(0, 1fr) 3vw 5.5vw 6vw;
     column-gap: 0.5vw;
     width: 100%;
   }
@@ -391,7 +391,7 @@
 
 .transit-board__departures:not(.transit-board__departures--wide) .transit-board__departure {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  grid-template-columns: max-content minmax(0, 1fr) 6vw;
   align-items: baseline;
   column-gap: 0.6vw;
   line-height: 1;

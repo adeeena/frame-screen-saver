@@ -1,7 +1,4 @@
 <div class="weather-page">
-
-    <div class="weather-page__title">{{ 'pages.weather.title' | translate }}</div>
-
     <div class="weather-page__body">
 
         <div class="weather-page__counters">
@@ -29,10 +26,15 @@
                     <span class="weather-page__stat-value">{{ forecastService.next12hPrecipitation() }} mm<span
                             class="weather-page__stat-suffix"> / 12h</span></span>
                 </div>
+                <div class="weather-page__stat" *ngIf="weatherService.uvIndex() !== null">
+                    <span class="weather-page__stat-icon" feather="sun"></span>
+                    <span class="weather-page__stat-label">UV index</span>
+                    <span class="weather-page__stat-value">{{ weatherService.uvIndex() }}</span>
+                </div>
                 <div class="weather-page__stat"
                     *ngIf="forecastService.todayUvMin() !== null && forecastService.todayUvMax() !== null">
                     <span class="weather-page__stat-icon" feather="sun"></span>
-                    <span class="weather-page__stat-label">UV index</span>
+                    <span class="weather-page__stat-label">Today</span>
                     <span class="weather-page__stat-value">{{ forecastService.todayUvMin() }}–{{
                         forecastService.todayUvMax() }}</span>
                 </div>
@@ -40,27 +42,48 @@
                     <span class="weather-page__stat-icon" [feather]="event.type"></span>
                     <span class="weather-page__stat-value">{{ event.time | formatDateTime:'HH:mm' }}</span>
                 </div>
+                <div class="weather-page__moon-divider" role="separator"></div>
+                <div class="weather-page__moon-phase">
+                    <span class="weather-page__stat-icon" feather="moon"></span>
+                    <span class="weather-page__moon-label">{{ moonPhase }}</span>
+                </div>
             </div>
 
         </div>
 
-        <div class="weather-page__meteogram" *ngIf="meteogram.length > 0">
-            <div class="weather-page__night-band" *ngFor="let band of nightBands" [style.left.%]="band.leftPercent"
-                [style.width.%]="band.widthPercent" aria-hidden="true"></div>
-            <svg class="weather-page__temp-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path [attr.d]="temperaturePath" vector-effect="non-scaling-stroke" />
-            </svg>
-            <div class="weather-page__hours">
-                <div class="weather-page__hour" *ngFor="let h of meteogram">
-                    <span class="weather-page__hour-label">{{ h.hourLabel }}</span>
-                    <span class="weather-page__hour-temp">{{ h.temperature }}°</span>
-                    <span class="weather-page__hour-icon" [feather]="hourIconName(h)"></span>
-                    <div class="weather-page__rain-track"
-                        [class.weather-page__rain-track--active]="h.precipitation > 0">
-                        <div class="weather-page__rain-bar" *ngIf="h.precipitation > 0"
-                            [style.height.%]="barHeight(h.precipitation)"></div>
+        <div class="weather-page__forecast">
+            <div class="weather-page__meteogram" *ngIf="meteogram.length > 0">
+                <div class="weather-page__night-band" *ngFor="let band of nightBands" [style.left.%]="band.leftPercent"
+                    [style.width.%]="band.widthPercent" aria-hidden="true"></div>
+                <svg class="weather-page__temp-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path [attr.d]="temperaturePath" vector-effect="non-scaling-stroke" />
+                </svg>
+                <div class="weather-page__hours">
+                    <div class="weather-page__hour" *ngFor="let h of meteogram">
+                        <span class="weather-page__hour-label">{{ h.hourLabel }}</span>
+                        <span class="weather-page__hour-temp">{{ h.temperature }}°</span>
+                        <span class="weather-page__hour-icon" [feather]="hourIconName(h)"></span>
+                        <div class="weather-page__rain-track"
+                            [class.weather-page__rain-track--active]="h.precipitation > 0">
+                            <div class="weather-page__rain-bar" *ngIf="h.precipitation > 0"
+                                [style.height.%]="barHeight(h.precipitation)"></div>
+                        </div>
+                        <span class="weather-page__rain-value" *ngIf="h.precipitation > 0">{{ h.precipitation }}mm</span>
                     </div>
-                    <span class="weather-page__rain-value" *ngIf="h.precipitation > 0">{{ h.precipitation }}mm</span>
+                </div>
+            </div>
+
+            <div class="weather-page__vigilance-list" *ngIf="vigilanceService.alerts().length > 0"
+                aria-label="Yvelines weather alerts">
+                <div class="weather-page__vigilance"
+                    *ngFor="let alert of vigilanceService.alerts()"
+                    [class.weather-page__vigilance--yellow]="alert.severity === 'yellow'"
+                    [class.weather-page__vigilance--orange]="alert.severity === 'orange'"
+                    [class.weather-page__vigilance--red]="alert.severity === 'red'"
+                    role="status">
+                    <span class="weather-page__vigilance-icon" feather="alert-triangle" aria-hidden="true"></span>
+                    <span class="weather-page__vigilance-severity">{{ alert.severity | uppercase }}</span>
+                    <span class="weather-page__vigilance-reason">Yvelines: {{ alert.phenomenon }}</span>
                 </div>
             </div>
         </div>

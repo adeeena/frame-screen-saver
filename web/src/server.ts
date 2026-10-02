@@ -129,6 +129,17 @@ interface WeatherForecastData {
   readonly willBeSunny: boolean;
 }
 
+type VigilanceSeverity = 'yellow' | 'orange' | 'red';
+
+interface YvelinesVigilanceAlert {
+  readonly severity: VigilanceSeverity;
+  readonly phenomenon: string;
+}
+
+interface YvelinesVigilanceData {
+  readonly alerts: readonly YvelinesVigilanceAlert[];
+}
+
 interface Departure {
   readonly line: string;
   readonly lineColor?: string;
@@ -162,6 +173,7 @@ interface CalendarDay {
 const solarCache: Cache<SolarData> = { data: null, expiresAt: 0 };
 const weatherCache: Cache<WeatherData> = { data: null, expiresAt: 0 };
 const weatherForecastCache: Cache<WeatherForecastData> = { data: null, expiresAt: 0 };
+const yvelinesVigilanceCache: Cache<YvelinesVigilanceData> = { data: null, expiresAt: 0 };
 const worldWeatherCaches = new Map<string, Cache<WorldCityWeather>>();
 const transitCaches = new Map<string, Cache<readonly Departure[]>>();
 const calendarCache: Cache<readonly CalendarDay[]> = { data: null, expiresAt: 0 };
@@ -310,6 +322,79 @@ async function weatherHandler(_req: Request, res: Response): Promise<void> {
     console.error('Weather handler error:', error);
     if (weatherCache.data) { res.json(weatherCache.data); }
     else { res.json({ temperature: 0, symbolCode: 'clearsky_day', weatherLabel: 'Unknown', windSpeed: 0, windDirection: 0, uvIndex: null }); }
+  }
+}
+
+const VIGILANCE_PHENOMENONS: Readonly<Record<string, string>> = {
+  '1': 'Wind',
+  '2': 'Rain and flooding',
+  '3': 'Thunderstorms',
+  '4': 'Flooding',
+  '5': 'Snow and ice',
+  '6': 'Heatwave',
+  '7': 'Extreme cold',
+  '8': 'Avalanches',
+  '9': 'Coastal waves',
+};
+
+function decodeVigilanceSession(encodedCookie: string): string {
+  return decodeURIComponent(encodedCookie).replace(/[A-Za-z]/g, (letter) => {
+    const code = letter.charCodeAt(0);
+    const base = code <= 90 ? 65 : 97;
+    return String.fromCharCode(base + ((code - base + 13) % 26));
+  });
+}
+
+async function yvelinesVigilanceHandler(_req: Request, res: Response): Promise<void> {
+  if (yvelinesVigilanceCache.data && Date.now() < yvelinesVigilanceCache.expiresAt) {
+    res.json(yvelinesVigilanceCache.data);
+    return;
+  }
+
+  try {
+    const page = await externalAxios.get<string>('https://vigilance.meteofrance.fr/fr/yvelines');
+    const cookies = page.headers['set-cookie'] ?? [];
+    const sessionCookie = cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .find((cookie) => cookie.startsWith('mfsession='));
+    if (!sessionCookie) throw new Error('Météo-France vigilance session cookie unavailable.');
+
+    const token = decodeVigilanceSession(sessionCookie.slice('mfsession='.length));
+    const url = new URL('https://rwg.meteofrance.com/wsft/v3/warning/currentphenomenons');
+    url.searchParams.set('domain', '78');
+    url.searchParams.set('warning_type', 'vigilance');
+    url.searchParams.set('formatDate', 'iso');
+    url.searchParams.set('echeance', 'J0');
+    url.searchParams.set('depth', '1');
+
+    const response = await externalAxios.get<{
+      readonly phenomenons_max_colors?: readonly {
+        readonly phenomenon_id: string | number;
+        readonly phenomenon_max_color_id: string | number;
+      }[];
+    }>(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
+
+    const severityByColor: Readonly<Record<number, VigilanceSeverity>> = {
+      2: 'yellow',
+      3: 'orange',
+      4: 'red',
+    };
+    const severityOrder: Readonly<Record<VigilanceSeverity, number>> = { yellow: 1, orange: 2, red: 3 };
+    const alerts = (response.data.phenomenons_max_colors ?? []).reduce<YvelinesVigilanceAlert[]>((result, item) => {
+      const severity = severityByColor[Number(item.phenomenon_max_color_id)];
+      const phenomenon = VIGILANCE_PHENOMENONS[String(item.phenomenon_id)];
+      if (severity && phenomenon) result.push({ severity, phenomenon });
+      return result;
+    }, []).sort((first, second) => severityOrder[second.severity] - severityOrder[first.severity]);
+
+    const data = { alerts };
+    yvelinesVigilanceCache.data = data;
+    yvelinesVigilanceCache.expiresAt = Date.now() + 10 * 60 * 1000;
+    res.json(data);
+  } catch (error) {
+    console.error('Yvelines vigilance handler error:', (error as Error).message);
+    if (yvelinesVigilanceCache.data) { res.json(yvelinesVigilanceCache.data); return; }
+    res.status(502).json({ message: 'Yvelines vigilance data unavailable.' });
   }
 }
 
@@ -1399,6 +1484,7 @@ app.get('/api/clock', clockHandler);
 app.get('/api/solar/next-event', solarHandler);
 app.get('/api/weather', weatherHandler);
 app.get('/api/weather/forecast', weatherForecastHandler);
+app.get('/api/weather/vigilance', yvelinesVigilanceHandler);
 app.get('/api/weather/world', worldWeatherHandler);
 app.get('/api/image/list', imageListHandler);
 app.get('/api/image/meta', imageMetaHandler);

@@ -4,11 +4,14 @@ import { WeatherForecastService, HourlyForecast } from '../../services/weather-f
 import { SolarEvent, SolarEventResponse, SolarService } from '../../services/solar.service';
 import { weatherIconName } from '../../services/weather-icon';
 import { ScreensaverConfigService } from '../../services/screensaver-config.service';
+import { WeatherVigilanceService } from '../../services/weather-vigilance.service';
 
 /** Width of each meteogram slice, in hours — coarser steps read more easily than hourly ticks. */
 const SLICE_HOURS = 3;
 /** Number of slices to plot (24h of forecast). */
 const SLICE_COUNT = 8;
+const SYNODIC_MONTH_MS = 29.530588853 * 24 * 60 * 60 * 1000;
+const REFERENCE_NEW_MOON_MS = Date.UTC(2000, 0, 6, 18, 14);
 
 export interface MeteogramSlice extends HourlyForecast {
   /** Precipitation (mm) summed across the whole slice, not just its first hour. */
@@ -39,10 +42,15 @@ export class WeatherPageComponent {
     readonly forecastService: WeatherForecastService,
     readonly solarService: SolarService,
     readonly configService: ScreensaverConfigService,
+    readonly vigilanceService: WeatherVigilanceService,
   ) {}
 
   get currentIconName(): string {
     return weatherIconName(this.weatherService.symbolCode());
+  }
+
+  get moonPhase(): string {
+    return this.moonPhaseFor(new Date());
   }
 
   /** Wind speed converted from the API's m/s to knots. */
@@ -52,6 +60,21 @@ export class WeatherPageComponent {
 
   hourIconName(h: HourlyForecast): string {
     return weatherIconName(h.symbolCode);
+  }
+
+  private moonPhaseFor(date: Date): string {
+    const elapsed = date.getTime() - REFERENCE_NEW_MOON_MS;
+    const age = ((elapsed % SYNODIC_MONTH_MS) + SYNODIC_MONTH_MS) % SYNODIC_MONTH_MS;
+    const phase = age / SYNODIC_MONTH_MS;
+
+    if (phase < 0.03 || phase >= 0.97) return 'New moon';
+    if (phase < 0.22) return 'Waxing crescent';
+    if (phase < 0.28) return 'First quarter';
+    if (phase < 0.47) return 'Waxing gibbous';
+    if (phase < 0.53) return 'Full moon';
+    if (phase < 0.72) return 'Waning gibbous';
+    if (phase < 0.78) return 'Last quarter';
+    return 'Waning crescent';
   }
 
   /** Hourly forecast resampled into 3-hour slices for a more legible chart. */
@@ -134,15 +157,18 @@ export class WeatherPageComponent {
    *  and a stroke inset below the clipped chart boundary. */
   private createTemperaturePath(points: readonly MeteogramSlice[]): string {
     const PADDING_TOP = 28;
-    const PADDING_BOTTOM = 8;
+    const PADDING_BOTTOM = 14;
     if (points.length === 0) return '';
     const temps = points.map((h) => h.temperature);
     const min = Math.min(...temps);
-    const range = Math.max(...temps) - min || 1;
+    const range = Math.max(...temps) - min;
+    const plotHeight = 100 - PADDING_TOP - PADDING_BOTTOM;
     const step = 100 / Math.max(1, points.length - 1);
     const coords: Array<readonly [number, number]> = points.map((h, i) => [
       i * step,
-      100 - PADDING_BOTTOM - ((h.temperature - min) / range) * (100 - PADDING_TOP - PADDING_BOTTOM),
+      range === 0
+        ? PADDING_TOP + plotHeight / 2
+        : 100 - PADDING_BOTTOM - ((h.temperature - min) / range) * plotHeight,
     ]);
     return this.smoothPath(coords);
   }

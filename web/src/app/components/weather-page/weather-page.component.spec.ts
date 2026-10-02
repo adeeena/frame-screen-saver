@@ -3,6 +3,7 @@ import { WeatherService } from '../../services/weather.service';
 import { WeatherForecastService, HourlyForecast } from '../../services/weather-forecast.service';
 import { SolarEvent, SolarService } from '../../services/solar.service';
 import { ScreensaverConfigService } from '../../services/screensaver-config.service';
+import { WeatherVigilanceService } from '../../services/weather-vigilance.service';
 
 describe('WeatherPageComponent night bands', () => {
   it('aligns sunrise to the displayed forecast point scale', () => {
@@ -11,6 +12,7 @@ describe('WeatherPageComponent night bands', () => {
       {} as WeatherForecastService,
       {} as SolarService,
       {} as ScreensaverConfigService,
+      { alerts: () => [] } as unknown as WeatherVigilanceService,
     );
     const hours = Array.from({ length: 8 }, (_, index): HourlyForecast => ({
       time: new Date(Date.parse('2026-09-24T18:00:00Z') + index * 3 * 60 * 60 * 1000).toISOString(),
@@ -60,6 +62,7 @@ describe('WeatherPageComponent rain bars', () => {
       { hourly: () => hours } as unknown as WeatherForecastService,
       { nextEvent: () => null } as SolarService,
       {} as ScreensaverConfigService,
+      { alerts: () => [] } as unknown as WeatherVigilanceService,
     );
   }
 
@@ -77,5 +80,43 @@ describe('WeatherPageComponent rain bars', () => {
     expect(component.barHeight(5)).toBe(25);
     expect(component.barHeight(10)).toBe(50);
     expect(component.barHeight(12)).toBe(50);
+  });
+});
+
+describe('WeatherPageComponent temperature path', () => {
+  it('centers a flat forecast instead of pinning it to the bottom edge', () => {
+    const component = new WeatherPageComponent(
+      {} as WeatherService,
+      {} as WeatherForecastService,
+      {} as SolarService,
+      {} as ScreensaverConfigService,
+      { alerts: () => [] } as unknown as WeatherVigilanceService,
+    );
+
+    const path = (component as any).createTemperaturePath([
+      { temperature: 25 },
+      { temperature: 25 },
+    ]);
+
+    expect(path).toBe('M0,57 L100,57');
+  });
+});
+
+describe('WeatherPageComponent moon phase', () => {
+  it('names new, quarter, full, and waning phases', () => {
+    const component = new WeatherPageComponent(
+      {} as WeatherService,
+      {} as WeatherForecastService,
+      {} as SolarService,
+      {} as ScreensaverConfigService,
+      { alerts: () => [] } as unknown as WeatherVigilanceService,
+    );
+    const newMoon = new Date(Date.UTC(2000, 0, 6, 18, 14));
+    const phaseAfter = (days: number): Date => new Date(newMoon.getTime() + days * 24 * 60 * 60 * 1000);
+
+    expect((component as any).moonPhaseFor(newMoon)).toBe('New moon');
+    expect((component as any).moonPhaseFor(phaseAfter(7.38))).toBe('First quarter');
+    expect((component as any).moonPhaseFor(phaseAfter(14.77))).toBe('Full moon');
+    expect((component as any).moonPhaseFor(phaseAfter(22.15))).toBe('Last quarter');
   });
 });
