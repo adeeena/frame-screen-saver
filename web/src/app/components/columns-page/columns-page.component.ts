@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, ViewChild, ElementRef, AfterViewChecked, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewChecked, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import moment from 'moment';
 import { ClockService } from '../../services/clock.service';
@@ -6,6 +6,7 @@ import { CalendarService, CalendarDay, CalendarEvent } from '../../services/cale
 import { ScreensaverConfigService, WorldClockCity } from '../../services/screensaver-config.service';
 import { WeatherService, WorldCityWeather } from '../../services/weather.service';
 import { weatherIconName } from '../../services/weather-icon';
+import { TransportPageComponent } from '../transport-page/transport-page.component';
 
 interface CityWeatherDisplay {
   readonly name: string;
@@ -34,8 +35,12 @@ const MINUTE_MS = 60 * 1000;
 })
 export class ColumnsPageComponent implements AfterViewChecked, OnDestroy {
   @Input() sidebarLayout = false;
+  @Input() active = false;
+  @Input() startOnTransport = false;
+  @Output() cycleComplete = new EventEmitter<void>();
 
   @ViewChild('calendarRef') private calendarRef?: ElementRef<HTMLElement>;
+  @ViewChild('transportContent') private transportContent?: TransportPageComponent;
 
   private trimCount = 0;
   private _trimPending = false;
@@ -55,9 +60,39 @@ export class ColumnsPageComponent implements AfterViewChecked, OnDestroy {
   private displayDaysSource: readonly CalendarDay[] | null = null;
   private displayDaysTrimCount = -1;
   private displayDaysCache: readonly CalendarDay[] = [];
-  private calendarPageTimerId: ReturnType<typeof setInterval> | null = null;
-  private calendarPageTimerStarted = false;
+  private calendarPageTimerId: ReturnType<typeof setTimeout> | null = null;
   calendarPage = 0;
+
+  transportStartIndex(): number { return this.countdownEvents.length > 0 ? 2 : 1; }
+
+  pageCount(): number { return this.transportStartIndex() + (this.transportContent?.pageCount() ?? 1); }
+
+  isTransportPage(): boolean { return this.calendarPage >= this.transportStartIndex(); }
+
+  onTransportPageChanged(index: number): void {
+    this.calendarPage = this.transportStartIndex() + index;
+  }
+
+  onTransportCycleComplete(): void {
+    if (this.active) this.cycleComplete.emit();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes.active) return;
+    if (this.calendarPageTimerId !== null) clearTimeout(this.calendarPageTimerId);
+    this.calendarPageTimerId = null;
+    if (this.active) this.calendarPage = this.startOnTransport ? this.transportStartIndex() : 0;
+  }
+
+  private scheduleNextCalendarPage(): void {
+    const duration = this.calendarPage === 0
+      ? this.configService.config()?.animationSettings.columnsPageTimeoutMs || 10000
+      : 7000;
+    this.calendarPageTimerId = setTimeout(() => {
+      this.calendarPageTimerId = null;
+      if (this.active && !this.isTransportPage()) this.calendarPage++;
+    }, duration);
+  }
 
   constructor(
     readonly clockService: ClockService,
@@ -272,12 +307,7 @@ export class ColumnsPageComponent implements AfterViewChecked, OnDestroy {
 
   ngAfterViewChecked(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    if (!this.calendarPageTimerStarted && this.countdownEvents.length > 0) {
-      this.calendarPageTimerStarted = true;
-      this.calendarPageTimerId = setInterval(() => {
-        this.calendarPage = this.calendarPage === 0 ? 1 : 0;
-      }, 7000);
-    }
+    if (this.active && !this.isTransportPage() && this.calendarPageTimerId === null) this.scheduleNextCalendarPage();
 
     // Reset trim count when the underlying data changes
     const key = this.candidateDays.map((d) => d.date + ':' + d.events.length).join('|');
@@ -301,7 +331,7 @@ export class ColumnsPageComponent implements AfterViewChecked, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.calendarPageTimerId !== null) clearInterval(this.calendarPageTimerId);
+    if (this.calendarPageTimerId !== null) clearTimeout(this.calendarPageTimerId);
   }
 
   dayLabelParts(day: CalendarDay): { accent: string; normal: string } {

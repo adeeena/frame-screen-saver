@@ -18,7 +18,6 @@ import { Router } from '@angular/router';
 import { ScreensaverConfig, ScreensaverConfigService } from '../../services/screensaver-config.service';
 import { CoverPageComponent } from '../cover-page/cover-page.component';
 import { ColumnsPageComponent } from '../columns-page/columns-page.component';
-import { TransportPageComponent } from '../transport-page/transport-page.component';
 import { WeatherPageComponent } from '../weather-page/weather-page.component';
 import { DebugOverlayComponent } from '../debug-overlay/debug-overlay.component';
 import { ImageCycleService } from '../../services/image-cycle.service';
@@ -52,13 +51,13 @@ const seconds = (milliseconds: number | undefined, fallback: number): number =>
 const frameChangeCycles = (cycles: number | undefined): number =>
   Number.isFinite(cycles) && cycles! > 0 ? Math.floor(cycles!) : 10;
 
-function forcedPageNumber(): 1 | 2 | 3 | 4 | 5 {
+function forcedPageNumber(): 1 | 2 | 3 | 4 {
   if (typeof window === 'undefined') return 1;
   switch (new URLSearchParams(window.location.search).get('force-page')) {
     case 'cover': return 2;
     case 'columns': return 3;
-    case 'transport': return 4;
-    case 'weather': return 5;
+    case 'transport': return 3;
+    case 'weather': return 4;
     default: return 1;
   }
 }
@@ -69,7 +68,6 @@ interface FrameElements {
   readonly overlay: HTMLDivElement;
   readonly cover: HTMLElement;
   readonly columns: HTMLElement;
-  readonly transport: HTMLElement;
   readonly weather: HTMLElement;
 }
 
@@ -91,12 +89,13 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   @ViewChild('outerFrame') private outerFrame!: ElementRef<HTMLDivElement>;
   @ViewChild('coverPage', { read: ElementRef }) private coverPageEl!: ElementRef<HTMLElement>;
   @ViewChild('columnsPage', { read: ElementRef }) private columnsPageEl!: ElementRef<HTMLElement>;
-  @ViewChild('transportPage', { read: ElementRef }) private transportPageEl!: ElementRef<HTMLElement>;
   @ViewChild('weatherPage', { read: ElementRef }) private weatherPageEl!: ElementRef<HTMLElement>;
 
   isPaused = false;
   showDebug = false;
-  currentPage: 1 | 2 | 3 | 4 | 5 = forcedPageNumber();
+  currentPage: 1 | 2 | 3 | 4 = forcedPageNumber();
+  readonly forceTransport = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('force-page') === 'transport';
   frameStyle: 0 | 1 | 2 | 3 | 4 | 5 = (Math.floor(Math.random() * 6)) as 0 | 1 | 2 | 3 | 4 | 5;
 
   private mainTimeline!: gsap.core.Timeline;
@@ -113,7 +112,7 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
   private imgH = 0;
 
   private kenBurnsTween: gsap.core.Tween | null = null;
-  private forcePage: 2 | 3 | 4 | 5 | null = null;
+  private forcePage: 2 | 3 | 4 | null = null;
 
   sidebarLayout = false;
 
@@ -202,23 +201,22 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       .subscribe(() => this.initImages());
   }
 
-  private readForcedPage(): 2 | 3 | 4 | 5 | null {
+  private readForcedPage(): 2 | 3 | 4 | null {
     const value = new URLSearchParams(window.location.search).get('force-page');
     switch (value) {
       case 'cover': return 2;
       case 'columns': return 3;
-      case 'transport': return 4;
-      case 'weather': return 5;
+      case 'transport': return 3;
+      case 'weather': return 4;
       default: return null;
     }
   }
 
-  private showForcedPage(page: 2 | 3 | 4 | 5): void {
-    const pages: Record<2 | 3 | 4 | 5, HTMLElement> = {
+  private showForcedPage(page: 2 | 3 | 4): void {
+    const pages: Record<2 | 3 | 4, HTMLElement> = {
       2: this.els.cover,
       3: this.els.columns,
-      4: this.els.transport,
-      5: this.els.weather,
+      4: this.els.weather,
     };
     this.currentPage = page;
     gsap.set(this.els.overlay, { opacity: 1 });
@@ -247,7 +245,6 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       overlay: this.infoOverlay.nativeElement,
       cover: this.coverPageEl.nativeElement,
       columns: this.columnsPageEl.nativeElement,
-      transport: this.transportPageEl.nativeElement,
       weather: this.weatherPageEl.nativeElement,
     };
   }
@@ -300,7 +297,6 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
     gsap.set(els.overlay, { opacity: 0 });
     gsap.set(els.cover, { opacity: 0, x: '-2vw' });
     gsap.set(els.columns, { opacity: 0, x: '-2vw' });
-    gsap.set(els.transport, { opacity: 0, x: '-2vw' });
     gsap.set(els.weather, { opacity: 0, x: '-2vw' });
 
     this.mainTimeline = gsap
@@ -315,32 +311,27 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
       .to(els.cover, { opacity: 0, x: '2vw', duration: timings.transitionDuration }, 'page3')
       .to(els.columns, { opacity: 1, x: 0, duration: timings.transitionDuration }, 'page3')
       .call(() => run(() => { this.currentPage = 3; }), [], 'page3')
-      .addLabel('page4', `page3+=${timings.transitionDuration + timings.columnsPageDuration}`)
+      .addLabel('columnsPause', `page3+=${timings.transitionDuration}`)
+      .addPause('columnsPause')
+      .addLabel('page4', 'columnsPause+=0.01')
       .to(els.columns, { opacity: 0, x: '2vw', duration: timings.transitionDuration }, 'page4')
-      .to(els.transport, { opacity: 1, x: 0, duration: timings.transitionDuration }, 'page4')
-      .call(() => run(() => { this.currentPage = 4; }), [], `page4+=${timings.transitionDuration}`)
-      .addLabel('messagePause', `page4+=${timings.transitionDuration}`)
-      .addPause('messagePause')
-      .addLabel('page5', 'messagePause+=0.01')
-      .to(els.transport, { opacity: 0, x: '2vw', duration: timings.transitionDuration }, 'page5')
-      .to(els.weather, { opacity: 1, x: 0, duration: timings.transitionDuration }, 'page5')
-      .call(() => run(() => { this.currentPage = 5; }), [], 'page5')
-      .addLabel('end', `page5+=${timings.transitionDuration + timings.weatherPageDuration}`)
+      .to(els.weather, { opacity: 1, x: 0, duration: timings.transitionDuration }, 'page4')
+      .call(() => run(() => { this.currentPage = 4; }), [], 'page4')
+      .addLabel('end', `page4+=${timings.transitionDuration + timings.weatherPageDuration}`)
       .to(els.overlay, { opacity: 0, duration: timings.transitionDuration }, 'end')
       .to(els.weather, { opacity: 0, x: '2vw', duration: timings.transitionDuration }, 'end')
       .call(() => run(() => {
         gsap.set(els.cover, { x: '-2vw' });
         gsap.set(els.columns, { x: '-2vw' });
-        gsap.set(els.transport, { x: '-2vw' });
         gsap.set(els.weather, { x: '-2vw' });
         this.currentPage = 1;
         this.advanceImage();
       }));
   }
 
-  onMessageCycleComplete(): void {
+  onColumnsCycleComplete(): void {
     if (this.forcePage) return;
-    if (this.currentPage === 4 && !this.isPaused) this.mainTimeline.resume();
+    if (this.currentPage === 3 && !this.isPaused) this.mainTimeline.resume();
   }
 
   private startKenBurns(el: HTMLElement): void {
@@ -421,11 +412,10 @@ export class TheFrameComponent implements AfterViewInit, OnDestroy {
 
   private skipToNextImage(): void {
     this.mainTimeline.kill();
-    gsap.killTweensOf([this.els.overlay, this.els.cover, this.els.columns, this.els.transport, this.els.weather]);
+    gsap.killTweensOf([this.els.overlay, this.els.cover, this.els.columns, this.els.weather]);
     gsap.set(this.els.overlay, { opacity: 0 });
     gsap.set(this.els.cover, { opacity: 0, x: '-2vw' });
     gsap.set(this.els.columns, { opacity: 0, x: '-2vw' });
-    gsap.set(this.els.transport, { opacity: 0, x: '-2vw' });
     gsap.set(this.els.weather, { opacity: 0, x: '-2vw' });
     this.advanceImage();
   }

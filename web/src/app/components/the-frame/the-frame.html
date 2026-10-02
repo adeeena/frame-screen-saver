@@ -45,13 +45,11 @@
       <app-cover-page #coverPage class="the-frame__page"></app-cover-page>
 
       <!-- Page 3: Columns -->
-      <app-columns-page #columnsPage class="the-frame__page" [sidebarLayout]="sidebarLayout"></app-columns-page>
+      <app-columns-page #columnsPage class="the-frame__page" [sidebarLayout]="sidebarLayout"
+        [active]="currentPage === 3" [startOnTransport]="forceTransport"
+        (cycleComplete)="onColumnsCycleComplete()"></app-columns-page>
 
-      <!-- Page 4: Transport -->
-      <app-transport-page #transportPage class="the-frame__page" [active]="currentPage === 4"
-        (messageCycleComplete)="onMessageCycleComplete()"></app-transport-page>
-
-      <!-- Page 5: Weather -->
+      <!-- Page 4: Weather -->
       <app-weather-page #weatherPage class="the-frame__page"></app-weather-page>
 
     </div><!-- /overlay -->

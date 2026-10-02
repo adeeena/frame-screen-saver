@@ -109,6 +109,7 @@
     flex-direction: column;
     -webkit-justify-content: flex-start;
     justify-content: flex-start;
+    margin-top: 1vw;
     border-top: var(--accent-rule-thickness) solid var(--accent);
     padding-top: 1.5vw;
     padding-top: 1.5vw;
@@ -291,8 +292,8 @@
   &__night-band {
     position: absolute;
     z-index: 0;
-    top: 5.5vw;
-    top: 5.5vw;
+    top: 6.2vw;
+    top: 6.2vw;
     bottom: 0;
     min-width: 1px;
     overflow: hidden;

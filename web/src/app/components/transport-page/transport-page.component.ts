@@ -4,6 +4,7 @@ import { takeUntil } from 'rxjs/operators';
 import moment from 'moment';
 import { TrainService, Departure } from '../../services/train.service';
 import { Message, MessageService } from '../../services/message.service';
+import { ClockService } from '../../services/clock.service';
 import { ScreensaverConfigService, TransitRouteSettings } from '../../services/screensaver-config.service';
 
 const defaultMessagePageDurationMs = 5000;
@@ -91,16 +92,18 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
   private readonly departuresCache = new Map<string, readonly Departure[]>();
 
   @Input() active = false;
+  @Input() embedded = false;
   @Output() messageCycleComplete = new EventEmitter<void>();
+  @Output() pageChanged = new EventEmitter<number>();
 
   messagePages: readonly (readonly Message[])[] = [[]];
   currentMessagePage = 0;
-  currentTransportPage = 0;
 
   constructor(
     readonly trainService: TrainService,
     readonly configService: ScreensaverConfigService,
     private readonly messageService: MessageService,
+    readonly clockService: ClockService,
   ) {}
 
   transitEntries(): readonly TransitRouteSettings[] {
@@ -144,8 +147,10 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe((messages) => {
         this.messagePages = this.paginate(messages);
         this.currentMessagePage = 0;
-        this.currentTransportPage = 0;
-        if (this.active) this.startMessageCycle();
+        if (this.active) {
+          this.pageChanged.emit(0);
+          this.startMessageCycle();
+        }
       });
   }
 
@@ -153,7 +158,6 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
     if (!changes.active) return;
     if (this.active) {
       this.currentMessagePage = 0;
-      this.currentTransportPage = 0;
       this.startMessageCycle();
     } else {
       this.clearPageTimeout();
@@ -180,24 +184,30 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
     return departures;
   }
 
-  transportEntriesPage(): readonly TransitRouteSettings[] {
+  transportEntriesPage(pageIndex = Math.min(this.currentMessagePage, this.transportPageCount() - 1)): readonly TransitRouteSettings[] {
     const entries = this.transitEntries();
-    if (this.messagePages[0].length === 0) return entries;
-    const start = this.currentTransportPage * 2;
+    const start = pageIndex * 2;
     return entries.slice(start, start + 2);
   }
 
+  transportPageIndexes(): readonly number[] {
+    return Array.from({ length: this.transportPageCount() }, (_, index) => index);
+  }
+
   transportPageCount(): number {
-    if (this.messagePages[0].length === 0) return 1;
     return Math.max(1, Math.ceil(this.transitEntries().length / 2));
   }
 
   pageCount(): number {
-    return Math.max(this.messagePages.length, this.transportPageCount());
+    return this.transportPageCount() + (this.messagePages[0].length > 0 ? this.messagePages.length : 0);
+  }
+
+  isMessagePage(): boolean {
+    return this.currentMessagePage >= this.transportPageCount() && this.messagePages[0].length > 0;
   }
 
   currentMessagePageIndex(): number {
-    return this.currentMessagePage % this.messagePages.length;
+    return this.currentMessagePage - this.transportPageCount();
   }
 
   minutesUntil(dep: Departure): number {
@@ -244,7 +254,7 @@ export class TransportPageComponent implements OnInit, OnChanges, OnDestroy {
     this.pageTimeoutId = setTimeout(() => {
       if (this.currentMessagePage < this.pageCount() - 1) {
         this.currentMessagePage += 1;
-        this.currentTransportPage = this.currentMessagePage % this.transportPageCount();
+        this.pageChanged.emit(this.currentMessagePage);
         this.startMessageCycle();
       } else {
         this.messageCycleComplete.emit();

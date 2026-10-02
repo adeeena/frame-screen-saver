@@ -1,5 +1,5 @@
-import { formatExpiryCountdown, nextTransitOpening } from './transport-page.component';
-import { TransitRouteSettings } from '../../services/screensaver-config.service';
+import { formatExpiryCountdown, nextTransitOpening, TransportPageComponent } from './transport-page.component';
+import { ScreensaverConfigService, TransitRouteSettings } from '../../services/screensaver-config.service';
 
 describe('formatExpiryCountdown', () => {
   const nowMs = Date.parse('2026-09-18T12:00:00Z');
@@ -50,5 +50,37 @@ describe('nextTransitOpening', () => {
     expect(nextTransitOpening([
       route('active', 'A', 'Central Station', '2026-01-01'),
     ], Date.parse('2026-09-18T12:00:00Z'))).toBeNull();
+  });
+});
+
+describe('TransportPageComponent page sequence', () => {
+  const entries = Array.from({ length: 4 }, (_, index) => ({ id: `route-${index}` })) as TransitRouteSettings[];
+  const component = new TransportPageComponent(
+    {} as any,
+    { config: () => ({ appSettings: { transit: { isEnabled: true, entries } } }) } as unknown as ScreensaverConfigService,
+    {} as any,
+    {} as any,
+  );
+
+  it('shows only two-route transit pages when there are no messages', () => {
+    component.messagePages = [[]];
+    component.currentMessagePage = 1;
+
+    expect(component.pageCount()).toBe(2);
+    expect(component.isMessagePage()).toBe(false);
+    expect(component.transportEntriesPage()).toEqual(entries.slice(2));
+  });
+
+  it('shows message pages after transit while keeping the outgoing routes mounted', () => {
+    component.messagePages = [[{} as any], [{} as any]];
+    component.currentMessagePage = 2;
+
+    expect(component.pageCount()).toBe(4);
+    expect(component.isMessagePage()).toBe(true);
+    expect(component.currentMessagePageIndex()).toBe(0);
+    expect(component.transportEntriesPage()).toEqual(entries.slice(2));
+
+    component.currentMessagePage = 3;
+    expect(component.currentMessagePageIndex()).toBe(1);
   });
 });

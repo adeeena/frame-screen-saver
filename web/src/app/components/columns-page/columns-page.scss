@@ -34,6 +34,10 @@
       -webkit-flex-direction: column;
       flex-direction: column;
     }
+
+    &--paginated {
+      padding-bottom: 1vw;
+    }
   }
 
   &__mini-clock {
@@ -341,6 +345,12 @@
     pointer-events: none;
     transform: translateX(1.2vw);
     transition: opacity 0.55s ease, transform 0.55s ease;
+
+    app-transport-page {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
   }
 
   &__calendar-view--countdown {

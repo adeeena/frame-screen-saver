@@ -45,48 +45,54 @@
   </div>
 
   <!-- RIGHT PANEL -->
-  <div class="columns-page__panel columns-page__panel--right">
-
-    <div class="columns-page__agenda-header">{{ 'pages.agenda.title' | translate }}</div>
+  <div class="columns-page__panel columns-page__panel--right"
+    [class.columns-page__panel--paginated]="pageCount() > 1">
 
     <div class="columns-page__calendar" #calendarRef>
       <div class="columns-page__calendar-views">
         <div class="columns-page__calendar-view" [class.columns-page__calendar-view--active]="calendarPage === 0">
-        <ng-container *ngFor="let day of displayDays; let isFirstDay = first">
-        <div class="cal-timeline__day-header">
-          <span class="cal-timeline__accent">{{ dayLabelParts(day).accent }}</span><!--
+          <div class="columns-page__agenda-header">{{ 'pages.agenda.title' | translate }}</div>
+          <ng-container *ngFor="let day of displayDays; let isFirstDay = first">
+            <div class="cal-timeline__day-header">
+              <span class="cal-timeline__accent">{{ dayLabelParts(day).accent }}</span><!--
           --><span class="cal-timeline__normal">{{ dayLabelParts(day).normal }}</span>
-        </div>
-        <div class="cal-timeline__event-row" [class.cal-timeline__event-row--last]="isLastEvt"
-          *ngFor="let evt of day.events; let isFirstEvt = first; let isLastEvt = last">
-          <div class="cal-timeline__spine" [style.--line-top]="isFirstEvt ? '1.15vw' : '0px'"
-            [style.--line-bottom]="isLastEvt ? 'calc(100% - 1.15vw)' : '0px'">
-            <div class="cal-timeline__dot"></div>
-          </div>
-          <div class="cal-timeline__event-body">
-            <span class="cal-timeline__time">{{ eventTime(evt) }}</span>
-            <span class="cal-timeline__title">{{ eventTitle(evt) }}</span>
-          </div>
-        </div>
-        </ng-container>
-        <div class="columns-page__no-events" *ngIf="displayDays.length === 0">
-          {{ 'empty.events' | translate }}
-        </div>
-        </div>
-        <div class="columns-page__calendar-view columns-page__calendar-view--countdown"
-          [class.columns-page__calendar-view--active]="calendarPage === 1">
-        <div class="columns-page__countdown-list">
-          <div class="columns-page__countdown-event" *ngFor="let event of countdownEvents">
-            <span class="columns-page__countdown-title">{{ event.title }}</span>
-            <span class="columns-page__countdown-value">{{ countdownLabel(event) }}</span>
-          </div>
-          <div class="columns-page__no-events" *ngIf="countdownEvents.length === 0">
+            </div>
+            <div class="cal-timeline__event-row" [class.cal-timeline__event-row--last]="isLastEvt"
+              *ngFor="let evt of day.events; let isFirstEvt = first; let isLastEvt = last">
+              <div class="cal-timeline__spine" [style.--line-top]="isFirstEvt ? '1.15vw' : '0px'"
+                [style.--line-bottom]="isLastEvt ? 'calc(100% - 1.15vw)' : '0px'">
+                <div class="cal-timeline__dot"></div>
+              </div>
+              <div class="cal-timeline__event-body">
+                <span class="cal-timeline__time">{{ eventTime(evt) }}</span>
+                <span class="cal-timeline__title">{{ eventTitle(evt) }}</span>
+              </div>
+            </div>
+          </ng-container>
+          <div class="columns-page__no-events" *ngIf="displayDays.length === 0">
             {{ 'empty.events' | translate }}
           </div>
         </div>
+        <div class="columns-page__calendar-view columns-page__calendar-view--countdown"
+          [class.columns-page__calendar-view--active]="calendarPage === 1 && countdownEvents.length > 0">
+          <div class="columns-page__agenda-header">{{ 'pages.agenda.title' | translate }}</div>
+          <div class="columns-page__countdown-list">
+            <div class="columns-page__countdown-event" *ngFor="let event of countdownEvents">
+              <span class="columns-page__countdown-title">{{ event.title }}</span>
+              <span class="columns-page__countdown-value">{{ countdownLabel(event) }}</span>
+            </div>
+            <div class="columns-page__no-events" *ngIf="countdownEvents.length === 0">
+              {{ 'empty.events' | translate }}
+            </div>
+          </div>
+        </div>
+        <div class="columns-page__calendar-view" [class.columns-page__calendar-view--active]="isTransportPage()">
+          <app-transport-page #transportContent [embedded]="true" [active]="active && isTransportPage()"
+            (pageChanged)="onTransportPageChanged($event)"
+            (messageCycleComplete)="onTransportCycleComplete()"></app-transport-page>
         </div>
       </div>
-      <app-pagination-dots *ngIf="countdownEvents.length > 0" [count]="2"
+      <app-pagination-dots *ngIf="pageCount() > 1" [count]="pageCount()"
         [activeIndex]="calendarPage"></app-pagination-dots>
     </div>
 
