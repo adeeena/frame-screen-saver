@@ -15,6 +15,8 @@ The frame cycles between two views on a configurable timer:
 | **Cover** | Full-bleed photo from the media library, clock overlay |
 | **Columns** | Weather · Transit departures · Calendar · Solar countdown |
 
+Today's timed agenda items remain visible until their end time has passed, checked every minute. All-day items remain visible throughout the day.
+
 Photos are served on-demand, resized and cached server-side via [Sharp](https://sharp.pixelplumbing.com/). The image set lives in `media/` and is baked into the container at build time.
 
 ---

@@ -236,7 +236,7 @@ export class ColumnsPageComponent implements AfterViewChecked, OnDestroy {
     this.candidateDaysCache = source
       .map((day) => {
         if (day.date === todayStr) {
-          const events = day.events.filter((e) => e.isAllDay || e.startTime >= nowTime);
+          const events = day.events.filter((event) => event.isAllDay || event.endTime >= nowTime);
           return { ...day, events };
         }
         return day;
