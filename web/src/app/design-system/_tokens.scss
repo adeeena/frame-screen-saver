@@ -7,6 +7,7 @@
   --palette-accent:        #f0bc75;
   --palette-accent-strong: #ff9d00;
   --palette-info:          #0089a7;
+  --palette-cold:          #9bdcff;
   --palette-white:         #fcfcfd;
   --palette-danger:        #c3002f;
   --palette-danger-soft:   #ff8f84;
@@ -37,6 +38,7 @@
   --accent-dim:       rgba(240, 188, 117, 0.55);
   --accent-rule-thickness: 3px;
   --color-info:       var(--palette-info);
+  --color-cold:       var(--palette-cold);
   --color-danger:     var(--palette-danger);
   --color-danger-soft: var(--palette-danger-soft);
   --color-success:    var(--palette-success);
@@ -71,4 +73,3 @@
     --space-xl:   5vw;
   }
 }
-

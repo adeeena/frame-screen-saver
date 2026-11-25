@@ -313,13 +313,17 @@
     overflow: visible;
     z-index: 2;
     pointer-events: none;
+  }
 
-    path {
-      fill: none;
-      stroke: var(--accent);
-      stroke-width: 0.25rem;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+  &__temp-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 0.25rem;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    &--cold {
+      stroke: var(--color-cold);
     }
   }
 

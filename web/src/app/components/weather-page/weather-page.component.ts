@@ -10,6 +10,8 @@ import { WeatherVigilanceService } from '../../services/weather-vigilance.servic
 const SLICE_HOURS = 3;
 /** Number of slices to plot (24h of forecast). */
 const SLICE_COUNT = 8;
+const TEMPERATURE_PLOT_TOP = 28;
+const TEMPERATURE_PLOT_BOTTOM = 14;
 const SYNODIC_MONTH_MS = 29.530588853 * 24 * 60 * 60 * 1000;
 const REFERENCE_NEW_MOON_MS = Date.UTC(2000, 0, 6, 18, 14);
 
@@ -35,6 +37,8 @@ export class WeatherPageComponent {
   private meteogramCache: readonly MeteogramSlice[] = [];
   private nightBandsCache: readonly NightBand[] = [];
   private temperaturePathCache = '';
+  private freezingClipYCache = 100;
+  private hasFreezingTemperaturesCache = false;
   private maximumPrecipitation = 0.1;
 
   constructor(
@@ -88,16 +92,26 @@ export class WeatherPageComponent {
     return this.nightBandsCache;
   }
 
-  /** Rain bar height relative to at most 10 mm, capped at half the graph height. */
+  /** Rain bar height relative to at least 10 mm, capped at half the graph height. */
   barHeight(mm: number): number {
     this.refreshDerivedWeather();
-    return Math.min(50, Math.round((mm / Math.min(10, this.maximumPrecipitation)) * 50));
+    return Math.min(50, Math.round((mm / Math.max(10, this.maximumPrecipitation)) * 50));
   }
 
   /** Smooth SVG path (0–100 viewBox) tracing the temperature curve through each slice. */
   get temperaturePath(): string {
     this.refreshDerivedWeather();
     return this.temperaturePathCache;
+  }
+
+  get freezingClipY(): number {
+    this.refreshDerivedWeather();
+    return this.freezingClipYCache;
+  }
+
+  get hasFreezingTemperatures(): boolean {
+    this.refreshDerivedWeather();
+    return this.hasFreezingTemperaturesCache;
   }
 
   private refreshDerivedWeather(): void {
@@ -123,6 +137,9 @@ export class WeatherPageComponent {
       solar?.events ?? [],
     );
     this.temperaturePathCache = this.createTemperaturePath(slices);
+    const freezingClipY = this.createFreezingClipY(slices);
+    this.hasFreezingTemperaturesCache = freezingClipY !== null;
+    this.freezingClipYCache = freezingClipY ?? 100;
   }
 
   private createNightBands(hours: readonly HourlyForecast[], solarEvents: readonly SolarEvent[]): readonly NightBand[] {
@@ -156,21 +173,34 @@ export class WeatherPageComponent {
   /** Smooth SVG path tracing the temperature curve, with space for labels above
    *  and a stroke inset below the clipped chart boundary. */
   private createTemperaturePath(points: readonly MeteogramSlice[]): string {
-    const PADDING_TOP = 28;
-    const PADDING_BOTTOM = 14;
     if (points.length === 0) return '';
     const temps = points.map((h) => h.temperature);
     const min = Math.min(...temps);
-    const range = Math.max(...temps) - min;
-    const plotHeight = 100 - PADDING_TOP - PADDING_BOTTOM;
+    const max = Math.max(...temps);
     const step = 100 / Math.max(1, points.length - 1);
     const coords: Array<readonly [number, number]> = points.map((h, i) => [
       i * step,
-      range === 0
-        ? PADDING_TOP + plotHeight / 2
-        : 100 - PADDING_BOTTOM - ((h.temperature - min) / range) * plotHeight,
+      this.temperatureY(h.temperature, min, max),
     ]);
     return this.smoothPath(coords);
+  }
+
+  private createFreezingClipY(points: readonly MeteogramSlice[]): number | null {
+    if (points.length === 0) return null;
+    const temperatures = points.map((point) => point.temperature);
+    const min = Math.min(...temperatures);
+    const max = Math.max(...temperatures);
+    if (min >= 0) return null;
+    if (max < 0) return 0;
+    return this.temperatureY(0, min, max);
+  }
+
+  private temperatureY(temperature: number, min: number, max: number): number {
+    const range = max - min;
+    const plotHeight = 100 - TEMPERATURE_PLOT_TOP - TEMPERATURE_PLOT_BOTTOM;
+    return range === 0
+      ? TEMPERATURE_PLOT_TOP + plotHeight / 2
+      : 100 - TEMPERATURE_PLOT_BOTTOM - ((temperature - min) / range) * plotHeight;
   }
 
   /** Catmull-Rom → cubic Bézier smoothing, so the line flows through every point instead of jagged segments.
@@ -223,4 +253,3 @@ export class WeatherPageComponent {
     return bands;
   }
 }
-

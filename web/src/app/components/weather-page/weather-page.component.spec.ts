@@ -66,39 +66,57 @@ describe('WeatherPageComponent rain bars', () => {
     );
   }
 
-  it('scales light rain against the visible maximum below 10 mm', () => {
+  it('uses a 10 mm scale when all rainfall is below 10 mm', () => {
     const component = componentWithRain([5, 2.5]);
 
-    expect(component.barHeight(5)).toBe(50);
-    expect(component.barHeight(2.5)).toBe(25);
+    expect(component.barHeight(5)).toBe(25);
+    expect(component.barHeight(2.5)).toBe(13);
     expect(component.barHeight(0)).toBe(0);
   });
 
-  it('uses 10 mm as the reference when the visible maximum exceeds it', () => {
+  it('scales the full rainfall set to its peak when the maximum exceeds 10 mm', () => {
     const component = componentWithRain([12, 5]);
 
-    expect(component.barHeight(5)).toBe(25);
-    expect(component.barHeight(10)).toBe(50);
+    expect(component.barHeight(5)).toBe(21);
+    expect(component.barHeight(10)).toBe(42);
     expect(component.barHeight(12)).toBe(50);
   });
 });
 
 describe('WeatherPageComponent temperature path', () => {
-  it('centers a flat forecast instead of pinning it to the bottom edge', () => {
-    const component = new WeatherPageComponent(
+  function component(): WeatherPageComponent {
+    return new WeatherPageComponent(
       {} as WeatherService,
       {} as WeatherForecastService,
       {} as SolarService,
       {} as ScreensaverConfigService,
       { alerts: () => [] } as unknown as WeatherVigilanceService,
     );
+  }
 
-    const path = (component as any).createTemperaturePath([
+  it('centers a flat forecast instead of pinning it to the bottom edge', () => {
+    const path = (component() as any).createTemperaturePath([
       { temperature: 25 },
       { temperature: 25 },
     ]);
 
     expect(path).toBe('M0,57 L100,57');
+  });
+
+  it('maps the zero-degree clipping line between positive and negative temperatures', () => {
+    const clipY = (component() as any).createFreezingClipY([
+      { temperature: 10 },
+      { temperature: -10 },
+    ]);
+
+    expect(clipY).toBeCloseTo(57);
+  });
+
+  it('only enables the cold overlay when the forecast contains negative temperatures', () => {
+    const weatherComponent = component();
+
+    expect((weatherComponent as any).createFreezingClipY([{ temperature: 0 }, { temperature: 5 }])).toBeNull();
+    expect((weatherComponent as any).createFreezingClipY([{ temperature: -5 }, { temperature: -1 }])).toBe(0);
   });
 });
 

@@ -56,7 +56,17 @@
                 <div class="weather-page__night-band" *ngFor="let band of nightBands" [style.left.%]="band.leftPercent"
                     [style.width.%]="band.widthPercent" aria-hidden="true"></div>
                 <svg class="weather-page__temp-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path [attr.d]="temperaturePath" vector-effect="non-scaling-stroke" />
+                    <defs>
+                        <clipPath id="weather-page-freezing-clip" clipPathUnits="userSpaceOnUse">
+                            <rect x="-1" [attr.y]="freezingClipY" width="102"
+                                [attr.height]="100 - freezingClipY"></rect>
+                        </clipPath>
+                    </defs>
+                    <path class="weather-page__temp-line" [attr.d]="temperaturePath"
+                        vector-effect="non-scaling-stroke" />
+                    <path *ngIf="hasFreezingTemperatures" class="weather-page__temp-line weather-page__temp-line--cold"
+                        [attr.d]="temperaturePath" vector-effect="non-scaling-stroke"
+                        clip-path="url(#weather-page-freezing-clip)" />
                 </svg>
                 <div class="weather-page__hours">
                     <div class="weather-page__hour" *ngFor="let h of meteogram">
@@ -68,19 +78,18 @@
                             <div class="weather-page__rain-bar" *ngIf="h.precipitation > 0"
                                 [style.height.%]="barHeight(h.precipitation)"></div>
                         </div>
-                        <span class="weather-page__rain-value" *ngIf="h.precipitation > 0">{{ h.precipitation }}mm</span>
+                        <span class="weather-page__rain-value" *ngIf="h.precipitation > 0">{{ h.precipitation
+                            }}mm</span>
                     </div>
                 </div>
             </div>
 
             <div class="weather-page__vigilance-list" *ngIf="vigilanceService.alerts().length > 0"
                 aria-label="Yvelines weather alerts">
-                <div class="weather-page__vigilance"
-                    *ngFor="let alert of vigilanceService.alerts()"
+                <div class="weather-page__vigilance" *ngFor="let alert of vigilanceService.alerts()"
                     [class.weather-page__vigilance--yellow]="alert.severity === 'yellow'"
                     [class.weather-page__vigilance--orange]="alert.severity === 'orange'"
-                    [class.weather-page__vigilance--red]="alert.severity === 'red'"
-                    role="status">
+                    [class.weather-page__vigilance--red]="alert.severity === 'red'" role="status">
                     <span class="weather-page__vigilance-icon" feather="alert-triangle" aria-hidden="true"></span>
                     <span class="weather-page__vigilance-severity">{{ alert.severity | uppercase }}</span>
                     <span class="weather-page__vigilance-reason">Yvelines: {{ alert.phenomenon }}</span>
